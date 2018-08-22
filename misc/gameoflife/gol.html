@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"></meta>
+<title>Game of life</title>
+<style type='text/css'>
+body {
+	margin-left: 5%;
+	margin-right: 5%;
+}
+canvas {
+     border: solid lightgrey;
+}
+</style>
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
+<script type="text/javascript" src="gol.js"></script>
+<script type="text/javascript" >
+$(document).ready(gol);
+</script>
+</head>
+
+<body>
+
+<p>Game of life on <a href="http://localhost:8080/misc/gameoflife/gol.html">localhost</a>, <a href="http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life">wikipedia</a>. <span id="status"></span></p>
+
+<div class="gol"><canvas id="gol">Canvas API required.</canvas> </div>
+
+<pre id="log" ></pre>
+
+</body>
+</html>
