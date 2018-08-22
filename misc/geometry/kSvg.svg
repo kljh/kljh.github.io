@@ -1,0 +1,106 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"  
+"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+<?xml-stylesheet href="kSvg.css" type="text/css"?> 
+<svg xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink" 
+  width="800" height="600" 
+  zoomAndPan="disable" zoomAndPanDefault="magnify" 
+  preserveAspectRatioOld="none" preserveAspectRatioDefault="xMidYMid "
+  onload="svginit(evt); ">
+<title id="svgTitle">Triangle</title>
+<desc id="svgDesc">Elements remarquables du triangle (centre de gravite, orthocentre, cercles inscrits, circonscrits, exinscrits, ...). Animable.</desc>
+
+<script xlink:href="kMth.js" />
+<script xlink:href="kSvg.js" />
+
+<script><![CDATA[
+
+var bBuild = true; // if true we do a full redraw
+function BuildContent(evt) {
+  
+  if ( bBuild && (svgdoc==null) ) {
+    //svgdoc = svginit("svgEmbedName");
+  }
+  
+  pt = Point( "A", 110, 130, true );
+  pt = Point( "B", 320, 150, true );
+  pt = Point( "C", 240, 210, true );
+  sg = Seg( "[AB]", "A", "B" );
+  sg = Seg( "[AC]", "A", "C" );
+  sg = Seg( "[BC]", "B", "C" );
+  
+  // grav, ortho, x..
+  pt = PointIso( "G", "A", "B", "C" );
+  pt = PointOrtho( "H", "A", "B", "C" );
+  pt = PointCirc( "X", "A", "B", "C" );
+  sg = Seg( "[HX]", "H", "X" );  
+  // construction ...
+  ln = Line( "(AH)", "A", "H");
+  ln = Line( "(BH)", "B", "H");
+  pt = PointIso( "Mac", "A", "C" );
+  
+  // inscr
+  cc = Circle( "Cx", "X", "A" );
+  // xcrit
+  pt = PointInscr( "I", "A", "B", "C" );
+  pt = PointProj( "Pax", "I", "[BC]");
+  cc = Circle( "Ci", "I", "Pax" );
+  // xinscr
+  pt = PointXInscr( "Xa", "A", "B", "C" );
+  pt = PointXInscr( "Xb", "B", "A", "C" );
+  pt = PointXInscr( "Xc", "C", "B", "A" );
+  pt = PointProj( "Pxa", "Xa", "[BC]");
+  cc = Circle( "Cxa", "Xa", "Pxa" );
+  pt = PointProj( "Pxb", "Xb", "[AC]");
+  cc = Circle( "Cxb", "Xb", "Pxb" );
+  pt = PointProj( "Pxc", "Xc", "[AB]");
+  cc = Circle( "Cxc", "Xc", "Pxc" );
+  
+  pt = Point( "CLineG", 550, 130, false );
+  pt = Point( "CLineD", 700, 130, false );
+  sg = Seg( "CLineSeg", "CLineG", "CLineD");
+  cs = PointCstr( "CLine", "CLineSeg", 30, 0, 100 );
+  vl = PointCstrGetValue("CLine")
+  tx = Texte( "Mtxt", 625, 120, function(v) { return "Rng value: "+Math.round(v) }, "CLine" );
+
+}
+
+]]></script>
+
+<defs id="defsId">
+  <symbol id="symbolRect" overflow="visible">
+    <rect x="-3" y="-3" width="6" height="6" style="fill:rgb(240,65,25); fill-opacity:0.8;stroke:rgb(0,0,0);stroke-width:.3" />
+  </symbol>
+  <symbol id="symbolCirc" overflow="visible">
+    <circle cx="0" cy="0" r="3" style="fill:rgb(12,166,107);fill-opacity:0.8; stroke:rgb(0,0,0);stroke-width:.3" />
+  </symbol>
+  <cursor id="kRotateCursor" xlink:href="rotate.jpeg" x="10" y="11"/>
+</defs>
+
+<g id="gId" onmousemove="bouger(evt)" onmousedown="cliquer(evt)" onmouseup="lacher(evt)" >  
+  <g id="Deco">
+    <rect id="bckgrndId" x="0" y="0" width="10" height="10" style="stroke-width:1; stroke:#0E0E0E; fill:#EEEEEE" />
+    <rect id="rectangleId" x="0" y="0" width="22" height="7" transform="matrix(1 0 0 1 50 80)" style="stroke-width:1; stroke:#FFFFFF; fill:lightgrey"  movable="rxy" />
+    <ellipse id="cercleId" cx="0" cy="0" rx="20" ry="20" transform="matrix(1 0 0 1 220 50)" style="stroke-width:1; stroke:#FFFFFF; fill:lightgrey"  movable="rxy" />
+    <g id="staedteRect">
+      <use id="Zurich" x="682" y="53" xlink:href="#symbolRect"/>
+      <use id="Basel" x="612" y="33" xlink:href="#symbolRect"/>
+      <use id="Genf" x="499" y="181" xlink:href="#symbolRect"/>
+      <use id="Bern" x="604" y="106" xlink:href="#symbolRect"/>
+    </g>
+    <g id="staedteCirc">
+      <use id="Luzern" x="665" y="89" xlink:href="#symbolCirc"/>
+      <use id="St. Gallen" x="748" y="46" xlink:href="#symbolCirc"/>
+      <use id="Chur" x="759" y="109" xlink:href="#symbolCirc"/>
+      <use id="Lugano" x="718" y="206" xlink:href="#symbolCirc"/>
+    </g>
+  </g>
+  <rect id="borderId" x="100" y="250" width="200" height="100" style="stroke-width:1; stroke:lightgrey; fill:none" />
+  <g id="scene" transform="translate(200,300) rotate(0) scale(95) ">
+    <rect id="bdId" x="-1" y="-.5" width="2" height="1" style="stroke-width:0.01; stroke:lightgrey; fill:none" />
+  </g>
+</g>
+
+</svg>

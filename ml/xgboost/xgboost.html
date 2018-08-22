@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Random forest</title>
+<script src="xgboost.js"></script>
+
+<script src="https://d3js.org/d3.v3.js"></script>
+<script src="d3scatter.js"></script>
+<link rel="stylesheet" href="d3scatter.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/codemirror.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/codemirror.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/mode/python/python.min.js"></script>
+
+<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+<style>
+body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Crete Round", Cambria, Georgia, serif;
+    font-weight: normal;
+    /*color: #363B40;*/
+    clear: both;
+}
+
+h1 {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+    margin-bottom: 1.5rem;
+    letter-spacing: -1.5px;
+}
+
+h2 {
+    font-size: 1.5rem;
+    line-height: 1.875rem;
+    margin-bottom: 1.5rem;
+    letter-spacing: -1px;
+}
+
+h3 {
+    font-size: 1.125rem;
+    line-height: 1.5rem;
+    margin-bottom: 1.5rem;
+    letter-spacing: -1px;
+}
+
+label { display: inline-block; width: 180px; text-align: left; }
+
+</style>
+<script>
+$(document).ready( function () {
+	$.get("concrete_data.csv")
+	.done(onDatasetLoad)
+	.fail(err => alert("failed to load data CSV. "+err));
+});
+
+function onDatasetLoad(datacsv) {
+    var dataset = datacsv.split('\n').filter(row => row!=="").map(row => row.replace(/\r/g, '').split(','));
+	
+    var headers = dataset.shift();
+    var cols = headers.map(x => { return { "title": x }; });
+    var rows = dataset.map(row => row.map(x => x*1));
+    
+    var d3data = rows.filter((x,i)=> i%3==0).map(row => { var tmp={}; for (var i=0; i<row.length; i++) tmp[headers[i]] = row[i]; return tmp; });
+    d3_scatterplot_matrix_brushing(d3data);
+    
+    $('#table_id').DataTable({
+        data: rows,
+        columns: cols
+    });
+
+    var editor1 = CodeMirror.fromTextArea(document.getElementById("training_id"), { lineNumbers: true, mode:  "python" });
+    var editor2 = CodeMirror.fromTextArea(document.getElementById("forest_id"), { lineNumbers: true });
+    editor1.setSize(null, 340);
+    editor2.setSize(null, 550);
+    
+    var xgb_model_txt = editor2.getValue();
+    var fmap = [ "cement", "blast_furnace_slag", "fly_ash", "water", "superplasticizer", "coarse_aggregate", "fine_aggregate", "age" ];
+    var xgb_model = xgboost_parse_dump(xgb_model_txt, fmap);
+    
+    var pred_div = $("#predict_id")
+    for (var i=0; i<headers.length-1; i++) 
+        pred_div.append('<label for="f'+i+'">'+headers[i]+'</label><input id="f'+i+'" class="predict_feature_id" type="text" value="'+rows[0][i]+'"><br/>');
+    pred_div.append('<label for="prediction_id">Compressive Strength</label><input id="prediction_id" type="text" value="..." disabled><br/>');
+    
+    function html_run_predict() {
+        var input = headers.map((h,i) => $("#f"+i).val()*1); input.pop();
+        var predicted = xgboost_predict(xgb_model, input);
+        var output = predicted.score;
+        console.log(output+" <= "+input);
+        $("#prediction_id").val(JSON.stringify(output));
+    }
+    $(".predict_feature_id").change(html_run_predict);
+    $(".predict_feature_id").keyup(function () { setTimeout(html_run_predict, 100); });
+    html_run_predict();
+    
+}
+</script>
+</head>
+
+<body>
+
+<h1>A quick dive into ramdom forests.</h1>
+
+<p>Since it's good to work on a concrete example, I picked a <em>Concrete Compressive Strength</em> data set from <a href="http://archive.ics.uci.edu/ml/datasets/concrete+compressive+strength">UCI</a>.<br/>
+We could have used <em>Concrete Slump Flow</em> from <a href="https://archive.ics.uci.edu/ml/datasets/Concrete+Slump+Test">UCI</a> as well, but it contains fewer records.</p>
+
+<p>The ramdom forests library used is <a href="https://xgboost.readthedocs.io/en/latest/">xgboost</a> (boosted trees).</p>
+
+<h2>Data set</h2>
+
+<p>Explained variable: <br/>
+<em>Concrete compressive strength</em>, a quantitative variable (in MPa).<br/>
+This differs from the XGBoost tutorial where the explained variable is a binary variable (yes/no). <br/>
+This means we run a regression (estimating a real quantity) rather than a logistic regression (estimating a probability between 0.0 and 1.0).
+</p>
+
+<p>Features variables: <br/>
+seven components (kg in a m3 mixture) and one age (number of days 1~365)
+</p>
+
+<div id="scatter_plot_id"></div>
+
+<table id="table_id" class="display"></table>
+
+<h2>Description of boosted trees</h2>
+
+<p>Make sure you read the short yet insightful introduction <a href="https://xgboost.readthedocs.io/en/latest/tutorials/model.html" style="font-weight: bold; color: orange;">here</a>.<br/>
+It describe what is a random forest, and how xgboost proceeds for the trainning.</p>
+
+
+<h2>Training</h2>
+
+<p>Training script below is staightforward reuse of the documentation:<br/>
+Link to <a href="concrete_data.csv">data</a> and (not-so documented) <a href="concrete_data.fmap">feature map</a>.<br/>
+</p>
+
+<textarea id="training_id">
+import xgboost as xgb
+
+# read data from https://archive.ics.uci.edu/ml/datasets/Concrete+Compressive+Strength
+# CSV to split in training and test dataset and save in SVM format (simple format, allowing sparse value, used by support vector machine algos)
+dtrain = xgb.DMatrix(r"xgboost_concrete.train.txt")
+dtest = xgb.DMatrix(r"xgboost_concrete.test.txt")
+
+# specify parameters via map
+param = {'max_depth': 3, 'eta': 1, 'silent': 1 } # removed 'objective':'binary:logistic' because we do not want a classifier
+num_round = 3
+bst = xgb.train(param, dtrain, num_round)
+
+# save model (in more or less) human-frinedly format
+bst.dump_model('xgboost_model_dump.txt', with_stats=False, fmap='xgboost_concrete_data.fmap') 
+bst.dump_model('xgboost_model_dump.raw', with_stats=True) 
+
+# make prediction
+preds = bst.predict(dtest)
+print("test set prediction", preds)
+</textarea>
+
+<p>The result of the training is rather self explanatory:</p>
+
+<textarea id="forest_id">
+booster[0]:
+0:[age<21] yes=1,no=2,missing=1
+	1:[cement<354.5] yes=3,no=4,missing=3
+		3:[age<10.5] yes=7,no=8,missing=7
+			7:leaf=15.1637936
+			8:leaf=26.8362064
+		4:[water<183.050003] yes=9,no=10,missing=9
+			9:leaf=38.8305092
+			10:leaf=27.0810814
+	2:[cement<352.5] yes=5,no=6,missing=5
+		5:[cement<164.800003] yes=11,no=12,missing=11
+			11:leaf=25.4239998
+			12:leaf=39.5973549
+		6:[water<183.050003] yes=13,no=14,missing=13
+			13:leaf=62.237114
+			14:leaf=45.3283577
+booster[1]:
+0:[blast_furnace_slag<25] yes=1,no=2,missing=1
+	1:[water<174.899994] yes=3,no=4,missing=3
+		3:[blast_furnace_slag<0.00999999978] yes=7,no=8,missing=7
+			7:leaf=2.24529719
+			8:leaf=-5.14309931
+		4:[fine_aggregate<679.349976] yes=9,no=10,missing=9
+			9:leaf=5.46604109
+			10:leaf=-6.60713387
+	2:[cement<274] yes=5,no=6,missing=5
+		5:[age<42] yes=11,no=12,missing=11
+			11:leaf=-0.589238107
+			12:leaf=7.98335886
+		6:[blast_furnace_slag<155.850006] yes=13,no=14,missing=13
+			13:leaf=3.93754601
+			14:leaf=13.9395304
+</textarea>
+
+<h2>Remember by doing</h2>
+
+<p>A good way to make sure we understand what's going on in the (black) box is to redo (part-of) it.<br/>
+This webpage parses XGBoost training output (displayed above), and calculates the estimated concrete compressive strength.<p>
+</p>
+
+<div id="predict_id"></div>
+
+<h2>Exercise</h2>
+
+<p>Modify this example to run to recognize <a href="https://en.wikipedia.org/wiki/Agaricus">agaricus</a> mushrooms as in <a href="https://xgboost.readthedocs.io/en/latest/get_started.html">XGBoost get started</a> example.</p>
+
+<p>In this case the random forest is used as a classifier. It is a logistic regression. <br/>
+You must transform the score in \(\mathbb{R}\) into a probability in \([0,1]\) using: \[ Prob = \frac{1}{1+\exp(score+0.5)} \].
+</p>
+
+<h2>Conclusion</h2>
+
+Strenght of boosted trees:
+<ul>
+<li>scales well with number of dimensions and size of dataset
+<li>avoids overfit
+<li>simple to interpret
+<li>handle dataset with missing features in records
+</ul>
+
+</body>
+</html>

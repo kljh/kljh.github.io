@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<!--script type="text/javascript" src="/js/jquery/jquery.cookie.js"></script-->
+<script type="text/javascript" src="jquery.preview.js"></script>
+<script type="text/javascript" src="webgl-matrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="webgl-utils.js"></script>
+<script type="text/javascript" src="webgl-debug.js"></script>
+<script type="text/javascript" src="html.js" ></script>
+<script type="text/javascript" src="sphere-webgl.js"></script>
+<script type="text/javascript" src="sphere-data.js"></script>
+<script type="text/javascript" src="linalg.js" ></script>
+<script type="text/javascript" src="polyedron.js" ></script>
+
+<style type="text/css">
+	a img { border-style: none; } 
+	form { display:inline; }
+	input { display:inline; }
+	#screenshot {
+		position: absolute;
+		border: 1px solid #ccc;
+		background: #333;
+		padding: 5px;
+		display: none;
+		color: #fff;
+	}
+	#screenshot.img {
+		width : 150;
+	}
+</style>
+
+<script type="text/javascript">
+	var mvMatrix = mat4.create();
+	var pMatrix = mat4.create();
+</script>
+
+<!-------------------------------------------------------------------------------------------------------------------->
+
+<script id="shader-vs" type="x-shader/x-vertex">
+  // input that vary from vertex to vertex
+  attribute vec3 aVertexPosition;
+  attribute vec2 aTextureCoord;
+
+  // non-varying input
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+  
+  // output
+  varying vec2 vTextureCoord;
+
+  void main(void) {
+    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+    vTextureCoord = aTextureCoord;
+  }
+</script>
+
+<script id="shader-fs" type="x-shader/x-fragment">
+  #ifdef GL_ES
+  //precision mediump float;
+  precision highp float;
+  #endif
+
+  varying vec2 vTextureCoord;
+
+  uniform bool uUseTextures;
+  uniform vec3 uAmbientColor;
+  uniform float uBrightness;
+
+  uniform sampler2D uSampler;
+
+  void main(void) {
+    if ( ! uUseTextures ) {
+      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+      gl_FragColor = vec4(uAmbientColor, 1.0); //  * uBrightness
+    } else {
+      //gl_FragColor = vec4(vTextureCoord.s, vTextureCoord.t, 1.0, 1.0);
+      gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+	  // want to add this :   
+	  //vec3 lightWeighting = vec3(uBrightness, uBrightness, uBrightness);
+	  //gl_FragColor = vec4(gl_FragColor.rgb * uBrightness, gl_FragColor.a);
+    }
+  }
+</script>
+
+<!-------------------------------------------------------------------------------------------------------------------->
+
+<script id="per-fragment-lighting-vs" type="x-shader/x-vertex">
+  // input that vary from vertex to vertex
+  attribute vec3 aVertexPosition;
+  attribute vec3 aVertexNormal;
+  attribute vec2 aTextureCoord;
+
+  // non-varying input
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+  uniform mat3 uNMatrix;
+
+  // output
+  varying vec2 vTextureCoord;
+  varying vec3 vTransformedNormal;
+  varying vec4 vPosition;
+
+  void main(void) {
+    vPosition = uMVMatrix * vec4(aVertexPosition, 1.0);
+    gl_Position = uPMatrix * vPosition;
+    vTextureCoord = aTextureCoord;
+    vTransformedNormal = uNMatrix * aVertexNormal;
+  }
+</script>
+
+<script id="per-fragment-lighting-fs" type="x-shader/x-fragment">
+  #ifdef GL_ES
+  precision highp float;
+  #endif
+
+  varying vec2 vTextureCoord;
+  varying vec3 vTransformedNormal;
+  varying vec4 vPosition;
+
+  uniform bool uUseLighting;
+  uniform bool uUseTextures;
+
+  uniform vec3 uAmbientColor;
+
+  uniform vec3 uPointLightingLocation;
+  uniform vec3 uPointLightingColor;
+
+  uniform sampler2D uSampler;
+
+  void main(void) {
+    float directionalLightWeighting;
+    vec3 lightWeighting;
+	if ( ! uUseLighting ) {
+      directionalLightWeighting = 1.0;
+      lightWeighting = vec3(1.0, 1.0, 1.0);
+    } else {
+      vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);
+
+      directionalLightWeighting = max(dot(normalize(vTransformedNormal), lightDirection)+0.5, 0.0);
+      lightWeighting = uAmbientColor + uPointLightingColor * directionalLightWeighting;
+    }
+
+    vec4 fragmentColor;
+    if (uUseTextures) {
+      fragmentColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+    } else {
+      fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
+    }
+    gl_FragColor = vec4(fragmentColor.rgb * lightWeighting, fragmentColor.a);
+    gl_FragColor = vec4(fragmentColor.rgb, directionalLightWeighting);
+  }
+</script>
+
+<!-------------------------------------------------------------------------------------------------------------------->
+
+<script type="text/javascript">
+// replaces onload
+$(document).ready(function() {
+	initSphereData();
+	// initSphereWebGL();
+	webGLStart(); 
+} );
+</script>
+
+</head>
+<body>
+	<div>
+	<span id="menu" style="">
+		<form name="viewform"><select id="viewselect" name="viewselect" onchange="onViewSelect()"><option value="">Point of view</option></select></form>
+		<input type="checkbox" id="lighting" checked /> Use lighting<br/> 
+	</span><br/>
+	<span id="viewmenu" style="">
+		<!-- Device coordinates to World coordinates -->
+		View directions : <a href="#" onclick="setDeviceToWorldRotMtx([[1,0,0],[0,0,-1],[0,1,0]]);">N</a>
+		<a href="#" onclick="setDeviceToWorldRotMtx([[-1,0,0],[0,0,1],[0,1,0]]);">S</a>
+		<a href="#" onclick="setDeviceToWorldRotMtx([[0,0,-1],[-1,0,0],[0,1,0]]);">E</a>
+		<a href="#" onclick="setDeviceToWorldRotMtx([[0,0,1],[1,0,0],[0,1,0]]);">O</a>
+		<a href="#" onclick="setDeviceToWorldRotMtx([[-1,0,0],[0,1,0],[0,0,-1]]);">Sky</a>
+		<a href="#" onclick="setDeviceToWorldRotMtx([[1,0,0],[0,1,0],[0,0,1]]);">Ground</a> -
+	</span>
+	</div>
+	
+	<div>
+	<div id="snapshots" style=""></div>
+	</div>
+	
+	<canvas id="canvas" style="border: none;" width="800" height="500"></canvas><br/>
+	<a href="http://learningwebgl.com/blog/?p=11">Learning WebGL tutorial</a>
+	
+	<p>Trouble shooting WebGL with old graphic card:<ul>
+	<li/>Force WebGL in Firefox : type <tt>about:config</tt> in adress bar, set <tt>webgl.force-enabled = true</tt>
+	<li/>Force WebGL in Chrome : type <tt>about:flags</tt> in adress bar, click on enable <tt>Override software rendering list</tt> and add <tt>--enable-webgl</tt> in shortcut .
+	<li/>Force WebGL in Opera : type <tt>opera:config#UserPrefs</tt> in adress bar, set <tt>Enable WebGL=1</tt> and <tt>Enable Hardware Acceleration=0</tt> and press Save.
+	<li/>FireFox needs to be restarted after computer returns from sleep mode
+	<li/>All browsers apply a same-domain-policy on images. Also report the image size is non zero as soon as image starts loading (when image loding completes with FireFox).
+	</ul></p>
+	
+	<div id="log" />
+
+</body>
+</html>

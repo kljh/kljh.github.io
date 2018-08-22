@@ -1,0 +1,185 @@
+<html>
+
+<head>
+<!--link rel="stylesheet" type="text/css" href="../../kljh.css" media="screen" /-->
+<style type="text/css">
+<!--
+table.smart{border:1px solid #963;margin:3px;border-collapse:collapse;text-align:center; }
+table.pinout{border:1px solid #369;margin:3px;}
+.smart th{background:#369;color:#fff}
+.pinout th{background:#369;color:#fff}
+.even,.odd{vertical-align:baseline}
+.even{background:#fff}
+.odd{background:#eee}
+.staterules { background:#fdc; border: #000000 1px dotted; padding-left:15px; padding-right:15px; text-align : left; }
+
+.token { background:#ccc; border: #000000 1px dotted; padding-left:0.5em; padding-right:0.5em; text-align : center; }
+.consumed { background:#ddd; font-weight:lighter;}
+.lookahead { background:Gold; font-weight:bold; }
+
+
+span.statetree{border:1px solid #963;margin:3px;text-align:center; }
+
+.statetree {
+  background-color: #ddeeff;
+  border: 1px dotted #332211;
+  margin: 1px;
+  padding-left:2px; padding-right:2px; 
+  float: left;
+  text-align: center;
+}
+.terminal {
+	background-color: #ffeeff;
+
+}
+.conteneur {
+  width: 100%;
+}
+
+.spacer {clear: both; }
+hr {clear:both;  width:40%; height:1px;  }
+
+.center { margin-left: auto; margin-right: auto; width:95%; }
+
+tr.HighlightAction td.LrTableAction {   background-color: Gold;  }
+tr.HighlightGoto td.LrTableGoto {   background-color: Gold;  }
+
+-->
+</style>
+<!--script type="text/javascript" src="../../kljh.js"></script-->
+<script type="text/javascript" src="lexer.js"></script>
+<script type="text/javascript" src="grammars.js"></script>
+<!--script> setTimeout("AutoNavLinks();", 800); </script-->
+<script type="text/javascript">
+function getById(id) { 
+	return document.getElementById(id);
+}
+function hideById(id)
+{
+    tmp = getById(id);
+    tmp.style.visibility = "hidden";
+	tmp.style.position = "absolute";
+	tmp.style.display = "none";
+}
+function showById(id)
+{
+    tmp = getById(id);
+    tmp.style.visibility = "visible";
+    tmp.style.position = "relative";
+    tmp.style.display = "inline";
+}
+function toggleById(id)
+{
+    tmp = getById(id);
+    if (tmp.style.visibility=="hidden")	
+        showById(id);
+    else
+        hideById(id);
+}
+</script>
+</head>
+
+<body>
+
+<center><table><tr>
+<td>
+<!--
+z= { "vd" : 22, "abc" : [ ab, c+1 ] } ; 
+x= [ 3, 5*b, {} ]; 
+y = pow(a,5) - 3*7*xy;
+
+#include "header"
+void f1();
+uint f2()
+void f3(int a, double*,  // patati
+ const dvector& b);
+-->
+<form><textarea name="inputSrc" id="inputSrc" size=60 rows="10" cols="80">
+z= { "vd" : 22, "abc" : [ ab, c+1 ] } ; 
+x= [ 3, 5*b, {} ]; 
+y = pow(a,5) - 3*7*xy;
+</textarea>
+</form>
+</td>
+<td>
+<form>
+	<input type="button" value="Lexer" accessKey="l" onclick="html_js_tokenize();" />
+	(test : <select id="selectRules" onchange="html_js_load_rules();" />
+		<option value="arith_rules" selected>Arithmetics (incl. json)</option>
+		<option value="header_rules">C headers</option>
+	</select> )
+</form>
+<form id="buttonsLR" styled="visibility:hidden;position:absolute;">
+	Hide consumed tokens <input id="cbHideConsumed" type="checkbox" checked="true"/><br/>
+	Compact abtract syntax tree (AST) <input id="cbCompactAST" type="checkbox" checked="false"/><br/>
+	Play pause between actions <input type="text" id="fieldPauseMs" name="fieldPauseMs" value="20" size=4 /> ms<br/>
+	<input id="buttonPlayLR" type="button" value="Play" accessKey="p" onclick="html_js_parse_play();" disabled="true" />
+	<input id="buttonPauseLR" type="button" value="Pause" accessKey="s" onclick="html_js_parse_pause();" disabled="true" />
+	<input id="buttonNextLR" type="button" value="Next" accessKey="x" onclick="html_js_parsenext();" disabled="true" />
+	<input id="buttonCompactAST" type="button" value="Compact !" accessKey="c" onclick="html_js_compactAst();" disabled="true" /><br/>
+	<span id="spanNextLR"></span><br/>
+	<!--button id="buttonNextLR" onclick="html_js_parsenext();" disabled="true" >Next</button-->
+</form></td>
+</table></center>
+<!--h4>Token input stack (top of stack on the left):</h4-->
+
+
+<div id="divTokens" style="line-height:1.5;" >
+</div>
+
+<!--h4>State stack (top of stack on top):</h4-->
+
+<div id="divCurrStateStack" class="center">
+
+<!--div class="statetree">
+	<a href="">T1</a>
+	<div class="children">
+	<div class="statetree">
+		<a href="">T2</a>
+		<div class="children">
+		<div class="statetree">x2</div>
+		<div class="statetree">y2</div>
+		<div class="statetree">z2</div>
+		</div>
+	</div>
+	<div class="statetree">y1</div>
+	<div class="statetree">
+		<a  href="a3">A3</a>
+		<div class="children">
+		<div class="statetree">z1</div>
+		</div>
+	</div>
+	</div>
+	<div class="spacer"> </div>
+</div-->
+
+<!--script type="text/javascript">
+document.write(htmlify_statestack(stack));
+</script-->
+
+</div>
+<!--hr/-->
+<div class="spacer"> </div>
+
+<!--h4>Previous state stack:</h4>
+
+<div id="divPrevStateStack">
+</div-->
+
+<!--h4>Action table</h4-->
+<div align="center">
+<script type="text/javascript">
+document.write(htmlify_table(lr0));
+</script>
+</div>
+
+<!--h4>Rules (non extended EBNF ;-)</h4>
+<div align="center">
+<script type="text/javascript">
+document.write(htmlify_bnf(lr0));
+</script>
+</div-->
+
+</body>
+
+</html>

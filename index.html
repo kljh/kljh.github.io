@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+<title>Projects</title>
+
+<!--
+<script src="jquery.js"></script>
+<script src="parallax.min.js"></script>
+-->
+
+<style>
+
+body { margin: 0px; }
+body { font-family: "Helvetica Neue",Helvetica,Arial,sans-serif; }
+h1 { font-size: 1.7em; font-weight: 500; line-height: 1.1; }
+h2 { font-size: 1.5em; font-weight: 500; line-height: 1.0; }
+
+
+.boxes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+}
+
+.box {
+    border: 1px solid grey;
+    border-radius: 10px;
+    background: beige;
+    min-width: 300px;
+    max-width: 300px;
+    min-height: 200px;
+    max-height: 200px;
+    margin: 10px 10px;
+    padding: 2px 10px;
+}
+
+.widebox {
+    width: 80%;
+}
+
+.parallax-window {
+    min-height: 300px;
+    background: transparent;
+    
+}
+
+
+</style>
+</head>
+
+<body>
+
+    
+<div class="boxes" style="background: lightgrey; border-bottom: 1px solid lightblue;">
+
+	<div class="box" style="background: black url(img/oeil3ddl.jpg) no-repeat 85% bottom; background-size: 40%; color: beige;">
+        <h2>Vision</h2>
+        <p>Projective geometry is fun.<br/>
+        <a href="#vision" style="color: orange;">Go</a></p>
+    </div>
+
+    <div class="box" style="background: rgb(56,158,51) url(img/grammar-for-dummies.jpg) no-repeat 90% bottom; background-size: 50%; color: beige;">
+        <h2>Grammar</h2>
+        <p>Read grammar, generate finite state machine, execute interactively..</br>
+        <a href="misc/grammars/grammars.html" style="color:orange;">Try</a></p>
+    </div>
+
+	<div class="box" style="background: black url(img/pacman.jpg) no-repeat 5% bottom; background-size: 50%; color: white;">
+        <h2>Pacman</h2>
+        <p>With autoplay.<br/>Machine learning free.<br/>
+        <a href="misc/pacman/pacman.html" style="color: orange;">Play</a></p>
+    </div>
+
+     <div class="box" style="background: black url(img/game-of-life.gif) no-repeat 75% bottom; background-size: 50%; color: beige;">
+        <h2>Training</h2>
+        <p>Game of life : Absolute beginers project.<br/>
+        <a href="misc/gameoflife/gol.html" style="color: orange;">Learn</a></p>
+    </div>
+
+     <div class="box" style="background: rgb(235,74,74) url(img/ml.png) no-repeat 0% bottom; background-size: 50%; color: beige;">
+        <h2>Machine learning</h2>
+        <p>Let's data mine the blockchains !!<br/>
+        <a href="#ml" style="color: orange;">Why not?</a></p>
+    </div>
+
+<!--
+
+    <div class="box" style="background: rgb(215,192,160) url(img/train.jpg) no-repeat 5% bottom; background-size: 50%; color: brown;">
+        <h2>Machine Learning</h2>
+    </div>
+
+    <div class="box" style="background: white url(img/cercleEuler.gif) no-repeat 5% bottom; background-size: 50%; color: black;">
+        <h2>Geometry</h2>
+    </div>
+-->
+</div>
+
+<!--
+<div class="parallax-window" data-parallax="scroll" data-image-src="img/grammar-for-dummies.jpg">adad</div>
+-->
+
+<div class="boxes">
+
+<a id="vision">
+<div class="widebox">
+<h2>Image Vision</h2>
+<ul>
+<li>2007-03-17 <a href="vision/stereo/index.html">Stereovision</a></li>
+<li>2010-10-29 <a href="vision/sphere/sphere-html5.html">Sphere stitching (Canvas version)</a></li>
+<li>2011-08-22 <a href="vision/sphere/sphere-webgl.html">Sphere stitching (WebGL version)</a></li>
+<!-- 
+<li>2011-08-23 <a href="vision/sphere/matchmaker.html">Features matchmaker</a><br/>
+    Manual matching of corresponding points in a set of pictures.</li>
+<li>2012-11-13 <a href="vision/video/video-paths.html">Features tracking in videos</a><br/>
+    Using Html5 Video API</li>
+<li>2013-06-05 <a href="vision/camera/windrose.html">Windrose</a></li>
+<li>2013-06-05 <a href="vision/camera/camera.html">Sphere camera</a></br>
+    HTML5 port from my first Android app</li>
+-->
+</ul>
+</div>
+
+<div class="widebox">
+<h2>Misc</h2>
+<ul>
+<li>2009-08-08 <a href="misc/grammars/grammars.html">LR0 grammar</a><br/>
+    Generates the finite state machine from grammar production rules.<br/>
+    Parses expressions/source code into syntax tree.<br/>
+    Graphical interface with step by step visualisation.</li>
+<li>2012-01-19 <a href="misc/pacman/pacman.html">Pacman</a> with automatic mode.<br/>
+    Inspired by a C++ beginner course's project by R. Keriven at Ponts et Chauss&eacute;es school.<br/>
+    Students had to implement pacman and ghost's logic. Exam was a competition between them.</li>
+<li>2013-05-30 <a href="misc/gameoflife/gol.html">Game of life</a><br/>
+    Absolute beginers code project..</li>
+<li>2013-05-06 <a href="misc/hex/hex-view.html">Binary file viewer</a><br/>
+    With heaxadecimal and double (IEEE 754) display.</li>
+<li>2014-08-16 <a href="misc/mergely/html/ajax.html">Diff tool</a><br/>. 
+    WinMerge shortcuts and runs everywhere.</li>
+<li>2015-10-07 <a href="misc/geometry/kSvg.html">Triangle geometry</a><br/>
+    Interactive geometry &agrave; la Cabri (using plain SVG).</li>   
+</ul>
+</div>
+
+<a id="ml">
+<div class="widebox">
+<h2>Machine learning</h2>
+<ul>
+<li>2018-03-18 <a href="http://kljh.org/misc/mnist/index.html">MNIST</a><br/>
+    MNIST handwritten digit recognition (training using Tensorflow).<br/>
+    Demistification of ML with Excel/VBA (92% accuracy).<br/>
+    Convolutional neural network <a href="https://tkljh.s3.amazonaws.com/misc/mnist/mnist.html">in a webpage</a> (98.2% accuracy).</li>
+<li>2018-08-21 <a href="ml/xgboost/xgboost.html">(Boosted) Random forests</a>.<br/>
+    A concrete example of decision trees e.g. forest (with some visulisation with d3js).</li>
+<li><em>next</em> <a href="">Recurrent Neural Network for music generation</a><br/>
+    The art of computer programmer</li>
+<!--
+<li>next<a href="">Reinforcment learning</a><br/>
+    To better play 2048 and other games.</li>   
+-->
+</ul>
+</div>
+
+
+</div>
+
+</body>
+</html>
+ 

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Stereo vision</title>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="misc.js"></script>
+<script src="../numerics/numerics_base.js"></script>
+<script src="../numerics/numerics_ludcmp.js"></script>
+<script src="../numerics/numerics_svdcmp.js"></script>
+
+<script src="stereovision.js"></script>
+<script src="camera.js"></script>
+<script src="homography.js"></script>
+</head>
+
+<body>
+
+<h1>Input</h1>
+Two pictures of the same subject and camera projection matrices. <a href="javascript:toggleById('input');">Show/hide</a>
+<div id="input"><table><tr><td>
+
+Left <br/>
+<!--img id="left_img" src="face00.jpg" /><br/> <!-- width=128 height=128  -->
+<canvas id="left_img"></canvas>
+<pre id="left_mtx">
+[ [ 1.008625769,   -0.1231000000,   -2.726496908,   100.7731396 ], 
+[ 0.8361681672,   4.182806666,   0.09730552466,   157.7821517 ], 
+[ 0.001940031162,   -0.0002500000000,   0.0004294973553,   0.5091827970 ]]
+</pre>
+<pre id="left_pts">
+[ [ 302, 197 ],  // oeil droit
+[ 311, 375 ],   // oeil gauche
+[ 220, 78 ],    // oreille droite, pointe
+[ 240, 479 ],    // oreille gauche, cavite
+[ 45, 44 ],    // couture droite, creux
+[ 181, 283 ],    // reflet dent avant droite
+[ 35, 421 ],    // grain de beaute cou
+[ 138, 402 ],   // grain de beaute joue
+[ 409, 51 ] ]   // meche, droite
+</pre>
+
+</td><td>
+
+Right<br/>
+<!--img id="right_img" src="face01.jpg" /><br/-->
+<canvas id="right_img"></canvas><br/>
+<pre id="right_mtx">
+[ [ 1.426624453,   -0.1471000000,   -2.539954861,   78.3047630 ], 
+[ 0.7976452886,   4.150586666,   0.1303686090,   143.3641217 ], 
+[ 0.001903601260,   -0.0001466666667,   0.0006532670189,   0.5012476834 ]]
+</pre>
+<pre id="right_pts">
+[ [ 261, 172 ],   
+[ 267, 353 ],   
+[ 210, 55 ],   
+[ 223, 456 ],   
+[ 42, 25 ],   
+[ 131, 259 ],   
+[ 20, 393 ],   
+[ 93, 375 ],   
+[ 379, 26 ] ]  
+</pre>
+
+
+</td></tr></table></div>
+
+<h1>Output</h1>
+
+<div id="output"><table><tr><td>
+<canvas id="left_pmtx_reproj"></canvas>
+</td><td>
+<canvas id="right_pmtx_reproj"></canvas>
+</td></tr></table></div>
+
+<div id="output"><table><tr><td>
+<canvas id="left_fundamental_reproj"></canvas>
+</td><td>
+<canvas id="right_fundamental_reproj"></canvas>
+</td></tr></table></div>
+
+<div id="input"><table><tr><td>
+</td><td>
+</td></tr></table></div>
+
+<div id="log"></div>
+
+<script>
+
+eval("var pts0 = "+document.getElementById('left_pts').textContent);
+eval("var pts1 = "+document.getElementById('right_pts').textContent);
+function pt2s_2_pt3s(pt2s) { var pt3s=[]; for (var i=0; i<pt2s.length; i++) pt3s.push([pt2s[i][0],pt2s[i][1],1.0]); return pt3s; }
+// passage en coords homogenes
+var pts0 = pt2s_2_pt3s(pts0);
+var pts1 = pt2s_2_pt3s(pts1);
+
+var mtx0 = JSON.parse(document.getElementById('left_mtx').textContent);
+var mtx1 = JSON.parse(document.getElementById('right_mtx').textContent);
+
+var nbImageToLoad = 2;
+var nbImageLoaded = 0;
+set_canvas_img('left_img', "face00.jpg", stereo_reprojection);
+set_canvas_img('right_img', "face01.jpg", stereo_reprojection);
+
+function set_canvas_img(canvas_id, img_src, callback) {
+	var img = new Image();
+	img.onload = function (e) { 
+		var img = e.target;
+		var canvas = document.getElementById(canvas_id);
+		canvas.width = img.width;
+		canvas.height = img.height;
+		canvas.getContext("2d").drawImage(img, 0, 0);
+		nbImageLoaded++;
+		if (nbImageLoaded==nbImageToLoad)
+			callback();
+	}
+	img.src = img_src; 
+}
+
+function get_canvas_grey_level(canvas_id) {
+	var canvas = document.getElementById(canvas_id);
+	var ctx = canvas.getContext("2d");
+	var width = canvas.width, height = canvas.height;
+	var image_data = ctx.getImageData(0, 0, width, height);
+	var data = image_data.data;    
+	var grey = mtx_make(width, height);
+	var k = 0;  // k = ( i * width * j ) * 4;
+	for (var i=0; i<height; i++) {
+        for (var j=0; j<width; j++) {
+            r = data[k++];
+            g = data[k++];
+            b = data[k++];
+            a = data[k++];
+			grey[i][j] = (r+g+b)/3;
+		}
+	}
+	return grey;
+}
+
+function set_canvas_grey_level(canvas_id, grey) {
+	var canvas = document.getElementById(canvas_id);
+	var ctx = canvas.getContext("2d");
+	var width = cols(grey), height = rows(grey);
+	var image_data = ctx.createImageData(width, height);
+	var data = image_data.data;
+	canvas.width = width;
+	canvas.height = height;
+	var k = 0;  // k = ( i * width * j ) * 4;
+	for (var i=0; i<height; i++) {
+        for (var j=0; j<width; j++) {
+            data[k++] = grey[i][j]; //if (i<100 && j<200) data[k-1] = Math.min(data[k-1]*2, 255);  // r   
+            data[k++] = grey[i][j]; // g
+            data[k++] = grey[i][j]; // b
+            data[k++] = 255;	// alpha
+		}
+	}
+	ctx.putImageData(image_data, 0, 0); // at coords 0,0;
+}
+
+function drawLine(ctx, A, B ) {
+	if ( A==undefined || B==undefined )  return;
+	
+	ctx.save();
+	ctx.beginPath()
+	ctx.moveTo(A[0], A[1]);
+	ctx.lineTo(B[0], B[1]);
+	// ctx.strokeStyle = "red";  
+	ctx.stroke();
+	ctx.restore();
+}
+function set_canvas_markers(canvas_id,pts) {
+	var canvas = document.getElementById(canvas_id);
+	var ctx = canvas.getContext("2d");
+
+	ctx.strokeStyle = "red";  
+	for (var i=0; i<pts.length; i++) {
+		var pt=pts[i], d=5;
+		drawLine(ctx, [ pt[0]-d, pt[1]-d ], [ pt[0]+d, pt[1]+d ] );
+		drawLine(ctx, [ pt[0]-d, pt[1]+d ], [ pt[0]+d, pt[1]-d ] );
+	}
+}
+	
+function stereo_reprojection() {
+	set_canvas_markers('left_img',pts0);
+	set_canvas_markers('right_img',pts1);
+	var grey0 = get_canvas_grey_level('left_img');
+	var grey1 = get_canvas_grey_level('right_img');
+	toggleById("input");
+	
+	info_msg( "<p>Fundamental matrix</p>" );
+	//var fundamentalP8 = fundamental_from_projection_8pts(cam00, cam01);
+	var fundamentalP = fundamental_from_projection(mtx0, mtx1);
+	var fundamental8 = fundamental_from_8pairs(pts0, pts1);
+	function get_diag(m) { var i,n=m.length,res=[]; for (i=0; i<n; i++) res.push(m[i][i]); return res; }
+	info_msg("Pts8' fundamental_P Pts8 : " + get_diag(
+		mtx_prod(mtx_prod(pts0, fundamentalP), mtx_trsp(pts1)) ));
+	info_msg("Pts8' fundamental_8 Pts8 : " + get_diag(
+		mtx_prod(mtx_prod(pts0, fundamental8), mtx_trsp(pts1)) ));
+	
+	var grey_out = epipolar_projection_projmtx(mtx0, mtx1, grey0, grey1);
+	var grey_out8 = epipolar_projection_fundamental(fundamental8, grey0, grey1);
+	
+	set_canvas_grey_level('left_pmtx_reproj', grey_out[0]);
+	set_canvas_grey_level('right_pmtx_reproj', grey_out[1]);
+	set_canvas_grey_level('left_fundamental_reproj', grey_out8.img[0]);
+	set_canvas_grey_level('right_fundamental_reproj', grey_out8.img[1]);
+}
+
+stereo_reprojection();
+
+var nb_glob_var = 4;
+
+</script>
+</body>
+</html>

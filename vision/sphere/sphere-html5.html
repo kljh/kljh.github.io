@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Ma doudou &#x306E; programming</title>
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script type="text/javascript" src="jquery.preview.js"></script>
+<script type="text/javascript" src="html.js" ></script>
+<script type="text/javascript" src="sphere-data.js" ></script>
+<script type="text/javascript" src="sphere-html5.js" ></script>
+<script type="text/javascript" src="linalg.js" ></script>
+<script type="text/javascript" src="polyedron.js" ></script>
+
+<style type="text/css">
+	a img { border-style: none; } 
+	form { display:inline; }
+	input { display:inline; }
+	#screenshot {
+		position: absolute;
+		border: 1px solid #ccc;
+		background: #333;
+		padding: 5px;
+		display: none;
+		color: #fff;
+	}
+	#screenshot.img {
+		width : 150;
+	}
+</style>
+
+
+<!--
+JSONP : the script file below should be added dynamically (after page load complete) and will be executed immediately.
+The script contains a call to a callback with the json text as argument.
+<script type="text/javascript" src="views/20100815/views.js" ></script>
+-->
+
+<!--
+Drobbox :
+http://dl.dropbox.com/u/11932549/test.txt
+http://dl.dropbox.com/u/11932549/20100815/ImageDay3_20100815_182411_066.jpg
+http://dl.dropbox.com/u/11932549/kwln%20Victoria%20%20harbour/ImageDay3_20100718_163356_826.jpg
+
+Dropbox/Amazon
+http://docs.amazonwebservices.com/AmazonS3/2006-03-01/API/
+https://www.dropbox.com/developers/docs
+
+Alternatives : Picasa, Flickr but the URL path is not predictible
+-->
+
+<script type="text/javascript">
+// replaces onload
+$(document).ready(function() {
+	initSphereData();
+	initSphereHtml5();
+} );
+</script>
+
+<script type = "text/javascript">
+
+function proj_change(radio)
+{
+	//alert('proj = '+obj_txt(radio));
+	for (var i=0; i<radio.length; i++) {
+		//alert( 'proj = '+radio[i].value+' '+radio[i].checked+"\n\n"+obj_txt(radio[i]) );
+		if (radio[i].checked) proj_type = radio[i].value;
+	}
+	//alert( 'proj_type = ' + proj_type );
+	return false;
+}
+
+</script>
+
+</head>
+
+<body>
+<!-- onload replaced by jQuery.ready     onload="initSphereMap();" --> 
+
+<div style="position:absolute; top:0; right:0; width:80;" > 
+	<div id="notifs" style="border-style:dashed; border-width:1px; "></div>
+</div>
+<span id="menu" style="">
+	Zoom: <a href="#" onclick="fc=100;">100%</a>
+	<a href="#" onclick="fc*=1.2;">zoom-in</a>
+	<a href="#" onclick="fc/=1.2;">zoom-out</a> -
+	<form name="frmProjection" style="display:inline;" onchange="return proj_change(this.proj);"> 
+		<input type="radio" style="display:inline;" name="proj" value="linear" >pinhole</input>
+		<input type="radio" style="display:inline;" name="proj" value="planisphere" checked><a href="http://wiki.panotools.org/Stereographic_Projection">planisphere</a></input>
+	</form>  -  
+	<form name="frmOptions" style="display:inline;" onchange="drawMesh = this.optGeode.checked; return false;"> 
+		<input type="checkbox" style="display:inline;" name="optGeode" value="optGeodeTrue" checked>Geode</input>
+		<!--input type="checkbox" style='display:inline;' name="optLabels" value="optLabelsTrue" checked>Labels</input-->
+	</form>  -  
+	Rotation: <a href="#" onclick="theta=0;">None</a>
+	<a href="#" onclick="theta += 0.0025;">Increase</a>  -  
+	<form name="viewform">
+		<select id="viewselect" name="viewselect" onChange="onViewSelect()">
+			<option value="">Select point of view</option>
+		</select>
+	</form>
+</span>
+<br/>
+<span id="viewmenu" style="">
+	<!-- Device coordinates to World coordinates -->
+	View directions : <a href="#" onclick="setDeviceToWorldRotMtx([[1,0,0],[0,0,-1],[0,1,0]]);">N</a>
+	<a href="#" onclick="setDeviceToWorldRotMtx([[-1,0,0],[0,0,1],[0,1,0]]);">S</a>
+	<a href="#" onclick="setDeviceToWorldRotMtx([[0,0,-1],[-1,0,0],[0,1,0]]);">E</a>
+	<a href="#" onclick="setDeviceToWorldRotMtx([[0,0,1],[1,0,0],[0,1,0]]);">O</a>
+	<a href="#" onclick="setDeviceToWorldRotMtx([[-1,0,0],[0,1,0],[0,0,-1]]);">Sky</a>
+	<a href="#" onclick="setDeviceToWorldRotMtx([[1,0,0],[0,1,0],[0,0,1]]);">Ground</a> -
+</span>
+<canvas id="canvas" width="600" height="400" ></canvas>
+<div id="log" style="border-style:dotted; border-width:1px; float: left;"></div>
+
+<!--
+<div id="a" style="left:5; top:5; position:absolute;">A</div>
+<div id="b" style="left:2; top:5; position:absolute;">B</div>
+-->
+
+
+</body>
+</html>

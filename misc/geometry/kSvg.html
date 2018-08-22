@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8"></meta>
+<title>Compass and Straightedge</title>
+<!-- a la CABRI -->
+
+<style>
+.deco {
+  fill: lightblue;
+}
+.deco:hover {
+  stroke: darkblue;
+}
+</style>
+<style>
+/* Styles for GraphWiz/Dagre/D3 */
+
+/*svg {
+  border: 1px solid #999;
+  overflow: hidden;
+}*/
+
+.node {
+  white-space: nowrap;
+}
+
+.node rect,
+.node cicrce,
+.node ellipse {
+  stroke: #333;
+  fill: #fff;
+  stroke-width: 1.5px;
+}
+
+.cluster rect {
+  stroke: #333;
+  fill: #000;
+  fill-opacity: 0.1;
+  stroke-width: 1.5px;
+}
+
+.edgePath path.path {
+  stroke: #333;
+  stroke-width: 1.5px;
+  fill: none;
+}
+</style>
+
+<!--base target=".."-->
+<script src='kMth.js'></script>
+<script src='kGraph.js'></script>
+<script src='kSvg.js'></script>
+
+<!-- Code/deps/graphwix-like/cpettitt/dagre-d3/demo -->
+<script src="dist/d3.js"></script>
+<script src="dist/graphlib-dot.js"></script>
+<script src="dist/dagre-d3.js"></script>
+<!-- 
+<script src="http://d3js.org/d3.v3.js"></script>
+<script src="http://cpettitt.github.io/project/graphlib-dot/v0.5.2/graphlib-dot.js"></script>
+<script src="https://raw.githubusercontent.com/cpettitt/dagre-d3/master/dist/dagre-d3.js"></script>
+-->
+
+<script>
+var svgdoc;
+
+function logText(txt) {
+  console.log(txt);
+  txt = "Html: " + txt;
+  document.all.logDiv.innerHTML += txt + "<br/>";
+}
+
+function logAndEval(txt) {
+  logText(txt);
+  document.all.logDiv.innerHTML += txt;
+  eval(txt);
+  document.all.logDiv.innerHTML += ";<br/>";
+  alert(txt + "\t\nDone.")
+}
+
+function htmlinit(evt) {
+  svginit(undefined, "svgEmbedId");
+
+  var elnt = svgdoc.getElementById('bckgrndId');
+  if (elnt!=null) {
+    elnt.setAttribute("width", svgwidth);
+    elnt.setAttribute("height", svgheight);
+  }
+
+  BuildContent();
+
+  redraw();
+  graphtxt_redraw();
+
+  graphwiz_init();
+  graphwiz_redraw();
+
+  document.getElementById("graphsvg_update").addEventListener("click", function(evt) {
+    graphwiz_redraw();
+    evt.preventDefault(); // cancel the event
+  });
+  
+  document.getElementById("cmd").addEventListener("input", function(evt) {
+    evt.preventDefault();
+
+    var cmd = evt.target.value;
+    evt.target.value = "";
+    if (cmd=="P" || cmd=="p")
+      user_create_unconstraint_point();
+    else if (cmd=="L" || cmd=="l")
+      user_create_line();
+    else if (cmd=="C" || cmd=="c")
+      user_create_circle();
+    else {
+      cmd_instruction("unhandled command '"+cmd+"'.", 2);
+      throw new Error("unhandled command");
+    }
+  }, false);
+}
+
+// functions to display graph in text format
+function graphtxt_redraw() {
+  var graph_json = JSON.stringify(graph, null, 1);
+  var graph_txt = graphtxt_make_summary(graph.nodes)
+  document.getElementById("graphtxt").innerHTML = "<pre>"+graph_txt+"</pre>";
+}
+function graphtxt_make_summary(nodes) {
+  var txt = "";
+  for (var n in nodes) {
+    var is_used_input = (!nodes[n].prec || nodes[n].prec.length==0) && (nodes[n].succ && nodes[n].succ.length!=0);
+    var is_final_output = (nodes[n].prec && nodes[n].prec.length!=0) && (!nodes[n].succ || nodes[n].succ.length==0);
+    var is_missing_fct = (nodes[n].prec && nodes[n].prec.length!=0) && (!nodes[n].fct);
+    if (is_missing_fct)
+      x=3;
+    var mark = (is_missing_fct?"*":"") + (is_used_input?">":"") + (is_final_output?"<":"") + " ";
+    txt += mark+n+": "+JSON.stringify(nodes[n].val)+"\n";
+  }
+  return txt;
+}
+
+// functions to display graph dependency tree a la graphwiz
+function graphwiz_init() {
+  if (typeof d3 == "undefined") {
+    console.log(arguments.callee.name+": skip because d3 is not loaded");
+    return;
+  }
+
+  // Set up zoom support
+  var svg = d3.select("#graphsvg"),
+    inner = d3.select("#graphsvg g"),
+    zoom = d3.behavior.zoom().on("zoom", function() {
+      inner.attr("transform", "translate(" + d3.event.translate + ")" +
+                                  "scale(" + d3.event.scale + ")");
+    });
+  svg.call(zoom);
+
+  // Create and configure the renderer
+  dd3_render = dagreD3.render();
+}
+function graphwiz_redraw() {
+  var graph_dot = graphwiz_make_dot(graph.nodes);
+  graphwiz_svg_redraw(graph_dot);  
+}
+function graphwiz_svg_redraw(graph_dot) {
+  if (typeof d3 == "undefined") {
+    console.log(arguments.callee.name+": skip because d3 is not loaded");
+    return;
+  }
+  var g = graphlibDot.read(graph_dot);
+
+  // Set margins, if not present
+  if (!g.graph().hasOwnProperty("marginx") &&
+      !g.graph().hasOwnProperty("marginy")) {
+    g.graph().marginx = 20;
+    g.graph().marginy = 20;
+  }
+
+  g.graph().transition = function(selection) {
+    return selection.transition().duration(1500);
+  };
+
+  // Render the graph into svg g
+  d3.select("#graphsvg g").call(dd3_render, g);
+}
+function graphwiz_make_dot(nodes) {
+  function clean(k) {
+    return k.replace(/\(/g, 'O').replace(/\)/g, 'C').replace(/\[/g, 'o').replace(/\]/g, 'c');
+  }
+
+  // edge shape:
+  // https://github.com/mbostock/d3/wiki/SVG-Shapes
+  // http://bl.ocks.org/mbostock/4342190
+  // lineInterpolate : basis, monotone
+  //  subgraph mycluster {  aa -> aa -> az; color=blue; }; 
+  //  A [labelType="html" label="A <span style='font-size:32px'>Big</span> <span style='color:red;'>HTML</span> Source!"];
+  //  D -> E [label="A thick red edge" style="stroke: #f77; stroke-width: 2px;" arrowheadStyle="fill: #f77"];
+  //  A -> D [labelType="html" label="A multi-rank <span style='color:blue;'>HTML</span> edge!"];
+  var txt = "digraph {\n";
+  txt += "  node [ rx=6 ry=6 labelStyle=\"font: 300 14px 'Helvetica Neue', Helvetica\"] \n";
+  txt += "  edge [ lineInterpolate=\"basis\" style=\"color:red;\" labelStyle=\"font: 300 14px 'Helvetica Neue', Helvetica\"] \n";
+  txt += "  \n";
+
+  for (var n in nodes) {
+    var shape = undefined;
+    if (nodes[n].val.type=="circle") 
+      shape = "circle";
+
+    if (shape || clean(n)!=n) 
+      txt += "  "+clean(n)+" [ label=\""+n+"\""+(shape?" shape="+shape:"")+" style=\"min-width:150px; fill:lightblue; stroke: #333; stroke-width: 1.5px; font-weight:bold;\" ] \n"
+  }
+  
+  for (var n in nodes) {
+    var prec = nodes[n].prec;
+    txt += "  "+clean(n)+" -> { "
+    for (var p=0; p<prec.length; p++)
+      txt += clean(prec[p]) + " "
+    txt += "};\n";
+  }
+  txt += "}\n";
+  return txt;
+}
+
+
+function SvgSetVisible(src) {
+  var bVisible = src.checked
+
+  var args = arguments
+  for (var i=1; i<args.length; i++) {
+    var elnt = svgdoc.getElementById(args[i]);
+    var style = elnt.style || elnt.getStyle();
+
+    if (bVisible) {
+      //style.setProperty("visibility", "visible");
+      style.setProperty("display", "inline ");
+    } else {
+      //style.setProperty("visibility", "hidden");
+      style.setProperty("display", "none");
+    }
+  }
+}
+
+
+</script>
+
+<script>
+
+function BuildContent() {
+
+  A  = Point( "A", 126, 51, true );
+  B  = Point( "B", 320, 150, true );
+  C  = Point( "C", 80, 310, true );
+  sg = Seg( "[AB]", A, B );
+  sg = Seg( "[AC]", A, C );
+  sg = Seg( "[BC]", B, C );
+
+  // grav, ortho, x..
+  G  = PointIso( "G", A, B, C );
+  H  = PointOrtho( "H", A, B, C );
+  X  = PointCirc( "X", A, B, C );
+  sg = Seg( "[HX]", H, X );
+  // construction ...
+  ln = Line( "(AH)", A, H);
+  ln = Line( "(BH)", B, H);
+  pt = PointIso( "Mac", A, C );
+
+  // inscr
+  cc = Circle( "Cx", X, A );
+  // xcrit
+  I  = PointInscr( "I", A, B, C );
+  pt = PointProj( "Pax", I, "[BC]");
+  cc = Circle( "Ci", I, "Pax" );
+  // xinscr
+  Xa = PointXInscr( "Xa", A, B, C );
+  Xb = PointXInscr( "Xb", B, A, C );
+  Xc = PointXInscr( "Xc", C, B, A );
+  pt = PointProj( "Pxa", "Xa", "[BC]");
+  cc = Circle( "Cxa", "Xa", "Pxa" );
+  pt = PointProj( "Pxb", "Xb", "[AC]");
+  cc = Circle( "Cxb", "Xb", "Pxb" );
+  pt = PointProj( "Pxc", "Xc", "[AB]");
+  cc = Circle( "Cxc", "Xc", "Pxc" );
+
+  pt = Point( "CLineG", 550, 130, false );
+  pt = Point( "CLineD", 700, 130, false );
+  sg = Seg( "CLineSeg", "CLineG", "CLineD", { style: "stroke:rgb(97,115,169); stroke-width:15; stroke-linecap:round;"});
+  cs = PointCstr( "CLine", "CLineSeg", 30, -1000, 1000, { nolabel: true, symbol: "scrollMarker", style: "stroke-linecap:round; cursor:col-resize;" } );
+  tx = Texte( "Mtxt", 625, 120, function(v) { return "Rng value: "+Math.round(v) }, "CLine" );
+
+}
+
+</script>
+
+</head>
+
+<body id="bodyId" onload="htmlinit();">
+
+<script>
+var out = document;
+//setTimeout("svgdoc = svginit('svgEmbedName');",1250);
+//setTimeout("BuildContent()",1250);
+</script>
+
+<p></p>
+<div style="border:1px solid; position:relative; left:15px; top:+10px; background-color:lightgrey; width:120px; ">&nbsp;&nbsp;Ctrls</div>
+<div id="ctrlDiv" class="bord" style="border:1px dashed;"><p></p>
+  <input type="checkbox" checked onclick="SvgSetVisible(this, 'Deco');"/>Décors<br />
+  <input type="checkbox" checked onclick="SvgSetVisible(this, 'G','H','X','[HX]');"/>Gravite, Orthocentre, ...<br />
+  <input type="checkbox" checked onclick="SvgSetVisible(this, '(AH)','(BH)','Mac');"/>Trais de construction<br />
+  <input type="checkbox" checked onclick="SvgSetVisible(this, 'I','Ci','Pax');" />Cercle inscrit <br />
+  <input type="checkbox" checked onclick="SvgSetVisible(this, 'Cx');" />Cercle circonscrit<br />
+  <input type="checkbox" checked onclick="SvgSetVisible(this, 'Cxa','Xa','Pxa','Cxb','Xb','Pxb','Cxc','Xc','Pxc');" />Cercle exinscrit <br />
+
+  <!--input type="text" name="evaltxt" value="Point('W',200,150,true);" size="60" note="This could be a textarea"/>
+  <input type="button" value="Eval" accessKey="E" onclick="logAndEval(document.getElementById('evaltxt').value);" /><br /-->
+</div>
+
+<p></p>
+<center>
+  <input id="cmd" type="text" style="width:700px;" placeholder="Type 'P' for point, 'L' for line, or 'C' for circle or Use icons"></input>
+  <input id="clr" type="color" style=""></input><br/>
+
+  <!-- OLD EMBED  (requires plugin) -->
+  <!-- <embed id="svgEmbedId" name="svgEmbedName" width="750" height="400" src="kSvg.svg"><br/> -->
+
+  <!-- OBJECT  (triggers download in Chrome) -->
+  <!-- OBJECT
+  <object class="embedcontext" type="image/svg+xml" data="kSvg.svg">Please use FF1.5+, Opera 9+, WebKit/Safari3.0, or IE with an SVG plugin!</object><br/>
+  -->
+
+  <!-- IFRAME (triggers download in Chrome and FF) -->
+  <!-- IFRAME
+  <iframe class="embedcontext" src="kSvg.svg" style="border: 0">Please use FF1.5+, Opera 9+, WebKit/Safari3.0, or IE with an SVG plugin!</iframe><br/>
+  -->
+
+  <!-- IMG  (sandboxed) -->
+  <!-- IMG
+  <img class="embedcontext" alt="SVG IMG should disply here" src="kSvg.svg"/><br/>
+  -->
+
+  <svg id="svgEmbedId" version="1.1" xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 800 600" width="800" height="600" font-family="Verdana">
+
+    <title id="svgTitle">Triangle</title>
+    <desc id="svgDesc">Elements remarquables du triangle (centre de gravite, orthocentre, cercles inscrits, circonscrits, exinscrits, ...). Animable.</desc>
+
+    <defs id="defsId">
+      <!-- icons -->
+      <symbol id="symbolIconPoint" overflow="visible" style="cursor:hand;">
+        <rect x="0" y="0" width="40" height="40" style="fill:rgb(240,240,240); stroke:rgb(220,220,220); stroke-width:1" />
+        <circle cx="20" cy="20" r="3" style="fill:darkblue; fill-opacity:0.8; stroke:rgb(0,0,0); stroke-width:.3" />
+      </symbol>
+      <symbol id="symbolIconIntersect" overflow="visible" style="cursor:hand;">
+        <rect x="0" y="0" width="40" height="40" style="fill:rgb(240,240,240); stroke:rgb(220,220,220); stroke-width:1" />
+        <line x1="2" y1="15" x2="38" y2="25" style="stroke:darkblue; stroke-width:1.5;"></line>
+        <!-- arc path : M xstart ystart
+          A rx ry x-axis-rotation large-arc-flag sweep-flag xend yend  -->
+        <path d="M 12 38
+           A 40 40 0 0 0 20 2" style="stroke:darkblue; fill:none; stroke-width:1.5;"/>
+        <circle cx="20" cy="20" r="3" style="fill:lightblue; fill-opacity:1.0; stroke:blue; stroke-width:.3" />
+      </symbol>
+      <symbol id="symbolIconLine" overflow="visible" style="cursor:hand;">
+        <rect x="0" y="0" width="40" height="40" style="fill:rgb(240,240,240); stroke:rgb(220,220,220); stroke-width:1" />
+        <line x1="10" y1="30" x2="30" y2="10" style="stroke:lightblue; stroke-width:3; stroke-linecap:round;"></line>
+        <circle cx="10" cy="30" r="3" style="fill:darkblue; fill-opacity:0.8;" />
+        <circle cx="30" cy="10" r="3" style="fill:darkblue; fill-opacity:0.8;" />
+      </symbol>
+      <symbol id="symbolIconCircle" overflow="visible" style="cursor:hand;">
+        <rect x="0" y="0" width="40" height="40" style="fill:rgb(240,240,240); stroke:rgb(220,220,220); stroke-width:1" />
+        <circle cx="20" cy="20" r="15" style="fill:none; fill-opacity:0.8; stroke:lightblue; stroke-width:3;" />
+        <circle cx="20" cy="20" r="3" style="fill:darkblue; fill-opacity:0.8; stroke:rgb(0,0,0); stroke-width:.3" />
+        <circle cx="32" cy="12" r="3" style="fill:darkblue; fill-opacity:0.8; stroke:rgb(0,0,0); stroke-width:.3" />
+      </symbol>
+      <symbol id="symbolIconCircle3" overflow="visible" style="cursor:hand;">
+        <rect x="0" y="0" width="40" height="40" style="fill:rgb(240,240,240); stroke:rgb(220,220,220); stroke-width:1" />
+        <circle cx="20" cy="20" r="15" style="fill:none; fill-opacity:0.8; stroke:lightblue; stroke-width:3;" />
+        <line x1="20" y1="20" x2="35" y2="20" style="stroke:blue; stroke-width:3; stroke-linecap:round;"/>
+        <circle cx="20" cy="20" r="3" style="fill:darkblue; fill-opacity:0.8; stroke:rgb(0,0,0); stroke-width:.3" />
+      </symbol>
+
+      <!-- deco -->
+      <symbol id="symbolRect" overflow="visible">
+        <rect x="-3" y="-3" width="6" height="6" style="fill:rgb(240,65,25); fill-opacity:0.8;stroke:rgb(0,0,0);stroke-width:.3" />
+      </symbol>
+      <symbol id="symbolCirc" overflow="visible">
+        <circle cx="0" cy="0" r="3" style="fill:rgb(12,166,107);fill-opacity:0.8; stroke:rgb(0,0,0);stroke-width:.3" />
+      </symbol>
+
+      <symbol id="scrollMarkerOld" overflow="visible">
+        <rect x="-3" y="-3" width="6" height="6" style="fill:rgb(0,0,255); stroke:rgb(255,0,0); stroke-width:2" />
+        <rect x="-3" y="-3" width="6" height="6" style="fill:rgb(0,0,255); stroke:rgb(255,0,0); stroke-width:2" />
+      </symbol>
+      <line id="scrollMarker" x1="-1" y1="0" x2="1" y2="0" style="stroke:lightblue; stroke-width:8"></line>
+      <cursor id="kRotateCursor" xlink:href="rotate.jpeg" x="10" y="11"/>
+
+    </defs>
+
+    <g id="gId" onmousemove="bouger(evt)" onmousedown="cliquer(evt)" onmouseup="lacher(evt)" style>
+      <g id="Deco" class="deco">
+
+        <!-- draw a rectangle to force the group to cover all the SVG (required to capture mouse events on all the SVG) -->
+        <!-- coordinates MUST match the viewport -->
+        <rect x="0" y="0" width="800" height="600" style="stroke-width:1; stroke:#AFAFAF; fill:#FAFAFA" />
+        <!-- previous attempt was using code to obtain 100% coverage -->
+        <!-- rect id="bckgrndId" x="0" y="0" width="10" height="10" style="stroke-width:1; stroke:#0E0E0E; fill:#EEEEEE" /-->
+
+        <rect id="rectangleId" x="0" y="0" width="22" height="7" transform="matrix(1 0 0 1 580 80)" style="stroke-width:1; stroke:#FFFFFF; fill:lightblue"  movable="rxy" />
+        <ellipse id="cercleId" cx="0" cy="0" rx="20" ry="20" transform="matrix(1 0 0 1 540 50)" style="stroke-width:1; stroke:#FFFFFF; "  movable="rxy" />
+
+        <use id="iconPoint" class="icon" x="500" y="150" width="40" height="40" xlink:href="#symbolIconPoint"/>
+        <use id="iconIntersect" class="icon" x="550" y="150" width="40" height="40" xlink:href="#symbolIconIntersect"/>
+        <use id="iconLine" class="icon" x="600" y="150" width="40" height="40" xlink:href="#symbolIconLine"/>
+        <use id="iconCircle" class="icon" x="650" y="150" width="40" height="40" xlink:href="#symbolIconCircle"/>
+        <use id="iconCircle3" class="icon" x="700" y="150" width="40" height="40" xlink:href="#symbolIconCircle3"/>
+        <!-- impacted dy .deco:hover
+        <g><text id="statusText" id="statusText" x="550" y="220" fill="black" font-size="10">select element to insert</text></g>
+        -->>
+        <!--
+        <g id="staedteRect">
+          <use id="Zurich" x="682" y="53" xlink:href="#symbolRect"/>
+          <use id="Basel" x="612" y="33" xlink:href="#symbolRect"/>
+          <use id="Genf" x="499" y="181" xlink:href="#symbolRect"/>
+          <use id="Bern" x="604" y="106" xlink:href="#symbolRect"/>
+        </g>
+        <g id="staedteCirc">
+          <use id="Luzern" x="665" y="89" xlink:href="#symbolCirc"/>
+          <use id="St. Gallen" x="748" y="46" xlink:href="#symbolCirc"/>
+          <use id="Chur" x="759" y="109" xlink:href="#symbolCirc"/>
+          <use id="Lugano" x="718" y="206" xlink:href="#symbolCirc"/>
+        </g>
+        -->
+      </g>
+      <!--
+      <rect id="borderId" x="100" y="250" width="200" height="100" style="stroke-width:1; stroke:lightgrey; fill:none" />
+      <g id="scene" transform="translate(200,300) rotate(0) scale(95) ">
+        <rect id="bdId" x="-1" y="-.5" width="2" height="1" style="stroke-width:0.01; stroke:lightgrey; fill:none" />
+      </g>
+      -->
+      
+      <g id="gBack"></g>
+      <g id="gFront"></g>
+      
+      <line id="interactive_line" x1="5" y1="5" x2="10" y2="10" style="stroke:darkblue; stroke-width:2"></line>
+      <circle id="interactive_circle" cx="5" cy="5" r="2" style="stroke:darkblue; fill:lightblue; stroke-width:2;"></line>
+    </g>
+
+  </svg>
+
+  <div style="display: inline-block; vertical-align: top; border:1pt solid grey; width:400px; height:600px; resize:both; overflow:auto;" contentEditable="true">
+    <pre id="graphtxt" style="text-align:left;"></pre></div>
+  <div style="display: inline-block; vertical-align: top; border:1pt solid grey; width:1200px; height:400px; resize:both; overflow:auto;">
+    <svg id="graphsvg" width="1200" height="400"><g/></svg></div>
+
+  <br/><a href="#" id="graphsvg_update">Update dependency graph</a>
+</center>
+
+<p></p>
+<div style="border:1px solid; position:relative; left:15px; top:+10px; background-color:lightgrey; width:120px; ">&nbsp;&nbsp;Logs</div>
+<div id="logDiv" class="bord" style="border:1px dashed;"><p></p></div>
+<div name="geomPoint"></div>
+
+</body>
+</html>

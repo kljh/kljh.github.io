@@ -1,0 +1,26 @@
+
+<svg 
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink" 
+  width="400" height="200" onload="cree_rectangle(evt)">
+
+
+<defs>
+  <clipPath id="clip1">
+    <path d = "M 0 0 L 550 200 L 1100 0"/>
+  </clipPath>
+  <clipPath id="clippathtmgif" > 
+   <circle cx="170" cy="30" r="106"  /> 
+ </clipPath> 
+</defs>
+
+
+<g>
+  <circle id="chemindecoupe" cx="170" cy="30" r="106" style="fill:none;stroke:black;stroke-width:1" 
+    onclick="logText('log from svg')" />
+  <image x="170" y="30" width="150" height="100" xlink:href="c:\tm.gif" style="clip-path:url(#clippathtmgif)" /> 
+  <path transform="translate(170 30)" d="M 0 13 L 150 0 L 94 100 L 17 81 Z" style="fill:none;stroke:red;stroke-width:1" />
+  <circle id="chemindecoupe" cx="170" cy="30" r="106" style="fill:none;stroke:black;stroke-width:1" />
+</g>
+
+</svg>

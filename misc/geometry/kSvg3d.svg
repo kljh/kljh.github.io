@@ -1,0 +1,81 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"  
+"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+<!-- ?xml-stylesheet href="kSvg.css" type="text/css"? --> 
+
+<svg xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink" 
+  width="800" height="500" 
+  zoomAndPan="disable" zoomAndPanDefault="magnify" 
+  preserveAspectRatioOld="none" preserveAspectRatioDefault="xMidYMid "
+  onload="svginit(evt); ">
+
+<title id="svgTitle">Projection</title>
+<desc id="svgDesc"></desc>
+
+<script xlink:href="kMth.js" />
+<script xlink:href="kSvg3d.js" />
+
+<script><![CDATA[
+
+	// http://www.mozilla.org/docs/web-developer/js/debugging/
+	var evtHandler;
+	var scene;
+	
+	function svginit(e) {
+		if ( window.svgDocument == null )
+			svgDocument = e.target.ownerDocument;
+			
+		var root   	= svgDocument.getElementById("root");
+		var origin   	= svgDocument.getElementById("origin");
+		scene 	= new Scene(origin);
+		evtHandler 	= new EventHandler(root, scene);
+		
+		scene.z_dist = 500;
+		scene.z_focal = 200;
+		make_scene(scene.mesh);
+		scene.draw();
+	}
+
+	function make_scene(mesh) {
+		var p1 = mesh.add(new Point3D(-100, -100, -100));
+		var p2 = mesh.add(new Point3D(-100, -100,  100));
+		var p3 = mesh.add(new Point3D(-100,  100,  100));
+		var p4 = mesh.add(new Point3D(-100,  100, -100));
+		var p5 = mesh.add(new Point3D( 100, -100, -100));
+		var p6 = mesh.add(new Point3D( 100, -100,  100));
+		var p7 = mesh.add(new Point3D( 100,  100,  100));
+		var p8 = mesh.add(new Point3D( 100,  100, -100));
+		
+		mesh.add(new Vertex(p1, p2, "stroke:red;" ));
+		mesh.add(new Vertex(p2, p3));
+		mesh.add(new Vertex(p3, p4));
+		mesh.add(new Vertex(p4, p1, "stroke:red;" ));
+		mesh.add(new Vertex(p1, p5, "stroke:red;" ));
+		mesh.add(new Vertex(p2, p6));
+		mesh.add(new Vertex(p3, p7));
+		mesh.add(new Vertex(p4, p8));
+		mesh.add(new Vertex(p5, p6));
+		mesh.add(new Vertex(p6, p7));
+		mesh.add(new Vertex(p7, p8));
+		mesh.add(new Vertex(p8, p5));
+		
+		var vk = mesh.add(new Variable("Distance focale ", 0.7, 0.0, 1.0, "focal"));
+		var pk = mesh.add(new Point3D_Barycentre(p1, p7, vk));
+		
+		mesh.add(new Vertex(p1, pk));
+	}
+	
+]]></script>
+
+	<g id="root">
+		<rect width="100%" height="100%" style="fill:rgb(230,255,234)" />
+		<g id="origin" transform="translate(400,250)">
+			<rect x="-100" y="-100" width="20" height="20" style="fill: rgb(250,245,230)" />
+		</g>
+		<text id="focal" x="10" y="30" fill="black" font-size="10" >-</text>
+
+	</g>
+	
+</svg>

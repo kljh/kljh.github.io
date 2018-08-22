@@ -1,0 +1,38 @@
+<html>
+<head>
+	<title>PacMan with autopilot - Tribute to Renaud Keriven</title>
+	<!-- src http://digitalinsane.com/games/pacman/ -->
+	<link rel="stylesheet" type="text/css" href="core.css">
+	<script type="text/javascript"  src="https://code.jquery.com/jquery-3.3.1.js" ></script>
+	<script type="text/javascript" src="pacman.js"></script>
+	<script type="text/javascript" src="ghost.js"></script>
+	<script type="text/javascript" src="maze.js"></script>
+	<script type="text/javascript">$(document).ready( init );</script>
+</head>
+<body>
+	<p>Pacman with autopilot (enable by pressing space / disable by pressing arrows) - Press Enter to start.<p/>
+	<div id="leftpanel">
+		<form><input id="autopilot" type="checkbox" checked="true" />autopilot</form>
+		<div id="sc">Score: 0</div>
+		<div id="dots"></div>
+	
+		<div>
+			<div id="life1" class="lives" style="background-image: none; "></div>
+			<div id="life2" class="lives" style="background-image: none; "></div>
+			<div id="life3" class="lives" style="background-image: none; "></div>						
+		</div>
+	</div>
+	
+	<div id="maze">
+		<!-- Sprites -->
+		<div id="pacman" style="left: 237px; top: 399px; background-position: -90px 0px; "></div>
+		<div id="clyde" style="left: 219px; top: 237px; background-position: -210px 30px; "></div>
+		<div id="blinky" style="left: 237px; top: 237px; background-position: -210px 30px; "></div>			
+		<div id="inky" style="left: 219px; top: 237px; background-position: -210px 30px; "></div>						
+		<div id="pinky" style="left: 237px; top: 237px; background-position: -210px 30px; "></div>		
+		<div id="infobox" style="display: block; "></div>
+	</div>
+	
+	<div id="rightpanel"></div>
+</body>
+</html>
