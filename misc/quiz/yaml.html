@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Yaml editor</title>
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/codemirror.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/codemirror.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/mode/yaml/yaml.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/codemirror.js"></script>
+
+<script src="js-yaml.js"></script>
+<script>
+$(function () {
+  var editor = CodeMirror.fromTextArea(document.getElementById("src"), { lineNumbers: true, mode: "yaml" });
+  editor.setSize(null, 800);
+  
+  editor.on("change", function (ed, chg) { content_updated() });
+  function content_updated() {
+    var txt = editor.getValue();
+    var data = jsyaml.safeLoad(txt, {
+      onWarning: function (arg) { console.warn(arg); }
+      });
+    var json = JSON.stringify(data, null, 4);
+    var yaml = jsyaml.safeDump(txt, { 
+      skipInvalid: false
+      });
+    
+    $("#download_as_json").attr("href", "data:text/plain;base64,"+btoa(json));
+    $("#download_as_yaml").attr("href", "data:text/plain;base64,"+btoa(yaml));
+    
+    //$("#status").text(Object.keys(data));
+    $("#output").text(json);
+  }
+  content_updated();
+  
+  var src = uri_args().src;
+  if (src) { 
+    var extension = src.split('.').pop();
+    var filename = src.split('/').pop();
+    var barename = filename.substr(0, filename.length-extension.length-1);
+    
+    $.ajax({
+      url: src,
+      success: function(data) {
+        if (extension=="json") {
+          var yaml = jsyaml.safeDump(data, { skipInvalid: false });
+          editor.setValue(yaml);
+        } else {
+          editor.setValue(data);
+        }
+      },
+      error : function(e) {
+        alert("Error getting "+src+".");
+      }
+    });
+    
+    $("#download_as_json").attr("download", barename+".json");
+    $("#download_as_yaml").attr("download", barename+".yaml");
+  }
+});
+
+function uri_args() {
+	var tmp = window.location.search.substr(1).split('&');
+	var kv = {};
+	for (var i=0; i<tmp.length; i++) {
+		var key = tmp[i].split('=', 1)[0];
+		var val = tmp[i].substr(key.length+1);
+		kv[key] = val ? decodeURIComponent(val) : val;
+	}
+	return kv;
+}
+</script>
+
+</head>
+<body>
+
+<div class="header"></div>
+
+<span><b>Download as <a id="download_as_json" href="#" download>Json</a> or <a id="download_as_yaml" href="#" download>Yaml</a>.</b></span>
+<span id="status"></span>
+
+<div class="content">
+	<textarea id="src" rows="40" cols="120"></textarea>
+</div>
+
+<div class="content">
+	<h4>Equivalent JSON</h4>
+	<pre id="output"></pre>
+</div>
+
+</body></html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jshint/2.9.5/jshint.min.js"></script>
+
+<!--  TeX-MML-AM_CHTML   TeX-MML-AM_HTMLorMML   TeX-MML-AM_SVG  -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_SVG"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+<script type="text/javascript">
+MathJax.Hub.Config({
+	tex2jax: {
+		inlineMath: [['$','$'], ['\\(','\\)']],
+		processEscapes: true
+	}
+});
+</script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/handsontable/5.0.1/handsontable.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/handsontable/5.0.1/handsontable.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/codemirror.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/addon/lint/lint.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/codemirror.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/mode/clike/clike.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/mode/javascript/javascript.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/mode/python/python.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/mode/sql/sql.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/addon/lint/lint.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/addon/lint/javascript-lint.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/addon/lint/json-lint.js"></script>
+
+<script src="quiz.js"></script>
+<script src="code.js"></script>
+<script src="sql.js"></script>
+
+<!-- shim for ES6 Promise builtin -->
+<script src="https://pypyjs.org/pypyjs-release/lib/Promise.min.js"></script>
+<!-- shim for off-main-thread function compilation -->
+<script src="https://pypyjs.org/pypyjs-release/lib/FunctionPromise.js"></script>
+<!-- main PyPy js file, creates the global name pypyjs  -->
+<script async defer src="https://pypyjs.org/pypyjs-release/lib/pypyjs.js"></script>
+
+<!--
+<script>
+var scr = document.createElement("script");
+scr.src = "quiz.js" //+ "?timestamp=" + new Date().toISOString().replace(/[ ]/g, ""); // .getTime();
+document.getElementsByTagName("head")[0].appendChild(scr);
+</script>
+-->
+
+<style>
+body {
+	width: 100%; margin: 0px; }
+.topbar {
+	width: 100%; height: 100%; margin: 0px; padding: 5px;
+	color: #EEE; background-color: #111; font-size: larger; }
+
+.box-container {
+	width:80%; min-width:310px; margin-left: auto; margin-right: auto;
+	display: flex; flex-flow: row wrap; align-items: stretch; justify-content: space-around;
+	/* border: 1px solid #F00; */
+	}
+.box {
+	flex: 1 1 40%; min-width:310px; margin: 5px; padding: 5px;
+	/* display: inline-block; vertical-align: top; */
+    color: #444; background-color: #FCFCFC; border: 1px solid #99D;  }
+.textbox {
+	min-width: 280px; /* padding: 2px 10px; */
+	color: #444; background-color: #FCFCFC; border: 1px solid #EEF;  }
+
+.table { display: table; }
+.row { display: table-row; }
+.cell { display: table-cell; padding: 0px 5px; }
+
+h1 { font-size: 1.5em; }
+h2 { font-size: 1.3em; }
+h3 { font-size: 1.2em; }
+h4 { font-size: 1em; }
+h5 { font-size: .8em; }
+
+</style>
+</head>
+
+<body>
+<div class="topbar" >
+	<span>Research &amp; Development brain-teasers</span>
+	<span style="font-size: small; float: right; right-padding: 5px;">
+		<span id="user_id">anonymous</span> -
+		<a id="logout" href="#" style="color: lightblue;">logout</a> &nbsp;&nbsp;
+	</span>
+</div>
+<input type="hidden" id="quiz_id" value="startup">
+<br/>
+
+<div class="box-container">
+    <div class="box" >
+		<b><div id ="quiz_title"></div></b>
+		<form id="answer">
+			<div id="quiz"></div><br/>
+			<div id="answer_choice"></div>
+		</form>
+
+		<div id="code_div">
+			<label for="language">Language: </label>
+			<select id="language">
+				<option value="js">Javascript</option>
+				<option value="py">Python</option>
+				<option value="other">other...</option>
+			</select>
+
+			<textarea id="code_textarea" style="width:95%; height:400px;"></textarea>
+			<div id="code_choice" style="text-align: right;">
+				<input id="code_generate_test" type="submit" value="Generate test">
+				<input id="code_prev_sample" type="submit" value="Prev test">
+				<input id="code_next_sample" type="submit" value="Next test">
+				&nbsp;&nbsp;
+				<input id="code_try" type="submit" value="Try with sample input" >
+			</div>
+			<div id="code_console" style="width:95%;"></div>
+			<div id="sample_input_output_div" style="width:95%;"></div>
+			<div id="user_output" style="width:95%;"></div>
+		</div>
+
+		<div id="sql_div"></div>
+
+		<br/>
+
+        <div style="text-align: right;">
+			<input id="menu" type="submit" value="Menu" >
+			<input id="skip" type="submit" value="Skip" >
+			<input id="next" type="submit" value="Next" >
+			<input id="done" type="submit" value="Done" style="display: none;">
+		</div>
+    </div>
+    <div class="box">
+		<div style="float:left; width:0px; height:0px;">
+			<div style="position:relative; top:-18px; left:-10px;">
+				<a href="#" id="show_hide_box" style="text-decoration:none; background-color:white;">&#10006;</a>
+			</div>
+		</div>
+
+        <label><b>Tell us more</b><br/>
+		<form id="answer">
+		<textarea id="reason" placeholder="A good answer comes with a good explanation... Please feel free to put some comments here."
+			class="textbox" style="resize: both; box-sizing:border-box; width: 100%; min-width: 280px;" rows="15"></textarea></label>
+		</form>
+    </div>
+
+<br/><br/>
+
+</body>
+</html>
