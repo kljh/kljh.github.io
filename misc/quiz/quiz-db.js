@@ -3,7 +3,7 @@ const ddb = configure_dynamo_db_aws();
 
 function configure_dynamo_db_local() {
     AWS.config.update({
-      region: 'fakeREGION',  
+      region: 'fakeRegion',  
       accessKeyId: "fakeMyKeyId",
       secretAccessKey: "fakeMyKeyId",
       });
@@ -96,8 +96,10 @@ function add_user(userid, replace) {
             "Item": {
                 "uid": { "S": "user_"+userid },
                 "timestamp": { "S": "-" }, 
+				"score" : { "N": "0" },
+                "scored" : { "N": "0" },
                 //"comments" : { "S": "this is a test item" } ,
-                "actions" : { "L": [ { S: "abc"}, { N: "123" } ] },
+                "actions" : { "L": [ { S: "created "+(new Date().toISOString()) }, { N: ""+Math.random() } ] },
                 "answers" : { "M": {} },
             }, 
             
@@ -161,6 +163,12 @@ function update_user_with_answer(userid, qid, answer) {
         expression = "SET answers.#id = :a ";
         expr_names["#id"] = qid;
         expr_vals[":a"] = dynamo_attr_val;
+		
+		if (answer.score !== undefined && answer.score !== null) { 
+			expression += "ADD score :si , scored :ni ",
+			expr_vals[":si"] = { "N" : ""+answer.score };
+			expr_vals[":ni"] = { "N" : ""+1 };
+		}
     } 
     if (!qid) {
         expression += (!expression?"SET":",") + " actions = list_append(actions, :al) "
@@ -204,6 +212,55 @@ function update_user_with_answer(userid, qid, answer) {
     });
 }
 
+function delete_user(userid) {
+    return new Promise(function (resolve, reject) {
+        var delete_prms = {
+            "TableName": "quiz",
+            "Key": {
+                "uid": {
+                    "S": "user_"+userid
+                },
+                "timestamp": {
+                    "S": "-"
+                }
+            }
+        };
+        ddb.deleteItem(delete_prms, function(err, data) {
+            if (err) {
+                reject({ delete_prms, err, message: err.message, stack: err.stack });
+            } else {
+                resolve( data );
+            }
+        });
+    });
+}
+
+function get_users() {
+    return new Promise(function (resolve, reject) {
+        var scan_prms = {
+            "TableName": "quiz",
+            "ProjectionExpression": "uid, score, scored",
+            /*
+			"KeyConditionExpression": "#yr = :yyyy and title between :letter1 and :letter2",
+			"ExpressionAttributeNames:{
+				"#yr": "year"
+			},
+			ExpressionAttributeValues: {
+				":yyyy": 1992,
+				":letter1": "A",
+				":letter2": "L"
+			}*/
+        };
+        ddb.scan(scan_prms, function(err, data) {
+            if (err) {
+                reject({ scan_prms, err, message: err.message, stack: err.stack });
+            } else {
+                if (data.Items) data.Items = data.Items.map(item => dynamo_attribute_value_to_js_value(item));
+				resolve( data );
+            }
+        });
+    });
+}
 
 function js_value_to_dynamo_attribute_value(a) {
     if (typeof a=="string") return a.length ? { "S": a } : { "NULL": true }; // empty string not allowed by DynamoDB
@@ -264,7 +321,21 @@ module.exports = {
     update_user_with_answer: update_user_with_answer
 };
 
-//create_quiz_table_promise(ddb)
-test_dynamo_db("dslkhf@sf.com")
-.then(console.log)
-.catch(console.error)
+function test() {
+	var userid = "test27@test.com", 
+		replace = true, 
+		answer = {score: 0.7 } ;
+	
+	var userid0 = "test31@test.com"; 
+	
+	Promise.resolve()
+	//.then(_ => create_quiz_table_promise(ddb))
+	//.then(_ => test_dynamo_db(userid))
+	//.then(_ => add_user(userid, replace))
+	.then(_ => update_user_with_answer(userid, "q12", answer))
+	//.then(_ => delete_user(userid0))
+	.then(_ => get_users())
+	.then(x=> console.log(JSON.stringify(x, null, 4)))
+	.catch(console.error);
+}
+// test();

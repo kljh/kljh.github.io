@@ -107,6 +107,9 @@ async function quiz_aws_handler(event, context, callback) {
 			case "questions":
 				res = await quiz_questions(req);
 				break;
+			case "users":
+				res = await quiz_users(req);
+				break;
 			default:
 				err = "Unhandled action '"+ req.action+"'.";
 				// res = event;
@@ -143,8 +146,15 @@ async function quiz_register(prms) {
     var user_id = prms.user_id || prms.uid;
 	var bReplace = prms.replace;
     if (!user_id) throw new Error("user_id missing");
+    
+	// try getting existing user
+	var tmp = await db.get_user(user_id, bReplace);
+	if (tmp.uid) return tmp;
+	
+	// create and get
     var tmp = await db.add_user(user_id, bReplace);
-    return user_id;
+    var tmp = await db.get_user(user_id, bReplace);
+    return tmp;
 }
     
 
@@ -380,6 +390,13 @@ function auto_scoring(question, reply) {
             } catch(e) {}
         }
     }
+}
+
+async function quiz_users(prms) {
+    var admin = prms.pwd=="Galilei";
+    
+    var users = await db.get_users();
+    return users;
 }
 
 function deep_clone(o) { return JSON.parse(JSON.stringify(o)); }

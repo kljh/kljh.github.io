@@ -1,5 +1,5 @@
 
-var sql_worker;
+var sql_worker, sql_worker_count=0;
 function sql_init() {
     // textarea and buttons
     var html = ''
@@ -24,13 +24,21 @@ function sql_init() {
 
 function sql_worker_promise(msg) {
     return new Promise(function(resolve, reject) {
+		var id = "#"+(sql_worker_count++)+" "+new Date().toISOString();
+        msg.id = id; 
+
         sql_worker.onmessage = function(event) {
-            console.log("sql_worker_promise", msg, event.data)
+            console.log("sql_worker_promise", msg, event.data);
+			if (event.data.id!=id) {
+                console.warn("a previous call to sql_worker_promise was made without await, discard this result\n")
+                return;
+            }
+			
             var results = event.data.results;
             resolve(results);
         }
         sql_worker.onerror = function(event) {
-            console.error("sql_worker_promise", msg, event)
+            console.error("sql_worker_promise", msg, event);
             reject(event.message);
         }
         sql_worker.postMessage(msg);

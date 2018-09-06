@@ -19,6 +19,7 @@ $(function () {
 			type: "GET",
 			url: http_rpc_server + "/quiz?action=register&user_id="+user_id,
 			crossDomain: true,
+			cache: false, 
 			//data: { action: "register", uid: user_id },
 			contentType: "application/json",
 			dataType: "json",
@@ -63,7 +64,7 @@ body {
 
 <body>
 <div class="topbar" >
-    <span>Quantitative Research brain-teasers login</span>
+    <span>Research &amp; Development brain-teasers login</span>
 </div>
 <br/>
 
