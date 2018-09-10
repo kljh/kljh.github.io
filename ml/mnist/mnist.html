@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>MNIST</title>
+<style>
+    #container { position: relative; }
+    #imageView { border: 1px solid #000; }
+</style>
+<script type="text/javascript" src="mnist.js"></script>
+<script type="text/javascript">
+var training_data;
+
+function init() {
+    var layer1_n = 3, layer1_m = 5;   // 32 features in tutorial,  used 15 to keep low footprint
+    var layer2_n = 4, layer2_m = 8;   // 64 features in tutorial,  used 30 to keep low footprint
+    build_extra_views("layer1", 112, layer1_n, layer1_m);
+    build_extra_views("layer2", 56, layer2_n, layer2_m);
+    
+    var canvas = document.getElementById('canvasid');
+    var ctx = canvas.getContext("2d");
+    var draw_line = false;
+    var w = canvas.width,
+        h = canvas.height;
+    
+    // Drawing in canvas
+    (function () {
+        var prev_x, prev_y; 
+        canvas.addEventListener("mousedown", function (e) {
+            draw_line = true;
+            
+            prev_x = e.offsetX;
+            prev_y = e.offsetY;
+        }, false);
+        canvas.addEventListener("mouseup", function (e) {
+            draw_line = false;
+            refresh_ximgs_eval();
+        }, false);
+        canvas.addEventListener("mousemove", function (e) {
+            if (!draw_line)
+                return;
+            
+            var x = e.offsetX;
+            var y = e.offsetY;
+
+            ctx.beginPath();
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 16;
+            ctx.lineCap = "round";
+            ctx.moveTo(prev_x, prev_y);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.closePath();
+            
+            prev_x = x;
+            prev_y = y;
+        }, false);
+    })();
+    
+    document.getElementById('clearid').addEventListener("click", function (e) {
+           ctx.beginPath();
+           ctx.fillStyle = "white";
+           ctx.fillRect(0, 0, w, h);
+           ctx.closePath();
+    });
+
+    var load_idx = 0;
+    document.getElementById('loadid').addEventListener("click", function (e) {
+        //var elnt = document.getElementById('load_image_select');
+        //var load_idx = elnt.value;
+        load_idx = (load_idx+1) % training_data.ximgs.length;
+        load_image(training_data.ximgs[load_idx]);
+        refresh_ximgs_eval();
+    });
+    
+    // load_image(training_data.ximgs[0]);
+    function load_image(img) {
+        var imageData = ctx.getImageData(0, 0, w, h);
+        grayscale_to_imageData(img, imageData);
+        ctx.putImageData(imageData, 0, 0);
+        
+        // check
+        var img2 = imageData_to_grayscale(imageData, img.length);
+        grayscale_compare(img, img2);
+    }
+
+    function refresh_ximgs_eval(e) {
+        var imageData = ctx.getImageData(0, 0, w, h);
+        var ximg = imageData_to_grayscale(imageData, 28);
+        
+        var res = ximgs_eval(training_data, [ ximg ]);
+        var html = "label <em>"+ res.summary[0].label + "</em> with score "+Math.round(res.summary[0].proba*100)+"%.";
+        document.getElementById('status').innerHTML = html;
+        document.getElementById('status').style = "color: blue;"
+        
+        // check
+        grayscale_to_imageData(ximg, imageData);
+        ctx.putImageData(imageData, 0, 0);
+        
+        // extra info layer 1
+        
+        function display_image_layer(layer_id, layer_data, nb_views) {
+            for (var i=0; i<nb_views; i++) {
+                var channel = i;
+                var canvas = document.getElementById('canvasid_'+layer_id+'_'+i);
+                var ctx = canvas.getContext("2d");
+                var imageData = getImageData(ctx);
+                grayscale_to_imageData(layer_data, imageData, channel);
+                ctx.putImageData(imageData, 0, 0);
+            }
+        }
+        display_image_layer("layer1", res.pool1[0], layer1_n*layer1_m);
+        display_image_layer("layer2", res.pool2[0], layer2_n*layer2_m);
+        display_image_layer("layer3", res.fc3[0].map(x => [x]), 1);
+        display_image_layer("layer4", res.probas[0].map(x => [x]), 1);
+    }
+
+    /*
+    function save() {
+        document.getElementById("imgid").style.border = "2px solid";
+        var dataURL = canvas.toDataURL();
+        document.getElementById("imgid").src = dataURL;
+        document.getElementById("imgid").style.display = "inline";
+    }
+    */
+
+    function load_training_results() {
+        var status = document.getElementById('status');
+        var httpReq = new XMLHttpRequest();
+        httpReq.open("GET", "mnist_training_results_deep.json");
+        httpReq.addEventListener("error", function(e) {
+            status.innerHTML = "training results failed. "+e;
+            status.style="color: red;"
+        });
+        httpReq.addEventListener("load", function(e) {
+            if (e.status>399) {
+                status.innerHTML = "training results failed. "+e.status;
+                status.style="color: red;"
+            } else {
+                status.innerHTML = "training results loaded."
+                training_data = JSON.parse(this.responseText);
+                load_image(training_data.ximgs[0]);
+                refresh_ximgs_eval();
+            }
+        });
+        httpReq.send();
+    }
+
+    load_training_results();
+}
+
+function getImageData(ctx) {
+    return ctx.getImageData(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight);
+}
+
+function imageData_to_grayscale(imageData, grey_size) {
+    var n = imageData.height,
+        m = imageData.width,
+        data = imageData.data;
+    
+    var n0 = grey_size || n;
+    var m0 = grey_size || m;
+    
+    var n1 = Math.floor(n/n0), 
+        m1 = Math.floor(m/m0);
+    var scale1 = 1.0 / (n1*m1) / 255;
+    
+    var grey = new Array(n0);
+    for (var i0=0; i0<n0; i0++) {
+        grey[i0] = new Array(m0);
+        for (var j0=0; j0<m0; j0++) {
+        
+            var gs = 0;
+            for (var i1=0; i1<n1; i1++) {
+                for (var j1=0; j1<m1; j1++) {     
+                    var i = i0*n1 + i1,
+                        j = j0*m1 + j1;
+                    var k = 4 * ( i*m + j );
+                    
+                    var r = data[k],
+                        g = data[k+1],
+                        b = data[k+2],
+                        a = data[k+3];
+                    gs += (r+g+b)/3;
+                }
+            }
+            gs = gs * scale1;
+            gs = 1.0 - gs;
+            grey[i0][j0] = [ gs ];
+        }
+    }
+    return grey;
+}
+
+function grayscale_to_imageData(grey, imageData, channel) {
+    var n0 = grey.length,
+        m0 = grey[0].length,
+        hasChannels = Array.isArray(grey[0][0]);
+		
+    if (hasChannels && channel>=grey[0][0].length)
+        return;
+
+    var n = imageData.height, 
+        m = imageData.width,
+        data = imageData.data;
+    
+    var n1 = Math.max(Math.floor(n/n0), 1);
+    var m1 = Math.max(Math.floor(m/m0), 1);
+    
+    for (var i0=0; i0<n0; i0++) {
+        for (var j0=0; j0<m0; j0++) {
+            var g = grey[i0][j0]
+            if (hasChannels) 
+                g = g[channel || 0] ;
+            g = 255 * ( 1.0 - g );
+    
+            for (var i1=0; i1<n1; i1++) {
+                for (var j1=0; j1<m1; j1++) {
+        
+                    var i = i0*n1 + i1,
+                        j = j0*m1 + j1;
+                    var k = 4 * ( i*m + j );
+                    data[k] = g;
+                    data[k+1] = g;
+                    data[k+2] = g;
+                    data[k+3] = 255;
+                }
+            }
+        }
+    }
+    return data;
+}
+
+function grayscale_compare(grey_left, grey_right) {
+    var n = grey_left.length,
+        m = grey_left[0].length;
+        
+    for (var i=0; i<n; i++) 
+        for (var j=0; j<m; j++) 
+            if (Math.abs(grey_left[i][j][0]-grey_right[i][j][0])>1e-7)
+                console.warn("grayscale_compare", i, j, grey_left[i][j], grey_right[i][j]);
+}
+
+function build_extra_views(id, dim, n, m) {
+    // elnt.style = "";
+    var div = document.getElementById("container_"+id);
+    var table = document.createElement("table"); 
+    for (var i=0; i<n; i++) {
+        var tr = document.createElement("tr"); 
+        for (var j=0; j<m; j++) {
+            var td = document.createElement("td"); 
+            td.innerHTML = '<canvas id="canvasid_'+id+'_'+(i*m+j)+'" width="'+dim+'" height="'+dim+'"style="border:1px solid grey;"></canvas>';
+            tr.appendChild(td);
+        }
+        table.appendChild(tr);
+    }
+    div.appendChild(table);
+}
+
+</script>
+<body onload="init()">
+    <em><u>Output</u></em>:<br/>
+    <span id="status" style="color: orange;">loading training results...</span>
+    <br/><br/>
+    
+    <span style="display: inline-block; width: 224px;">
+        <em><u>Input</u></em><br/>
+        <input type="button" value="load" id="loadid">
+        <input type="button" value="clear" id="clearid">
+    </span>
+    <span>
+        <em><u>Third and fourth dense layers</u></em>
+    </span>
+    <br/>
+    
+    <canvas id="canvasid" width="224" height="224"
+        style="border:1px solid grey;"></canvas>
+    <canvas id="canvasid_layer4_0" width="20" height="224"
+        style="border:1px solid grey;"></canvas>
+    <canvas id="canvasid_layer3_0" width="20" height="224"
+        style="border:1px solid grey;"></canvas>
+    <br/><br/>
+    
+    <em><u>First and second convolutional neural networks</u></em>:<br/>
+    try drawing vertical or horizontal lines and try to see which block gets activated<br/>
+    <span id="container_layer1"></span>
+    <span id="container_layer2"></span>
+        
+    <!--
+    <input id="load_image_select" value="0" size="3">
+    <img id="imgid" style="display:none;"> 
+    -->
+</body>
+</html>
