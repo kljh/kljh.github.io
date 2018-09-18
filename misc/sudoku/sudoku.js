@@ -1,5 +1,17 @@
-// Checking level Sudoku from Le Monde
-// 18_205 in indeed hard
+// Checking Sudoku from Le Monde
+// expert 18_205 is indeed hard
+// Arto Inkala's one is indeed very hard
+
+var sudoku_arto_inkala =
+	"8.. ... ... \n" +
+	"..3 6.. ... \n" +
+	".7. .9. 2.. \n" +
+	".5. ..7 ... \n" +
+	"... .45 7.. \n" +
+	"... 1... .3. \n" +
+	"..1 ... .68 \n" +
+	"..8 5.. .1. \n" +
+	".9. ... 4.. \n";
 
 var sudoku_18_205_expert =
 	"... ... ... \n" +
@@ -45,7 +57,7 @@ var sudoku_18_213_facile =
 	".81 ..5 2.4 \n" +
 	".24 .96 3.5 \n";
 
-var sudoku = sudoku_18_210_tres_difficile;
+var sudoku = sudoku_18_205_expert;
 
 var sdk = {
 	known: 0,
