@@ -9,7 +9,7 @@ function configure_dynamo_db_local() {
       });
 
     var ddb = new AWS.DynamoDB({ apiVersion: '2012-10-08' });
-    
+
     // Create the DynamoDB service object
     //console.log(ddb.endpoint)
     ddb.endpoint.protocol = 'http';
@@ -22,7 +22,7 @@ function configure_dynamo_db_local() {
 }
 
 function configure_dynamo_db_aws() {
-    var ddb = new AWS.DynamoDB({apiVersion: '2012-10-08', 
+    var ddb = new AWS.DynamoDB({apiVersion: '2012-10-08',
 		region: 'eu-west-3' });
     return ddb;
 }
@@ -56,7 +56,7 @@ function create_quiz_table_promise(ddb) {
                 }
             ]
         };
-     
+
         ddb.createTable(create_table_prms, function(err, data) {
             if (err) reject(err);
             else     resolve(data);
@@ -65,18 +65,18 @@ function create_quiz_table_promise(ddb) {
 }
 
 async function test_dynamo_db(uid) {
-    try { 
+    try {
         var userid = uid || "test_user";
         var qid = "test_question"
         var answer = { oui: false, non: false, maybe: true, reason: [ "pt'etre ben qu'oui", "pt'etre ben qu'nan." ], o: { a: "abc", b: false, c: 123 } };
-        
+
 		var replace = true;
         var add_user_status = await add_user(userid, replace);
-		console.log("add_user_status (replaced item)", JSON.stringify(add_user_status, null,4));
-    
+        console.log("add_user_status (replaced item)", JSON.stringify(add_user_status, null,4));
+
         var user = await get_user(userid);
         console.log("user", JSON.stringify(user, null,4));
-    
+
         var user = await update_user_with_answer(userid, qid, answer);
         console.log("updated user", JSON.stringify(user, null,4));
 
@@ -91,24 +91,24 @@ function add_user(userid, replace) {
     return new Promise(function (resolve, reject) {
         var put_item_prms = {
             "TableName": "quiz",
-            "ReturnValues": "ALL_OLD", 
-            //"ReturnConsumedCapacity": "TOTAL", 
+            "ReturnValues": "ALL_OLD",
+            //"ReturnConsumedCapacity": "TOTAL",
             "Item": {
                 "uid": { "S": "user_"+userid },
-                "timestamp": { "S": "-" }, 
+                "timestamp": { "S": "-" },
 				"score" : { "N": "0" },
                 "scored" : { "N": "0" },
                 //"comments" : { "S": "this is a test item" } ,
                 "actions" : { "L": [ { S: "created "+(new Date().toISOString()) }, { N: ""+Math.random() } ] },
                 "answers" : { "M": {} },
-            }, 
-            
+            },
+
         };
 		if (!replace) {
-            // disable overwrite 
-			put_item_prms["ConditionExpression"] = "attribute_not_exists(uid)"; 
+            // disable overwrite
+			put_item_prms["ConditionExpression"] = "attribute_not_exists(uid)";
 		}
-		
+
         ddb.putItem(put_item_prms, function(err, data) {
             if (err) {
                 reject({ put_item_prms, err, message: err.message, stack: err.stack });
@@ -151,14 +151,14 @@ function get_user(userid) {
 
 function update_user_with_answer(userid, qid, answer) {
     //console.log("adding answer", JSON.stringify(answer, null, 4));
-    
+
     var dynamo_attr_val = js_value_to_dynamo_attribute_value(answer);
     //console.log("dynamo_attr_val", JSON.stringify(dynamo_attr_val, null, 4));
-    
+
     var expression = "";
     var expr_names = {};
     var expr_vals = {};
-    
+
     if (qid) {
         expression = "SET answers.#id = :a ";
         expr_names["#id"] = qid;
@@ -169,12 +169,12 @@ function update_user_with_answer(userid, qid, answer) {
 			expr_vals[":si"] = { "N" : ""+answer.score };
 			expr_vals[":ni"] = { "N" : ""+1 };
 		}
-    } 
+    }
     if (!qid) {
         expression += (!expression?"SET":",") + " actions = list_append(actions, :al) "
         expr_vals[":al"] = { "L": [ dynamo_attr_val ] };
     }
-    
+
     return new Promise(function (resolve, reject) {
         var update_item_prms = {
             "TableName": "quiz",
@@ -192,12 +192,12 @@ function update_user_with_answer(userid, qid, answer) {
             "ReturnValues": "ALL_NEW",
             //"ReturnConsumedCapacity": "TOTAL"
         };
-        
+
         if (Object.keys(expr_names).length==0) {
             // empty struct not allowed
-            delete update_item_prms.ExpressionAttributeNames; 
+            delete update_item_prms.ExpressionAttributeNames;
         }
-            
+
         ddb.updateItem(update_item_prms, function(err, data) {
             if (err) {
                 console.error("update_item_prms:", JSON.stringify(update_item_prms, null, 4));
@@ -278,16 +278,16 @@ function js_value_to_dynamo_attribute_value(a) {
             kv[k] = js_value_to_dynamo_attribute_value(a[k]);
         return { "M": kv };
     }
-} 
+}
 
 function dynamo_attribute_value_to_js_value(a) {
-    
+
     function impl(a) {
         var err_msg = "Expected DynamoDB attribute, e.g. a JS object with exactly one key among N, NS, S, SS, BOOL, NULL, B, BS, L or M."
-        
+
         var keys = Object.keys(a);
         if (keys.length!=1) throw new Error(err_msg+" "+JSON.stringify(a));
-        
+
         var typ = keys[0];
         var val = a[keys[0]];
         switch (typ) {
@@ -304,14 +304,14 @@ function dynamo_attribute_value_to_js_value(a) {
                 return val.map(x => impl(x));
             case 'M':
                 var kv = {};
-                for (var k in val) 
+                for (var k in val)
                     kv[k] = impl(val[k]);
                 return kv;
             default:
                 throw new Error(err_msg+" Type '"+typ+"' unknown. "+JSON.stringify(a));
         }
     }
-    
+
     return impl({ "M": a });
 }
 
