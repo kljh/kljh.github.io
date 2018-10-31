@@ -68,6 +68,7 @@ function peer_edit(editor, uid) {
         // Restore the cursor
         if (curr_pos) {
             var next_pos = new_pos_using_patch(curr_pos, curr_txt, next_txt);
+            if (!next_pos) console.warn("curr_pos", curr_pos, "next_pos", next_pos);
             editor.setCursor(next_pos);
         }
     }

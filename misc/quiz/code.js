@@ -6,9 +6,16 @@ var code_editor;
 function code_init() {
     $("#code_try").click(function (ev) { code_try(editor); });
 
+    var lang = localStorage["language"];
+    if (lang) $("#language").val(lang);
+
+    lang_to_code_mirror_mode = {
+        "js": "javascript", 
+        "py": "python" };
+        
     var editor = CodeMirror.fromTextArea(document.getElementById("code_textarea"), {
             lineNumbers: true,
-            mode: "javascript",
+            mode: lang_to_code_mirror_mode[lang],
             gutters: ["CodeMirror-lint-markers"],
             lint: true
         });
@@ -77,6 +84,7 @@ function code_try(editor) {
     $("#user_output").empty();
 
     var lang = $("#language").val();
+    localStorage["language"] = lang;
     switch(lang) {
         case "js":
             return code_js_try(editor);
@@ -152,8 +160,15 @@ function code_pypyjs_try(editor) {
          if (e!==null)
             $("#code_console").html('<h2>Syntax error '+ts+'</h2><pre>'+e+'</pre> while compiling <pre>'+src+'</pre>');
         return Promise.reject(null);
-    }).then(function(v) {
-        return pypyjs.exec("res = "+code_info.skeleton_code.function_name+"(sample_input)");
+    }).then(function() {
+        if (!code_info) 
+            // getting main function
+            return pypyjs.get("main");
+    }).then(function(fct) {
+        if (code_info)
+            return pypyjs.exec("res = "+code_info.skeleton_code.function_name+"(sample_input)");
+        if (fct)
+            return pypyjs.exec("res = main()");
     }).catch(function(e) {
         if (e!==null)
             $("#code_console").html('<h2>Execution error '+ts+'</h2><pre>' + e + '</pre>');
@@ -182,7 +197,14 @@ function code_validate_output(user_output, sample_output, ts) {
             '<p style="color: #12AD2A;">validated with sample input.</p>' :
             '<p style="color: #B3000C;">NOT validated (compare output below).</p>' );
     } else {
-        html_short = user_output ? '' : '<em style="color:red;">add a <tt>return</tt> statement at the end of your code to display a result</em>';
+        html_short = "";
+        if (user_output==null || user_output==undefined) {
+            var lang = $("#language").val();
+            html_short = lang=="js"
+                ? '<em style="color:red;">add a <tt>return</tt> statement at the end of your code to display a result</em>'
+                : '<em style="color:red;">define a <tt>main</tt> function in your code</em>';
+        }
+        
     }
 
     var html = '<h2>Execution output '+ts+'</h2><pre>' + stringify_objects(user_output) + '</pre>';
