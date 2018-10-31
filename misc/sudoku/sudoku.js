@@ -13,6 +13,28 @@ var sudoku_arto_inkala =
 	"..8 5.. .1. \n" +
 	".9. ... 4.. \n";
 
+var sudoku_18_191_bad_input_causes_bug = // two ones in central square
+	"..5 ... ... \n" +
+	"... ... ... \n" +
+	"847 ..6 ... \n" +
+	".53 .9. 9.7 \n" +
+	"764 .3. 2.. \n" +
+	".9. 45. 1.. \n" +
+	"... 3.. ... \n" +
+	"..9 .6. ..3 \n" +
+	".7. 2.4 ..5 \n";
+
+var sudoku_18_191_dificile =
+	"..5 ... ... \n" +
+	"... ... ... \n" +
+	"847 ..6 ... \n" +
+	".53 .9. 2.7 \n" +
+	"764 .3. 9.. \n" +
+	".9. 45. 1.. \n" +
+	"... 3.. ... \n" +
+	"..9 .6. ..3 \n" +
+	".7. 2.4 ..5 \n";
+
 var sudoku_18_205_expert =
 	"... ... ... \n" +
 	"... 1.. .45 \n" +
@@ -57,7 +79,7 @@ var sudoku_18_213_facile =
 	".81 ..5 2.4 \n" +
 	".24 .96 3.5 \n";
 
-var sudoku = sudoku_18_205_expert;
+var sudoku = sudoku_18_191_dificile;
 
 var sdk = {
 	known: 0,

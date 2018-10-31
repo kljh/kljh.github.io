@@ -93,7 +93,8 @@ function code_js_try(editor) {
 
     // compile
     try {
-        var alt_src = "'use strict';\n" + src + "\n\n" + "return "+code_info.skeleton_code.function_name+"(sample_input);";
+        var alt_src = "'use strict';\n" + src + "\n\n";
+        if (code_info) alt_src += "return "+code_info.skeleton_code.function_name+"(sample_input);";
         var fct = new Function("sample_input", alt_src);
     } catch(e) {
         $("#code_console").html('<h2>Syntax error '+ts+'</h2><pre>'+e+'</pre> while compiling <pre>function f(sample_input) {\n'+alt_src+'\n}</pre>');
@@ -171,13 +172,18 @@ function code_pypyjs_try(editor) {
 
 
 function code_validate_output(user_output, sample_output, ts) {
+    var html_short;
+    if (sample_output) {
+        // check
+        var validated = JSON.stringify(user_output)==JSON.stringify(sample_output);
 
-    // check
-    var validated = JSON.stringify(user_output)==JSON.stringify(sample_output);
-
-    var html_short = '<h2>Validation '+ts+'</h2>' + (validated ?
-        '<p style="color: #12AD2A;">validated with sample input.</p>' :
-        '<p style="color: #B3000C;">NOT validated (compare output below).</p>' );
+        // display check summary
+        html_short = '<h2>Validation '+ts+'</h2>' + (validated ?
+            '<p style="color: #12AD2A;">validated with sample input.</p>' :
+            '<p style="color: #B3000C;">NOT validated (compare output below).</p>' );
+    } else {
+        html_short = user_output ? '' : '<em style="color:red;">add a <tt>return</tt> statement at the end of your code to display a result</em>';
+    }
 
     var html = '<h2>Execution output '+ts+'</h2><pre>' + stringify_objects(user_output) + '</pre>';
 
