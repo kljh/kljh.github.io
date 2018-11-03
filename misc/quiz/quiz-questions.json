@@ -1,0 +1,996 @@
+[
+    {
+        "id": "Self-assesment",
+        "category": "abc",
+        "level": 0,
+        "question": [
+            "Rate yourself on the following topics based on this scale : <br/>",
+            "Not interested&nbsp;(left/0), Never studied&nbsp;(2), <b>MSc level&nbsp;(middle/5)</b>, Professional use&nbsp;(8), Expert black belt&nbsp;(right/10)<br/><br/>",
+            "            <div class=\"table\">",
+            "            <div class=\"row\">",
+            "                <span class=\"cell\">Mathematics &amp Probability<br/><span style=\"font-size: smaller;\">linear algebra, differential eq.<br/>&nbsp;</span></span>",
+            "                <span class=\"cell\" style=\"vertical-align: middle;\"><input id=\"math\" type=\"range\" min=\"0\" max=\"10\" style=\"width:120px\"></span></div>",
+            "            <div class=\"row\">",
+            "                <span class=\"cell\">Data Science<br/><span style=\"font-size: smaller;\"> statistics, machine learning, databases<br/>&nbsp;</span></span>",
+            "                <span class=\"cell\" style=\"vertical-align: middle;\"><input id=\"data\" type=\"range\" min=\"0\" max=\"10\" style=\"width:120px;\"></span></div>",
+            "            <div class=\"row\">",
+            "                <span class=\"cell\">Finance<br/><span style=\"font-size: smaller;\">options pricing, hedging, ..<br/>&nbsp;</span></span>",
+            "                <span class=\"cell\" style=\"vertical-align: middle;\"><input id=\"finance\" type=\"range\" min=\"0\" max=\"10\" style=\"width:120px\"></span></div>",
+            "            <div class=\"row\">",
+            "                <span class=\"cell\">Computer Science<br/><span style=\"font-size: smaller;\">algorithmic, complexity<br/>&nbsp;</span></span>",
+            "                <span class=\"cell\" style=\"vertical-align: middle;\"><input id=\"cs\" type=\"range\" min=\"0\" max=\"10\" style=\"width:120px\"></span></div>",
+            "            </div>",
+            "",
+            "<p><b>Do not hesitate to skip questions.</b> Nobody knows everything. Better be honest about it. R&D keep learning all the time.</p>",
+            "<p><b>Warning.</b>Next questions are not (yet) based on your self-assessment nor your previous answers. ",
+            "You will see questions that are irrelevant to you. Do not hesitate to skip them. ",
+            "Question are displayed in this order : computer science, maths, finance, probas and stats.</p>"
+        ],
+        "answer_type": "no_scoring",
+        "validation": []
+    },
+    {
+        "id": "Warm-up question: trigonometry",
+        "category": "abc",
+        "level": 1,
+        "question": "Function \\(sin(x)\\) evaluated in \\(x=\\pi/4\\) is :",
+		"answer_list": [
+			"-2",
+			"\\(\\frac{1}{2}\\)",
+			"\\(\\frac{\\sqrt{2}}{2}\\)",
+			"\\(\\frac{\\sqrt{3}}{2}\\)",
+			"1",
+			"\\(\\frac{3}{2}\\)",
+			"2",
+			"none of the above"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "\\(\\frac{\\sqrt{2}}{2}\\)"
+        ]
+    },
+    {
+        "id": "Warm-up question: derivatives",
+        "category": "abc",
+        "level": 1,
+        "question": "Derivative of function \\(sin(2x)\\) evaluated in \\(x=0\\) is :",
+		"answer_list": [
+			"-2",
+			"-1",
+			"\\(-\\frac{1}{2}\\)",
+			"0",
+			"\\(\\frac{1}{2}\\)",
+			"1",
+			"2",
+			"none of the above"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "2"
+        ]
+    },
+    {
+        "id": "Warm-up question: a <tt>for</tt> loop",
+        "category": "abc",
+        "level": 2,
+        "question": [
+            "What does the following code display to the console ?<br/>",
+            "Reminder: the <tt>%</tt> is the modulo operator, e,g. it returns the remainder of the Euclidean division (17 % 5 is 2)",
+            "",
+            "<pre>",
+            "for (var i=0; i<10; i++) {",
+            "    if (i%3 != 0);",
+            "        print(i);",
+            "}",
+            "</pre>"
+        ],
+		"answer_list": [
+			"3 ,6, 9",
+			"0, 3 ,6, 9",
+			"1, 2, 4, 5, 7, 8",
+			"none of the above"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "1, 2, 4, 5, 7, 8"
+        ]
+    },
+    {
+        "id": "Fibonacci Recursive",
+        "category": "abc",
+        "level": 2.1,
+        "question": [
+            "Fibonacci sequence is defined as follow :",
+            "$$f_1 = f_2 = 1 \\\\ f_{i+2} = f_{i+1} + f_i $$<br/>",
+            "",
+            "Which of the statements are correct about the <em>recursive</em> implementation :",
+            "<pre>",
+            "int fibo(int k) {",
+            "    if (k==0||k==1) ",
+            "        return 1;",
+            "    else ",
+            "        return fibo(k-1) + fibo(k-2);",
+            "}",
+            "</pre>"
+        ],
+        "answer_list": [
+            "implementation is correct (if not tell why) or correct under some condition (tell which condition).",
+            "complexity is better than linear in k (constant, logarithmic, ...).",
+            "complexity is linear in k.",
+            "complexity is worse than linear in k (quadratic, exponential, ...)."
+        ],
+        "answer_type": "multiple",
+        "validation": [
+            "/is correct/",
+            "/is worse/"
+        ]
+    },
+    {
+        "id": "Fibonacci Iterative",
+        "category": "abc",
+        "level": 2.2,
+        "question": [
+            "Fibonacci sequence is defined as follow :",
+            "$$f_1 = f_2 = 1 \\\\ f_{i+2} = f_{i+1} + f_i $$<br/>",
+            "",
+            "Which of the statements are correct about the <em>iterative</em> implementation :",
+            "<pre>",
+            "int fibi(int k) {",
+            "    if (k==0||k==1) ",
+            "        return 1;",
+            "    int f0 = 1, f1 = 1, f2; ",
+            "    for (int i=2; i&lt;=k i++) {",
+            "        f2 = f0 + f1;",
+            "        f0 = f1; f1 = f2;",
+            "    }",
+            "    return f2",
+            "}",
+            "</pre>"
+        ],
+        "answer_list": [
+            "implementation is correct (if not tell why).",
+            "complexity is better than linear in k (constant, logarithmic, ...).",
+            "complexity is linear in k.",
+            "complexity is worse than linear in k (quadratic, exponential, ...)."
+        ],
+        "answer_type": "multiple",
+        "validation": [
+            "/is correct/",
+            "/is linear/"
+        ]
+    },
+    {
+        "id": "Fibonacci Geometric",
+        "category": "abc",
+        "level": 2.3,
+        "question": [
+            "Fibonacci sequence is defined as follow :",
+            "$$f_1 = f_2 = 1 \\\\ f_{i+2} = f_{i+1} + f_i $$<br/>",
+            "",
+            "If we assume there is a solution of the form \\(f_i = \\alpha . q^i\\), what are the conditions on &alpha; and q ?<br/><br/>",
+            "What does it imply in terms of complexity of fibonacci calculation ?"
+        ],
+        "answer_list": [
+            "\\( q^2 - q - 1 = 0 \\)",
+            "\\( q^2 + q + 1 = 0 \\)",
+            "\\( q = \\frac{1 \\pm \\sqrt{5}}{2} \\)",
+            "\\( ( \\alpha, q ) \\in { ( \\frac{1}{\\sqrt{5}}, \\frac{1+\\sqrt{5}}{2} ), \\frac{-1}{\\sqrt{5}}, \\frac{1-\\sqrt{5}}{2} ) } \\)",
+            "complexity is better than linear in k (constant, logarithmic, ...).",
+            "complexity is linear in k.",
+            "complexity is worse than linear in k (quadratic, exponential, ...)."
+        ],
+        "answer_type": "multiple",
+        "validation": [
+            "\\( q^2 - q - 1 = 0 \\)",
+            "\\( q = \\frac{1 \\pm \\sqrt{5}}{2} \\)",
+            "\\( ( \\alpha, q ) \\in { ( \\frac{1}{\\sqrt{5}}, \\frac{1+\\sqrt{5}}{2} ), \\frac{-1}{\\sqrt{5}}, \\frac{1-\\sqrt{5}}{2} ) } \\)",
+            "/constant/"
+        ]
+    },
+    {
+        "id": "Treasure map programming",
+        "category": "abc",
+        "level": 6,
+        "question": "<p>You have instructions to reach a treasure in the Caraibes.</p><p> Each instructions is made of one letter.<ul><li>Letter 'M' means move forward by one unit.</li><li>Letter 'L' means turn left (by 90 degrees).</li><li>Letter 'R' means turn right.</li></ul></p> <p>The map uses coordinates (longitude, latitude). You start at coordinates ( 0, 0 ) facing north (e.g. towards coordinate ( 0, 1 ).</p> <p>Write a <tt>find_treasure</tt> function that receives a list of instructions and return the coordinate of the treasure.<br/> </p>",
+        "answer_type": "code",
+        "test_data": [ 
+            {
+                "input": [
+                    "M",
+                    "R",
+                    "M",
+                    "M",
+                    "M",
+                    "L",
+                    "M"
+                ],
+                "output": [
+                    3,
+                    2
+                ]
+            }
+        ],
+        "skeleton_code": {
+            "function_name" : "find_treasure",
+            "js": "function find_treasure(instructions) {\n  var x=0, y=0;\n  for (var i=0; i<instructions.length; i++) {\n    var instr = instructions[i];\n    if (instr==\"M\") x = x + 7;\n    if (instr==\"L\") x = x * y;\n    if (instr==\"R\") y = y * 3 + 1;\n  }\n  return [ x, y ];\n}"
+        }, 
+        "validation" : {
+            "src" : "function find_treasure(instructions) {\n  var dirs = [ [1,0], [0,1], [-1,0], [0,-1] ];\n  var x=0, y=0, d=1;\n  for (var i=0; i<instructions.length; i++) {\n    var instr = instructions[i];\n    if (instr=='M') { x += dirs[d][0]; y += dirs[d][1]; }\n    if (instr=='L') d = ( d+1 ) % 4;\n    if (instr=='R') d = ( d-1 + 4 ) % 4;\n  }\n  return [x,y];\n}",
+            "test_data":  [ {
+                "input": [ "M", "M", "M", "R", "R", "R", "R", "R", "R", "M", "L", "M", "M" ]
+            }]
+        }
+    },
+    {
+        "id": "Anagram",
+        "category": "abc",
+        "level": 5,
+        "question": "<p>Two words (or sentence) are anagrams if they have the same letter in the same order.<p>Write a <tt>test</tt> function that receives a pair of words and return a Boolean: true if the two words are anagrams, false otherwise.<br/> </p>",
+        "answer_type": "code",
+        "test_data": [ 
+            {
+                "input": [ "abcd", "acdb" ],
+                "output":  true
+            },
+            {
+                "input": [ "baka", "abba" ],
+                "output":  false
+            },
+            {
+                "input": [ "papi", "pipa" ],
+                "output":  true
+            },
+            {
+                "input": [ "rail safety", "fairy tales" ],
+                "output":  true
+            },
+            {
+                "input": [ "Allez p\u00E8res de la foi !", "Allez faire de la poix !" ],
+                "output":  false
+            }
+        ],
+        "skeleton_code": {
+            "function_name" : "test",
+            "js": "function test(word_pair) {\n  var a=word_pair[0], b=word_pair[1];\n  var res = (a[0]==b[0]);\n  return res;\n}",
+            "py": "def test(word_pair):\n  a=word_pair[0]\n  b=word_pair[1]\n  res = (a[0]==b[0])\n  return res\n"
+        }, 
+        "validation" : {
+            "src" : "function test(word_pair) {\n  return Array.from(word_pair[0]).sort().join('')==Array.from(word_pair[1]).sort().join('');\n}",
+            "test_data":  [ {
+                "input": [ "qwertyuiopaz", "azertyuiopqw" ]
+            }]
+        }
+    },
+    {
+        "id": "Database query",
+        "category": "data",
+        "level": 5,
+        "question": "<p>You are given the table below.<br/>Write the SQL query to get the cities with more than 10 million habitants, with biggest cities first.<br/>Expected output is given for reference.<br/>Try to avoid implementation specific syntax. SQL dialect used: SQLite.</p>",
+        "answer_type": "sql",
+        "test_data": [ 
+            {
+                "metropoles": [
+                    [ "City", "Country", "Population" ],
+                    [ "London", "UK", 8825 ],
+                    [ "Tokyo", "Japan", 9273 ],
+                    [ "Saint Petersburg", "Russia", 5351 ],
+                    [ "Moscow", "Russia", 12229 ],
+                    [ "Lagos", "Nigeria", 16060 ],
+                    [ "Osaka", "Japan", 2691 ] ],
+                "expected_output":  [
+                    [ "City", "Population" ],
+                    [ "Lagos", 16060 ],
+                    [ "Moscow", 12229 ] ]
+            }
+        ],
+        "skeleton_sql" : "select City, Population from metropoles"
+    },
+    {
+        "id": "Algorithm: linear vs bsearch",
+        "category": "algo",
+        "level": -3,
+        "question": [
+            "Suppose we have a table with $n$ elements and we need to lookup $p$ elements for it. <br/>",
+            "We have the choice between either (1) using a linear search or (2) sorting the table and taking advantage of the table being ordered to do a faster search.<br/>",
+            "Which one of the following statements is correct:"
+        ],
+		"answer_list": [
+			"sorting the table does no help doing a faster search",
+			"if $n&gt;p$, it is always best to sort the table first",
+			"if $p&gt;3$, it is always best to sort the table first",
+			"the $p$ search of an ordered table requires $O(p \\log_2 n)$ operations",
+			"linear search requires $O(p \\log_2 n)$ operations"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "the $p$ search of an ordered table requires $O(p \\log_2 n)$ operations"
+        ]
+    },
+    {
+        "id": "Associative arrays",
+        "category": "algo",
+        "level": 3,
+        "question": [
+            "An array element can be directly accessed using a integer index. <br/>",
+            "An associative array (aka dictionary) is a container where records are stored using a logical index The index (or key) is often a string (or can be any type for which a comparison function is available in theory). <br/>",
+            "We consider the following containers:<br/>",
+            "<ul>",
+            "  <li>black/red tree: a form of tree that orders and balances itself at insertion</li>",
+            "  <li>hashmap: an array where index is computed from the key using a hashing function</li>",
+            "  <li>linked list: where the relevant record can be found by comparing the key to each successive element</li>",
+            "</ul>",
+            "Which of the following are correct:"
+        ],
+        "answer_list": [
+            "black/red tree in general provide an efficient implementation of associative array",
+            "hashmap in general provide an efficient implementation of associative array",
+            "an array using linear search in general provides an efficient implementation of associative array",
+            "hashmap represents a compromise between speed and storage space"
+        ],
+        "answer_type": "multiple",
+        "validation": [
+            "/tree .* efficient/",
+            "/hashmap .* efficient/",
+            "/hashmap .* compromise/"
+        ]
+    },
+    {
+        "id": "Programming: value and reference",
+        "category": "cs",
+        "level": 1,
+        "question": "Function parameters can either be passed by value or by reference. Which of the following statements are true:<br/>",
+        "answer_list": [
+            "passing small types (integer, double, pointers) by value is recommended",
+            "passing large object by value is efficient",
+            "passing large object by value is inefficient",
+            "passing variables by reference allows the function to have side effects",
+            "passing variables by reference prevents the function from having side effects"
+        ],
+        "answer_type": "multiple",
+        "validation": [
+            "/small types/",
+            "/large object by value is inefficient/",
+            "/by reference allows .* side effects/"
+        ]
+    },
+    {
+        "id": "Smart pointer in C++",
+        "category": "cs",
+        "level": 1,
+        "question": [
+            "Smart pointers are a powerful tool to manage memory in C++. <br/>",
+            "Unlike garbage collector available in Java on .Net, pointers behaviour is predictable because memory is freed as soon as the last reference gets out-of-scope.<br/>",
+            "They must be used properly though. Which of the advices below are correct ?"
+        ],
+        "answer_list": [
+            "Do not create loops of shared pointer (e.g. A constains a smart pointer on B, and B contains a smart pointer on A)",
+            "Do not create a shared pointer from a variable on the stack",
+            "Do not create a shared pointer from another smart pointer dereference (e.g. by getting the raw pointer within)",
+            "Do not create a shared pointer from a raw pointer allocated by <tt>new</tt>",
+            "Use references instead whenever possible"
+        ],
+        "answer_type": "multiple",
+        "validation": [
+            "/loop/",
+            "/stack/",
+            "/dereference/",
+            "/references/"
+        ]
+    },
+    {
+        "id": "Stack and Heap Memory",
+        "category": "cs",
+        "level": 2,
+        "question": [
+            "Most programming languages that operate near the machine support stack and heap variables:<br/>",
+            "Which one of the following statements are correct:"
+        ],
+        "answer_list": [
+            "memory of stack variable is allocated when defined and freed when it gets out of scope ",
+            "memory of heap variable persists when the variable goes out of scope and is either freed explicitly by the programmer or sweeped by garbage collection",
+            "heap memory is used for small objects and for arrays of known size",
+            "heap memory is used for large objects in general as stack space is limited and for any memory that needs to persist beyond the function scope"
+        ],
+        "answer_type": "multiple",
+        "validation": [
+            "/stack .* freed when .* out of scope /",
+            "/heap .* persists/",
+            "/heap memory .* large objects/"
+        ]
+    },
+    {
+        "id": "Array Storage",
+        "category": "cs",
+        "level": 2,
+        "question": [
+            "Arrays of double are best packed in an array of contiguous memory. Operations that require reading all elements such as scalar product can be performed quicker as memory is being read into a cache in large contiguous chunks.<br/>",
+            "When it comes to storing a matrix, alternative storage schemes are row major and column major schemes. ",
+            "We consider the equation $y := A . x$ where $A$ is a matrix and $x$ and $y$ are vectors.",
+            "Which one of the following is correct:"
+        ],
+        "answer_list": [
+			"row major storage is preferable for computing $y_i$",
+			"column major storage is preferable for computing $y_i$",
+			"storage choice is indifferent, row major is used by C and column major is used by Fortran."
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "/indifferent/"
+        ]
+    },
+    {
+        "id": "Javascript closure",
+        "category": "cs",
+        "level": 2.5,
+        "question": [
+            "What does the following code display to the console ?<br/><br/>",
+            "How would you amend it ? (please put this answer in comment box)<br/><br/>",
+            "",
+            "<pre>",
+            "&lt;script&gt;",
+            "for (var i=0; i&lt;5; i++) {",
+            "    setTimeout(function () {",
+            "        console.log(\"i=\"+i);",
+            "    }, (i+2*Math.random())*1000 );",
+            "}",
+            "&lt;/script&gt;",
+            "</pre>"
+        ],
+        "answer_list": [
+			"0, 1, 2, 3, 4, always in that order",
+			"0, 1, 2, 3, 4, more or less in that order",
+			"0, 1, 2, 3, 4, in complete random order",
+			"5, 5, 5, 5, 5, always",
+			"undefined, undefined, undefined, undefined, undefined, always"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "5, 5, 5, 5, 5, always"
+        ]
+    },
+    {
+        "id": "Lambdas in C++ 11",
+        "category": "cs",
+        "level": 2.5,
+        "question": [
+            "What does the following code display to the console ?<br/><br/>",
+            "How would you amend it ? (please put this answer in comment box)<br/><br/>",
+            "",
+            "<pre>",
+            "#include &lt;iostream&gt;",
+            "#include &lt;vector&gt;",
+            "#include &lt;future&gt;",
+            "#include &lt;chrono&gt;",
+            "#include &lt;thread&gt;",
+            "",
+            "int main()",
+            "{",
+            "       std::vector &lt;std::future&lt;void&gt;&gt; futures;",
+            "       for (auto i = 0; i &lt; 5; i++) {",
+            "             futures.push_back(std::async([&]() {",
+            "                    std::this_thread::sleep_for(std::chrono::milliseconds(int(100*(rand()+0.5))));",
+            "                    printf(\"i=%i\\n\", i); ",
+            "             }));         ",
+            "       }",
+            "       std::this_thread::sleep_for(std::chrono::milliseconds(15000));",
+            "       std::cout &lt;&lt; \"Press Enter to exit\";",
+            "       return 0;",
+            "}",
+            "</pre>"
+        ],
+        "answer_list": [
+			"0, 1, 2, 3, 4, always in that order",
+			"0, 1, 2, 3, 4, more or less in that order",
+			"0, 1, 2, 3, 4, in complete random order",
+			"5, 5, 5, 5, 5, always",
+			"undefined behavior"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "/(5|undefined)/"
+        ]
+    },
+    {
+        "id": "Exceptions",
+        "category": "cs",
+        "level": -3,
+        "question": [
+            "Most programming languages designed after 1970 feature exceptions. <br/>",
+            "Let's assume that a function is invoked to determine whether a certain condition is true and signal it to its caller. Let's assume the condition is not an error. ",
+            "A shrewd programmer finds that he can raise an exception and leverage that feature to obtain the required execution flow while slightly reducing the number of lines in the program.<br/>",
+            "The two following implementations are equally viable and will satisfy the requirements:<br/>"
+        ],
+		"answer_list": [
+			"An exception is raised by the callee if the condition is true, and caught by its caller. Adequate processing can be put in place in the catch statement or function continuation.",
+			"The callee  just return a boolean and the caller needs extra code handle the test of the condition and the logic involved in either case."
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "/return a boolean/"
+        ]
+    },
+    {
+        "id": "Exceptions in C++",
+        "category": "cs",
+        "level": 3,
+        "question": [
+            "Exceptions are a great mechanism to report unexpected situations.",
+            "Which of the following statements are correct ?"
+        ],
+        "answer_list": [
+            "exceptions must not be raised in constructors.",
+            "exceptions must not be raised in destructors.",
+            "exceptions must not be raised during exception handling (e.g. the catch section)"
+        ],
+        "answer_type": "multiple",
+        "validation": [
+            "/destructors/"
+        ]
+    },
+    {
+        "id": "Thread Safety",
+        "category": "cs",
+        "level": 4,
+        "question": [
+            "A thread is a lightweight subprocess. It is a separate path of execution in the memory space used by a process. <br/>",
+            "Besides giving rise of all the questions of asynchronous calls, multi-thread programming raises issues of concurrent access to shared resources, especially memory caches, which need to be protected by semaphores.<br/>",
+            "A deadlock can happen in which of the following cases:<br/>"
+        ],
+		"answer_list": [
+			"if the process is using a global state variable: some functions rely on the process state instead of taking all their arguments as parameters and can have their outcome spuriously affected by other threads execution",
+			"if there is no semaphore protecting access to shared resources when they get updated",
+			"if there are different resources protected each by their semaphore and different threads may attempt to acquire them in a different order.",
+			"none of the above"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "/acquire .* in a different order/"
+        ]
+    },
+    {
+        "id": "Taylor expansion",
+        "category": "maths",
+        "level": 1,
+        "question": " \\[ \\sum_{n=0}^\\infty \\frac{x^n}{n!} \\] is :",
+		"answer_list": [
+			"Not converging",
+			"exp(x)",
+			"sin(x)"
+		],
+		"answer_type": "exclusive",
+		"show_rationale": true,
+        "validation": [
+            "/exp/"
+        ]
+    },
+    {
+        "id": "Calculus: derivative 1",
+        "category": "maths",
+        "level": 1,
+        "question": "Let $f(x)=x^x$, what is its derivative?",
+		"answer_list": [
+			"$f'(x)= x^{x-1} $",
+			"$f'(x)=x . x^{x-1}$",
+			"$f'(x)=x^x (1 + \\ln x) $",
+			"$f'(x)=2 x^{x-1}$",
+			"none of the above"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "$f'(x)=x^x (1 + \\ln x) $"
+        ]
+    },
+    {
+        "id": "Calculus: derivative 2",
+        "category": "maths",
+        "level": 1,
+        "question": "Let $f(x)=\\sqrt{x}$, what is $f'(4)$?",
+        "answer_type": "free",
+        "validation": [
+            "0.25",
+            "1/4"
+        ]
+    },
+    {
+        "id": "Calculus: derivative 3",
+        "category": "maths",
+        "level": 1,
+        "question": "Let $f(t)=\\int_0^t \\cos(s).ds$, what is $f'(t)$?",
+		"answer_list": [
+			"$f'(t) = \\int_0^t \\sin(s).ds$",
+			"$f'(t) = \\cos(t)$",
+			"$f'(t) = t . \\cos(t)$",
+			"none of the above"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "$f'(t) = \\cos(t)$"
+        ]
+    },
+    {
+        "id": "Calculus: Integral 1",
+        "category": "maths",
+        "level": 1,
+        "question": "What is the numerical value of $$I = \\int_0^\\infty \\exp(-5x) dx$$",
+        "answer_type": "free",
+        "validation": [
+            "0.2",
+            "0.20",
+            "1/5"
+        ]
+    },
+    {
+        "id": "Calculus: Integral 2",
+        "category": "maths",
+        "level": 1,
+        "question": "Compute the value of $$I=\\int_0^1 { \\frac{dx}{x+3}}$$",
+        "answer_type": "free",
+        "validation": [
+            0.28768,
+            "ln(4/3)",
+            "ln(4)-ln(3)"
+        ]
+    },
+    {
+        "id": "Differential Equation 1",
+        "category": "maths",
+        "level": 1,
+        "question": "Consider the ODE: $y' = 3 y$",
+		"answer_list": [
+			"$y(t)$ is linearly decaying",
+			"$y(t)$ is linearly exploding",
+			"$y(t)$ is quadratically decaying",
+			"$y(t)$ is quadratically exploding",
+			"$y(t)$ is exponentially decaying",
+			"$y(t)$ is exponentially exploding",
+			"none of the above"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "/exp.* exp/"
+        ]
+    },
+    {
+        "id": "Differential Equation 2",
+        "category": "maths",
+        "level": -3,
+        "question": [
+            "The function $y(t)$ verifies the ODE: $$y''+ 2 y' + cy=0$$<br>",
+            "Which of the following statements is true?"
+        ],
+		"answer_list": [
+			"CAREFUL with HTML entity in math expressions ('&lt;' becomes '<' in answers)",
+			"QUESTION MISLEADING: oscilating if c>1, exploding if c<0",
+			"$y(x)$ is always exponentially decaying as $t \\rightarrow +\\infty$ if $|c|&gt;1$",
+			"$y(x)$ is always exponentially exploding as $t \\rightarrow +\\infty$ if $|c|&lt;1$",
+			"$y(x)$ has always pure oscillatory behavior if $c=1$",
+			"$y(x)$ is always exponentially decaying as $t \\rightarrow +\\infty$ if $|c|&lt;1$",
+			"none of the above"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "$y(x)$ is always exponentially decaying as $t \\rightarrow +\\infty$ if $|c|&lt;1$"
+        ]
+    },
+    {
+        "id": "Linear Algebra 1",
+        "category": "maths",
+        "level": 2,
+        "question": [
+            "We define $M$ as",
+            "$$",
+            "M=",
+            "  \\left[ {\\begin{array}{cccc}",
+            "   1&amp;1 &amp; 1 &amp; 2 \\\\ ",
+            "   1&amp;1 &amp; 1 &amp; 2 \\\\ ",
+            "   1&amp;1 &amp; 1 &amp; 2 \\\\ ",
+            "   1&amp;1 &amp; 1 &amp; 2       \\end{array} } \\right]",
+            "$$<br>",
+            "What is the dimension of $Ker(M)$?"
+        ],
+        "answer_type": "free",
+        "validation": [
+            "3"
+        ]
+    },
+    {
+        "id": "Linear Algebra 2",
+        "category": "maths",
+        "level": 2,
+        "question": "Which of the following statements is true:",
+		"answer_list": [
+			"$det(A+B)=det(A)+det(B)$",
+			"a matrix is invertible only if its determinant is strictly positive",
+			"a matrix determinant is invariant by permutation of the matrix columns",
+			"$tr(A B)=tr(B A)$",
+			"none of the above"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "$tr(A B)=tr(B A)$"
+        ]
+    },
+    {
+        "id": "Option: Call Gamma",
+        "category": "mathsfi",
+        "level": 2,
+        "question": [
+            "We assume an asset $S$ follows the following normal diffusion equation:",
+            "$$dS = \\mu dt + \\sigma dW_t$$",
+            "We consider the call payoff ",
+            "$$V = E( (S-K)^+)$$",
+            "The gamma is defined as $$\\Gamma = \\frac{\\partial^2 V}{\\partial S^2}$$. ",
+            "What shape is the option gamma as a function of strike:<br/>",
+            "<img src=\"vega.png\" width=\"100%\"/>"
+        ],
+		"answer_list": [
+			"answer 1",
+			"answer 2",
+			"answer 3",
+			"None"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "answer 1"
+        ]
+    },
+    {
+        "id": "Option: Put Gamma",
+        "category": "mathsfi",
+        "level": 2,
+        "question": [
+            "We do not make any assumption on the diffusion of $S$. We consider the <em>put</em> payoff ",
+            "$$V = E( (K-S)^+)$$",
+            "The gamma is defined as $$\\Gamma = \\frac{\\partial^2 V}{\\partial S^2}$$",
+            "At any given strike $K$,"
+        ],
+		"answer_list": [
+			"the gamma of a put is positive and exactly the same as the one of a call",
+			"the gamma of a put is opposite sign from the one of a call",
+			"none of the above unless we assume $S$ follows black-scholes SDE",
+			"call and put gamma are never the same",
+			"None"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "/exactly the same/"
+        ]
+    },
+    {
+        "id": "Option: Call Vega",
+        "category": "mathsfi",
+        "level": 3,
+        "question": [
+            "We assume an asset $S$ follows the following normal diffusion equation:",
+            "$$dS = \\mu dt + \\sigma dW_t$$",
+            "We consider the call payoff ",
+            "$$V = E( (S-K)^+)$$",
+            "The vega is defined as $$v=\\frac{\\partial V}{\\partial \\sigma}$$.",
+            "What shape is the option vega as a function of strike $K$:",
+            "<img src=\"vega.png\" width=\"100%\"/>"
+        ],
+		"answer_list": [
+			"answer 1",
+			"answer 2",
+			"answer 3",
+			"None"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "answer 1"
+        ]
+    },
+    {
+        "id": "Option: Binary Vega",
+        "category": "mathsfi",
+        "level": 4,
+        "question": [
+            "We assume an asset $S$ follows the following normal diffusion equation:",
+            "$$dS = \\mu dt + \\sigma dW_t$$",
+            "We consider the <em>binary</em> payoff ",
+            "$$V = E( 1_{\\{S&gt;K\\}})$$",
+            "The vega is defined as $$v=\\frac{\\partial V}{\\partial \\sigma}$$.",
+            "What shape is the option vega as a function of strike $K$:<br/>",
+            "<img src=\"vega.png\" width=\"100%\"/>"
+        ],
+		"answer_list": [
+			"answer 1",
+			"answer 2",
+			"answer 3",
+			"None"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "answer 2"
+        ]
+    },
+    {
+        "id": "Probability B-A-BA",
+        "category": "probas",
+        "level": 1,
+        "question": " \\[ \\int_0^\\infty e^{-\\frac{x^2}{2}} dx \\] is :",
+		"answer_list": [
+			1,
+			"$\\sqrt{2\\pi}$",
+			"e",
+			"something else"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "/sqrt/"
+        ]
+    },
+    {
+        "id": "Gaussian density",
+        "category": "probas",
+        "level": 1,
+        "question": " \\[ \\int_0^\\infty e^{-\\frac{x^2}{2}} dx \\] is :",
+		"answer_list": [
+			1,
+			"$\\sqrt{2\\pi}$",
+			"e",
+			"something else"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "/sqrt/"
+        ]
+    },
+    {
+        "id": "Joint Probabilities",
+        "category": "probas",
+        "level": 1,
+        "question": [
+            "Let $A$ et $B$ be 2 independent events with probabilities:",
+            "$$Pr(A) = \\frac{1}{4}$$",
+            "$$Pr(B) = \\frac{1}{3} $$",
+            "Compute the value of $P(A \\cup B)$"
+        ],
+        "answer_type": "free",
+        "validation": [
+            "0.5",
+            "1/2"
+        ]
+    },
+    {
+        "id": "First of two exponential random variables",
+        "category": "probas",
+        "level": 2,
+        "question": "Let A and B be independent exponential random variable of parameters $\\lambda_a$ and $\\lambda_b$. What is the probability than A is lower than B ?",
+		"answer_list": [
+			"$\\lambda_a / \\lambda_b$",
+			"$\\lambda_b / \\lambda_a$",
+			"$\\lambda_a - \\lambda_b$",
+			"$\\lambda_b - \\lambda_a$",
+			"$\\lambda_a/(\\lambda_a + \\lambda_b)$",
+			"$\\lambda_b/(\\lambda_a + \\lambda_b)$",
+			"other"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "$\\lambda_a/(\\lambda_a + \\lambda_b)$"
+        ]
+    },
+    {
+        "id": "Stochatic differential equations 2",
+        "category": "probas",
+        "level": 3.2,
+        "question": " $$ \\int_0^t W_s ds $$ is :",
+        "answer_list": [
+            "with expectation zero",
+            "a martingale",
+            "bonus question: calculate its variance"
+        ],
+        "answer_type": "multiple",
+        "validation": [
+            "/zero/"
+        ]
+    },
+    {
+        "id": "Stochatic differential equations 1",
+        "category": "probas",
+        "level": 3.1,
+        "question": "$$ \\int_0^t s dW_s $$ is :",
+        "answer_list": [
+            "with expectation zero",
+            "a martingale",
+            "bonus question: calculate its variance"
+        ],
+        "answer_type": "multiple",
+        "validation": [
+            "/zero/",
+            "/martingale/"
+        ]
+    },
+    {
+        "id": "Stochatic differential equations 3",
+        "category": "probas",
+        "level": -3.3,
+        "question": "$$ \\int_0^t W_s dW_s $$ is :",
+        "answer_list": [
+            "with expectation zero",
+            "a martingale",
+            "bonus question: calculate its variance"
+        ],
+        "answer_type": "multiple",
+        "validation": [
+            "/zero/",
+            "/martingale/"
+        ]
+    },
+    {
+        "id": "Conditional probability",
+        "category": "probas",
+        "level": 4,
+        "question": "Conditional probability : $$ E[ E[ X | Y ] ] $$ equals : ",
+        "answer_list": [
+			"X",
+			"E[X]",
+			"Y",
+			"E[Y]",
+			"XY",
+			"E[XY]",
+			"E[X].E[Y]",
+			"something else"
+		],
+		"answer_type": "exclusive",
+        "validation": [
+            "E[X]"
+        ]
+    },
+    {
+        "id": "Linear regression",
+        "category": "stats_machine_learning",
+        "level": -1,
+        "question": [
+            "We consider the linear regression of a time series $y$ from $p$ time series $x_1, \\ldots x_p$. <br>",
+            "If we write the regressors in row vector format $x_t = [x_{t1}, x_{t2}, \\ldots x_{tp}]$, and denote $\\\\beta$ the vector of linear regression coefficients of $y$ w.r. to $x$, should one write:"
+        ],
+		"answer_list": [
+			"$y_t = \\beta x_t  + \\epsilon_t$",
+			"$y_t = x_t \\beta + \\epsilon_t$",
+			"it does not matter"
+		],
+		"answer_type": "exclusive",
+		"validation": [
+            "/does not matter/"
+        ]
+    },
+    {
+        "id": "Causality",
+        "category": "stats_machine_learning",
+        "level": -3,
+        "question": [
+            "<img src=\"https://imgs.xkcd.com/comics/correlation.png\" width=\"100%\"/><br/>",
+            "Which of the following statements are correct ?"
+        ],
+        "answer_list": [
+            "Causality implies Correlation.",
+            "Correlation implies Causality.",
+            "Correlation and Causality are correlated :-)"
+        ],
+        "answer_type": "multiple",
+        "validation": [
+            "/and/"
+        ]
+    },
+    {
+        "id": "Machine learning",
+        "category": "stats_machine_learning",
+        "level": 3,
+        "question": [
+            "<img src=\"https://imgs.xkcd.com/comics/machine_learning.png\" width=\"150px;\"/><br/>",
+            "What are the main pitfalls/challenges with machine learning"
+        ],
+        "answer_list": [
+            "Training time and memory consumption.",
+            "Execution time of an already trained algo.",
+            "Overfitting."
+        ],
+        "answer_type": "multiple",
+        "validation": [
+            "/memory/",
+            "/fitting/"
+        ]
+    }
+]

@@ -3,7 +3,7 @@ const ddb = configure_dynamo_db_aws();
 
 function configure_dynamo_db_local() {
     AWS.config.update({
-      region: 'fakeRegion',  
+      region: 'fakeRegion',
       accessKeyId: "fakeMyKeyId",
       secretAccessKey: "fakeMyKeyId",
       });
@@ -163,8 +163,8 @@ function update_user_with_answer(userid, qid, answer) {
         expression = "SET answers.#id = :a ";
         expr_names["#id"] = qid;
         expr_vals[":a"] = dynamo_attr_val;
-		
-		if (answer.score !== undefined && answer.score !== null) { 
+
+		if (answer.score !== undefined && answer.score !== null) {
 			expression += "ADD score :si , scored :ni ",
 			expr_vals[":si"] = { "N" : ""+answer.score };
 			expr_vals[":ni"] = { "N" : ""+1 };
@@ -318,16 +318,17 @@ function dynamo_attribute_value_to_js_value(a) {
 module.exports = {
     add_user: add_user,
     get_user: get_user,
-    update_user_with_answer: update_user_with_answer
+    update_user_with_answer: update_user_with_answer,
+    get_users: get_users,
 };
 
 function test() {
-	var userid = "test27@test.com", 
-		replace = true, 
+	var userid = "test27@test.com",
+		replace = true,
 		answer = {score: 0.7 } ;
-	
-	var userid0 = "test31@test.com"; 
-	
+
+	var userid0 = "test31@test.com";
+
 	Promise.resolve()
 	//.then(_ => create_quiz_table_promise(ddb))
 	//.then(_ => test_dynamo_db(userid))

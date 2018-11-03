@@ -13,56 +13,32 @@ function load_questions_from_file() {
         question_map[q.quiz_id||q.id] = q;
     console.log("#questions", questions.length);
     //console.log("questions ids", Object.keys(question_map));
+
 }
 
-function quiz_install(app) {
+function quiz_server_start() {
+    const http = require('http');
+    const express = require('express');
+
     load_questions_from_file();
 
-    app.use('/quiz_register', function (req, res) {
+    const http_port = 8080;
+    var app = express();
+    var server = http.createServer(app);
+    server.listen(http_port, function () { console.log('HTTP server started on port: %s', http_port); });
+
+    app.use('/static', express.static(__dirname));
+
+    app.use("/quiz", async function (req, res, next) {
         var prms = req.method=="GET" ? req.query : req.body;
-        new Promise(async function (resolve, reject) {
-            try {
-                resolve(await quiz_register(prms));
-            } catch(e) {
-                console.error(e);
-                reject(e);
-            }
-        })
-        .then(function(data) { res.send(data); })
-        .catch(function(err) { res.status(500).send({ error: err }); })
+
+        try {
+            var response = await quiz_aws_handler({ body: prms });
+            res.send(response.body);
+        }catch(e) {
+            res.status(500).send({ error: e.message });
+        }
     });
-
-    app.use('/quiz_next', async function (req, res) {
-        var prms = req.method=="GET" ? req.query : req.body;
-        new Promise(async function (resolve, reject) {
-            try {
-                resolve(await quiz_next(prms));
-            } catch(e) {
-                console.error(e);
-                reject(e);
-            }
-        })
-        .then(function(data) { res.send(data); })
-        .catch(function(err) { res.status(500).send({ error: err }); })
-    });
-
-    app.use('/quiz_questions', function (req, res) {
-        // force refresh of the question list
-        load_questions_from_file();
-
-        var prms = req.method=="GET" ? req.query : req.body;
-        new Promise(async function (resolve, reject) {
-            try {
-                resolve(await quiz_questions(prms));
-            } catch(e) {
-                console.error(e);
-                reject(e);
-            }
-        })
-        .then(function(data) { res.send(data); })
-        .catch(function(err) { res.status(500).send({ error: err }); })
-    });
-
 }
 
 /*
@@ -224,7 +200,7 @@ async function quiz_questions(prms) {
     var rep = [];
     for (var id in question_map) {
         var question = question_map[id];
-        var answer = user.answers[id];
+        var answer = user && user.answers && user.answers[id];
 
         var item = {};
 
@@ -403,8 +379,10 @@ async function quiz_users(prms) {
 function deep_clone(o) { return JSON.parse(JSON.stringify(o)); }
 
 module.exports = {
-    quiz_install: quiz_install,
 	quiz_aws_handler: quiz_aws_handler,
 	load_questions_from_file: load_questions_from_file,
 };
 
+if (typeof require != 'undefined' && require.main==module) {
+    quiz_server_start();
+}

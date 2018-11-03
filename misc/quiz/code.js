@@ -4,15 +4,16 @@ var code_info; // from quiz.js
 
 var code_editor;
 function code_init() {
+    $("#code_div").show();
     $("#code_try").click(function (ev) { code_try(editor); });
 
     var lang = localStorage["language"];
     if (lang) $("#language").val(lang);
 
     lang_to_code_mirror_mode = {
-        "js": "javascript", 
+        "js": "javascript",
         "py": "python" };
-        
+
     var editor = CodeMirror.fromTextArea(document.getElementById("code_textarea"), {
             lineNumbers: true,
             mode: lang_to_code_mirror_mode[lang],
@@ -77,6 +78,7 @@ function code_init() {
     $("#code_generate_test").click(code_generate_test);
     $("#code_next_sample").click(_ => code_next(1));
     $("#code_prev_sample").click(_ => code_next(-1));
+    $("#code_div").hide();
 }
 
 function code_try(editor) {
@@ -161,7 +163,7 @@ function code_pypyjs_try(editor) {
             $("#code_console").html('<h2>Syntax error '+ts+'</h2><pre>'+e+'</pre> while compiling <pre>'+src+'</pre>');
         return Promise.reject(null);
     }).then(function() {
-        if (!code_info) 
+        if (!code_info)
             // getting main function
             return pypyjs.get("main");
     }).then(function(fct) {
@@ -204,7 +206,7 @@ function code_validate_output(user_output, sample_output, ts) {
                 ? '<em style="color:red;">add a <tt>return</tt> statement at the end of your code to display a result</em>'
                 : '<em style="color:red;">define a <tt>main</tt> function in your code</em>';
         }
-        
+
     }
 
     var html = '<h2>Execution output '+ts+'</h2><pre>' + stringify_objects(user_output) + '</pre>';

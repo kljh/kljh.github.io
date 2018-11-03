@@ -1,6 +1,6 @@
 var http_rpc_server = "";
 var http_rpc_server = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
-		
+
 $(function () {
 	if (window.location.hostname=="" || window.location.hostname=="localhost") {
 		//console.warn("changing http_rpc_server")
@@ -16,20 +16,20 @@ $(function () {
 		window.location.href = "quizlogin.html";
 		return;
 	}
-		
-	$("#logout").click(function (ev) { 
+
+	$("#logout").click(function (ev) {
 		if (localStorage) delete localStorage["user_id"];
 		var pwd = uri_args()["pwd"];
 		window.location.href = "quizlogin.html" + (pwd?"?pwd="+pwd:"");
 	});
 
-	$("#show_hide_box").click(function (ev) { 
+	$("#show_hide_box").click(function (ev) {
 		ev.preventDefault();
 		var div = ev.target.parentElement.parentElement.parentElement;
 		$(div).toggle();
 		//$(".box").toggleClass()("box nobox");
 	});
-	
+
 	$("#menu").click(function () { display_menu(); });
 	$("#skip").click(function () { next_reply_or_skip({ skip: true }); });
 	$("#next").click(function () { next_reply_or_skip(); });
@@ -45,9 +45,9 @@ $(function () {
             localStorage["user_id"] = $("#user_id").text();
 
         var req = { action: "next" };
-        if (prms.skip) 
+        if (prms.skip)
             req.skip_question = true;
-        if (prms.next_quiz_id) 
+        if (prms.next_quiz_id)
             req.next_quiz_id = prms.next_quiz_id;
         if (localStorage && localStorage["user_id"])
             req.user_id = localStorage["user_id"];
@@ -69,7 +69,7 @@ $(function () {
 
                 var question = Array.isArray(res.question) ? res.question.join("<br/>") : res.question;
 				$("#quiz").empty().append(question);
-                
+
                 if (res.done) {
                     //$("#done").show();
                     $("#done").val("Send");
@@ -105,10 +105,10 @@ $(function () {
 					$("#code_next_sample").hide();
 					code_info = res; // save as global variable
 					code_editor.setValue(res.skeleton_code.js);
-					if (res.test_data) { 
+					if (res.test_data) {
 						var test_data = res.test_data[0];
 						var html = "";
-						if (res.test_data_generate) 
+						if (res.test_data_generate)
 							$("#code_generate_test").show()
 						if (res.test_data.length>1) {
 							$("#code_prev_sample").show();
@@ -126,16 +126,16 @@ $(function () {
 				} else if (answer_type=="sql") {
 	             	$("#sql_div").show();
     				$("#sql_textarea").text(res.skeleton_sql);
-    
+
 	             	var test_data = res.test_data[0];
 	             	sql_add_tables(test_data);
                 } else if (answer_type=="no_scoring") {
                 } else {
 					console.warn("answer_type", answer_type);
 				}
-				
 
-				try { 
+
+				try {
 					MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
 				} catch (e) {
 					console.error(""+e);
@@ -165,10 +165,10 @@ $(function () {
 		var pwd = uri_args()["pwd"];
 		var admin = pwd=="Galilei";
 
-		$.get(http_rpc_server + "/quiz?action=questions&user_id=" + localStorage["user_id"] + (pwd?"&pwd="+pwd:"")) 
+		$.get(http_rpc_server + "/quiz?action=questions&user_id=" + localStorage["user_id"] + (pwd?"&pwd="+pwd:""))
 		.done(function (res) {
 			res = res.result || res;
-			
+
 			$("#quiz").empty();
 			$("#quiz_id").val("");
 			$("#reason").val("");
@@ -197,10 +197,10 @@ $(function () {
 
 				var reply_skipped = ( q.skip_question ) || ( question_timestamp && !reply_timestamp);
 				var reply_reason = answer && answer.reason;
-				
+
 				if (answer_type=="multiple" || answer_type=="exclusive") {
 					var tmp = [];
-					for (var k in answer) 
+					for (var k in answer)
 						if (answer[k]===true)
 							tmp.push(k);
 					answer = tmp;
@@ -210,7 +210,7 @@ $(function () {
 					txt += "<br/><b>Category: "+quiz_category+"</b><br/>\n";
 				txt += ""+quiz_id;
 
-				if (reply_skipped) 
+				if (reply_skipped)
 					txt += ' <span style="color:orange;">skipped</span>';
 				else if (reply_timestamp) {
 					txt += ' <span style="color:green;">done</span>';
@@ -219,10 +219,10 @@ $(function () {
 						if (answer_type != "no_scoring") {
 							if (score==null || score==undefined)
 								txt += ' <b>not scored</b>';
-							else 
-								txt += ' <b>'+(Math.round(score*1000)/1000)+'</b>';	
+							else
+								txt += ' <b>'+(Math.round(score*1000)/1000)+'</b>';
 						}
-						
+
 						if (question_timestamp && reply_timestamp) {
 						    var duration = Math.round((new Date(reply_timestamp).valueOf() - new Date(question_timestamp).valueOf())/100)/10 + "s";
 						    try {
@@ -241,7 +241,7 @@ $(function () {
 						txt += '<br/>Answer type: '+answer_type+'';
 						txt += '<br/>Validation: <tt>'+escape_html_entities_lt_and_gt(JSON.stringify(validation,null,4))+'</tt>'; // html entities
 						txt += '<br/>Reply: <pre>'+escape_html_entities_lt_and_gt(JSON.stringify(answer,null,4))+'</pre>';
-						if (reply_reason) 
+						if (reply_reason)
 						txt += '<br/>Reason:<br/><b>'+(reply_reason.substr?reply_reason.replace(/\n/g,"<br/>"):reply_reason)+'</b>';
 						txt += '<br/>';
 
@@ -249,35 +249,35 @@ $(function () {
 					}
 				}
 
-				if (reply_skipped || !reply_timestamp || admin) 
+				if (reply_skipped || !reply_timestamp || admin)
 					txt += ' <a href="#" class="quiz_direct_access" id="'+quiz_id+'">try-it</a>';
 				txt += "<br/>";
 
 			}
-			
+
 			$("#quiz_title").empty().append("Quiz menu");
 			$("#quiz").append($(txt));
 			$("#code_div").hide();
 
 			//$("#quiz").append(""+res);
 
-			$("#quizz_toggle_all_switch").click(function (ev) { 
+			$("#quizz_toggle_all_switch").click(function (ev) {
 				ev.preventDefault();
 				$(".quizz_toggle_div").hide("slow");
 			});
-			
-			$(".quizz_toggle_switch").click(function (ev) { 
+
+			$(".quizz_toggle_switch").click(function (ev) {
 				ev.preventDefault();
 				var e0 = this.nextElementSibling;
 				var el = ev.target.nextElementSibling;
 				$(el).toggle("slow");
 			});
 			$(".quizz_toggle_div");
-			
-			$(".quiz_direct_access").click(function (ev) { 
+
+			$(".quiz_direct_access").click(function (ev) {
 				var id = this.id;
 				var id2 = ev.target.id;
-				next_reply_or_skip({ next_quiz_id: id }); 
+				next_reply_or_skip({ next_quiz_id: id });
 			});
 			$("#next").prop('disabled', false);
 		})
@@ -312,7 +312,7 @@ function http_rpc(request_data, success, error) {
 		data : ajax_data,
 		contentType: "application/json; charset=utf-8",
 		dataType: "json",
-		
+
 		success: function(data) {
 			if (success)
 				success(data);

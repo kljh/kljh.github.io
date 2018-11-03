@@ -103,7 +103,7 @@ h5 { font-size: .8em; }
 			<div id="answer_choice"></div>
 		</form>
 
-		<div id="code_div">
+		<div id="code_div" style="display: none;">
 			<label for="language">Language: </label>
 			<select id="language">
 				<option value="js">Javascript</option>
@@ -113,18 +113,18 @@ h5 { font-size: .8em; }
 
 			<textarea id="code_textarea" style="width:95%; height:400px;"></textarea>
 			<div id="code_choice" style="text-align: right;">
-				<input id="code_generate_test" type="submit" value="Generate test">
-				<input id="code_prev_sample" type="submit" value="Prev test">
-				<input id="code_next_sample" type="submit" value="Next test">
+				<input id="code_generate_test" type="submit" value="Generate test" style="display: none;">
+				<input id="code_prev_sample" type="submit" value="Prev test" style="display: none;">
+				<input id="code_next_sample" type="submit" value="Next test" style="display: none;">
 				&nbsp;&nbsp;
-				<input id="code_try" type="submit" value="Try with sample input" >
+				<input id="code_try" type="submit" value="Run">
 			</div>
 			<div id="code_console" style="width:95%;"></div>
 			<div id="sample_input_output_div" style="width:95%;"></div>
 			<div id="user_output" style="width:95%;"></div>
 		</div>
 
-		<div id="sql_div"></div>
+		<div id="sql_div" style="display: none;"></div>
 
 		<br/>
 
