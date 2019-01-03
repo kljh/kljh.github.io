@@ -88,6 +88,8 @@ def listen_on_nat_pinhole(s) :
 
 
 def request_to_peers(peers):
+	print("#peers", len(peers))
+	print("peers[myid]", peers[my_id])
 	print("peers", peers)
 	for id in peers :
 		peer = peers[id]
@@ -105,8 +107,8 @@ def request_to_peers(peers):
 			s.send(msg)
 			rep = s.recv(1024)
 			print("reply from peer", id, ":", rep)
-		except:
-			print("NO reply from peer", id)
+		except Exception as e:
+			print("NO reply from peer", id, e)
 
 
 if __name__ == "__main__":
