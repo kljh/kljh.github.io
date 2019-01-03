@@ -12,6 +12,7 @@ TRACKER_HTTP_SERVER = ("kljh-peer-tracker.azurewebsites.net", 80) #  443
 TRACKER_HTTP_URL = "/" #public/peers"
 
 my_id = "xkcd"+str(os.getpid())
+if 'USERNAME' in os.environ : my_id =  os.environ['USERNAME']
 print("my_id", my_id, "\n")
 
 def register_with_tracker_tcp():
@@ -94,7 +95,10 @@ def request_to_peers(peers):
 	for id in peers :
 		peer = peers[id]
 
+		# TCP server
 		#host = tuple(peer)
+
+		# HTTP server on Azure
 		tmp = peer["c"].split(':')
 		host = (tmp[0], int(tmp[1]))
 
