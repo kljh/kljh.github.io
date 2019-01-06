@@ -1,8 +1,5 @@
 @echo off
 
-set func=quiz
-set func=quiz_next
-
 goto :deploy
 goto :test
 goto :eof
@@ -11,8 +8,8 @@ goto :eof
 
 7z a quiz.zip index.js quiz-app.js quiz-db.js quiz-questions.json
 
-:: aws lambda list-functions
-call aws lambda update-function-code --function-name %func% --zip-file fileb://quiz.zip
+:: call aws lambda list-functions
+call aws lambda update-function-code --function-name quiz --zip-file fileb://quiz.zip
 
 del quiz.zip
 echo.

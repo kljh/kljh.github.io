@@ -59,7 +59,7 @@ var bingo_regexps = {
     synergy: /[Ss]ynerg[yies]*/,
     bot: /([Ch]at|[Rr]o|\s)bot[iszation]*\s/,
     digitalisation: /[Dd]igital[isaton]*/,
-    bitcoin: /[Bb]it\s*[Cc]oin[s]*/,
+    blockchain: /[Bb]loc\s*[Cc]hain[s]*/,
     AI: /\sAI\s/,
     disrupt: /[Dd]isrupt[iveonr]*/,
     innovation: /[Ii]nnovation/,
@@ -67,6 +67,7 @@ var bingo_regexps = {
     mining: /([Dd]ata )?[Mm]ining/,
     cards: /[Cc]ards/,
     connected: /[Cc]onnected/,
+    communities: /[Cc]ommunit(ies|y)/,
     "2.0": /\s2\.0\s/,
 
     };
@@ -108,7 +109,7 @@ function bingo_substitution(elnt, html_before) {
 
     var grid = [
         [ "AI", "mining", "disrupt", "innovation" ],
-        [ "bitcoin", "synergy", "digitalisation", "bot" ],
+        [ "blockchain", "synergy", "digitalisation", "bot" ],
         [ "2.0", "connected", "cards", "initiative" ],
         ];
 

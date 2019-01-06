@@ -1,11 +1,11 @@
 
-/* 
-Given a matrix a[1..n][1..n], this routine replaces it by the LU decomposition of a row-wise permutation of itself. 
+/*
+Given a matrix a[1..n][1..n], this routine replaces it by the LU decomposition of a row-wise permutation of itself.
 
-- a and n are input. 
+- a and n are input.
 - a is output, arranged as in equation (2.3.14).
 - indx[1..n] is an output vector that records the row permutation effected by the partial pivoting.
-- d is output as +-1 depending on whether the number of row interchanges was even or odd, respectively. 
+- d is output as +-1 depending on whether the number of row interchanges was even or odd, respectively.
 
 This routine is used in combination with lubksb to solve linear equations or invert a matrix.
 */
@@ -15,11 +15,11 @@ function ludcmp(a, indx)
 	if (indx==undefined) indx = Array(n);
 
 	var TINY = 1.0e-20;
-	
+
 	var d = 1.0;
 	var big, dum, sum, temp;
     var i, j, k, imax, n=a.length;
-	
+
     var vv = Array(n);
 	for (i=0; i<n; i++) {
 		big = 0.0;
@@ -28,21 +28,21 @@ function ludcmp(a, indx)
 		if (big==0.0) throw new Error("Singular matrix in routine ludcmp" );
 		vv[i]=1.0/big;
 	}
-	
+
     for (j=0; j<n; j++) {
 		for (i=0; i<j; i++) {
 			sum = a[i][j];
-			for (k=0;k<i;k++) 
+			for (k=0;k<i;k++)
                 sum -= a[i][k]*a[k][j];
 			a[i][j] = sum;
 		}
 		big = 0.0;
 		for (i=j; i<n; i++) {
 			sum=a[i][j];
-			for (k=0; k<j; k++) 
+			for (k=0; k<j; k++)
                 sum -= a[i][k]*a[k][j];
 			a[i][j]=sum;
-            
+
             var dum=vv[i]*Math.abs(sum);
 			if (dum >= big) {
 				big=dum;
@@ -65,18 +65,18 @@ function ludcmp(a, indx)
 			for (i=j+1;i<n;i++) a[i][j] *= dum;
 		}
 	}
-    
+
     return { a: a, indx: indx, d: d };
 }
 
-/* 
+/*
 
-Solves the set of n linear equations A . X = B. 
+Solves the set of n linear equations A . X = B.
 
-Here a[1..n][1..n] is input, not as the matrix A but rather as its LU decomposition, determined by the routine ludcmp. 
-- indx[1..n] is input as the permutation vector returned by ludcmp. 
-- b[1..n] is input as the right-hand side vector B, and  returns with the solution vector X. 
-- a, n, and indx are not modified by this routine and can be left in place for successive calls with different right-hand sides b. 
+Here a[1..n][1..n] is input, not as the matrix A but rather as its LU decomposition, determined by the routine ludcmp.
+- indx[1..n] is input as the permutation vector returned by ludcmp.
+- b[1..n] is input as the right-hand side vector B, and  returns with the solution vector X.
+- a, n, and indx are not modified by this routine and can be left in place for successive calls with different right-hand sides b.
 
 This routine takes into account the possibility that b will begin with many zero elements, so it is effcient for use in matrix inversion.
 */
@@ -109,12 +109,12 @@ function lubksb(a, indx, b)
 
 function lusolve(mat, vec) {
 	var N = mat.length;
-	
+
     var tmp = mtx_copy(mat);
 	var indx = Array(N);
 	var d;
 	ludcmp(tmp, indx, d); // LU decomposition.
-    
+
  	var out = vec_copy(vec);
  	lubksb(tmp, indx, out);
 	return out;
@@ -125,22 +125,22 @@ function lusolve(mat, vec) {
 function luinv(mat) {
 	var N = mat.length;
 	var out = mtx_make(N, N);
-	
+
     var tmp = mtx_copy(mat);
 	var indx = Array(N);
 	var d;
 	ludcmp(tmp, indx, d); // LU decomposition.
-    
+
  	var i, j;
     var col = Array(N);
- 	for(j=0; j<N; j++) { 
+ 	for(j=0; j<N; j++) {
 		// find inverse by columns.
-		for(i=0; i<N; i++) 
+		for(i=0; i<N; i++)
 			col[i]=0.0;
 		col[j]=1.0;
-		
+
 		lubksb(tmp, indx, col);
-		for(i=0; i<N; i++) 
+		for(i=0; i<N; i++)
 			out[i][j]=col[i];
  	}
 	return out;
@@ -154,13 +154,22 @@ if (false && (typeof window) === "undefined" ) {
 	var load_script;
 	if (typeof load  != "undefined") { load_script = load; } // V8
 	else if (typeof LoadModule  != "undefined") { load_script = function(jsfile) { LoadModule('jsstd'); Exec(jsfile); }; } // JsLibs
-    
+
 	load_script('base_utils.js');
 	load_script('numerics_base.js');
-	
+
 	var m = [[1,5,0],[5,1,2],[0,2,1]];
     var mi = luinv(m);
     info_msg("m  =  \n", mtx_text(m));
     info_msg("mi =  \n", mtx_text(mi));
     info_msg("id ?= \n", mtx_text(mtx_prod(m,mi)));
+}
+
+if (typeof exports !="undefined") {
+	exports.mtx_inv = mtx_inv;
+	exports.lusolve = lusolve;
+
+	// bring some functions of numerics_base.js in this scope
+	const base = require("../../vision/numerics/numerics_base.js");
+	var { vec_copy, mtx_make, mtx_copy } = base;
 }

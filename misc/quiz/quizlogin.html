@@ -7,19 +7,24 @@
 
 <script>
 $(function () {
+	if (localStorage["user_id"])
+		$("#user_id").val(localStorage["user_id"]);
+
 	$("#next").click(function (ev) {
 		// !! IMPORTANT FOR CROSS DOMAIN !!
 		ev.preventDefault();
 
 		var user_id = $("#user_id").val();
 		if (!user_id) return;
-		
+
 		var http_rpc_server = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
+		if (location.hostname=="localhost") http_rpc_server = "";
+
 		$.ajax({
 			type: "GET",
 			url: http_rpc_server + "/quiz?action=register&user_id="+user_id,
 			crossDomain: true,
-			cache: false, 
+			cache: false,
 			//data: { action: "register", uid: user_id },
 			contentType: "application/json",
 			dataType: "json",

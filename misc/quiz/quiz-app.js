@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
+const bDebug = true;
+
 // https://aws.amazon.com/blogs/compute/simply-serverless-using-aws-lambda-to-expose-custom-cookies-with-api-gateway/
 const db = require('./quiz-db');
 
@@ -19,6 +21,7 @@ function load_questions_from_file() {
 function quiz_server_start() {
     const http = require('http');
     const express = require('express');
+    const bodyParser = require('body-parser');
 
     load_questions_from_file();
 
@@ -29,14 +32,18 @@ function quiz_server_start() {
 
     app.use('/static', express.static(__dirname));
 
+    app.use(bodyParser.json()); // parse JSON requests
+    app.set('json spaces', 4); // pretty JSON replies
     app.use("/quiz", async function (req, res, next) {
         var prms = req.method=="GET" ? req.query : req.body;
 
         try {
             var response = await quiz_aws_handler({ body: prms });
-            res.send(response.body);
-        }catch(e) {
-            res.status(500).send({ error: e.message });
+            var resobj = JSON.parse(response.body);
+            res.status(response.statusCode || 500).json(resobj);
+        } catch(e) {
+            res.status(500).json({ error: e.message });
+            console.log("quiz error", e);
         }
     });
 }
@@ -70,25 +77,27 @@ async function quiz_aws_handler(event, context, callback) {
 			req = JSON.parse(event.body);
 		}
 
-		if (!req)
-		err = "No action specified.";
-		else
-		switch (req.action) {
-			case "register":
-				res = await quiz_register(req);
-				break;
-			case "next":
-				res = await quiz_next(req);
-				break;
-			case "questions":
-				res = await quiz_questions(req);
-				break;
-			case "users":
-				res = await quiz_users(req);
-				break;
-			default:
-				err = "Unhandled action '"+ req.action+"'.";
-				// res = event;
+		if (!req) {
+            err = "No action specified.";
+		} else {
+            console.log("quiz", JSON.stringify(req));
+            switch (req.action) {
+                case "register":
+                    res = await quiz_register(req);
+                    break;
+                case "next":
+                    res = await quiz_next(req);
+                    break;
+                case "questions":
+                    res = await quiz_questions(req);
+                    break;
+                case "users":
+                    res = await quiz_users(req);
+                    break;
+                default:
+                    err = "Unhandled action '"+ req.action+"'.";
+                    // res = event;
+            }
 		}
 
     } catch(e) {
@@ -194,6 +203,8 @@ async function quiz_next(prms) {
 async function quiz_questions(prms) {
     var user_id = prms.user_id || prms.uid;
     var admin = prms.pwd=="Galilei";
+
+    if (bDebug) load_questions_from_file();
 
     var user = await db.get_user(user_id);
 

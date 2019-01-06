@@ -1,5 +1,9 @@
 const AWS = require('aws-sdk');
 const ddb = configure_dynamo_db_aws();
+//const ddb = configure_dynamo_db_local();
+//const ddb = null;
+
+var null_ddb_users = {}; // a basic mockup of dynamo DB (not persitent, not scalable)
 
 function configure_dynamo_db_local() {
     AWS.config.update({
@@ -28,6 +32,9 @@ function configure_dynamo_db_aws() {
 }
 
 function create_quiz_table_promise(ddb) {
+    if (!ddb)
+        return Promise.resolve({ "ok": true, "status": "table created" });
+
     return new Promise(function(resolve, reject) {
         var create_table_prms = {
            "TableName": "quiz",
@@ -88,6 +95,16 @@ async function test_dynamo_db(uid) {
 }
 
 function add_user(userid, replace) {
+    if (!ddb) {
+        null_ddb_users[userid] = {
+            "uid": userid,
+            "timestamp": new Date().toISOString(),
+            "score": 0, "scored": 0,
+            "actions" : [ "created "+(new Date().toISOString()) ],
+            "answers": {} };
+        return Promise.resolve(null_ddb_users[userid]);
+    }
+
     return new Promise(function (resolve, reject) {
         var put_item_prms = {
             "TableName": "quiz",
@@ -95,7 +112,7 @@ function add_user(userid, replace) {
             //"ReturnConsumedCapacity": "TOTAL",
             "Item": {
                 "uid": { "S": "user_"+userid },
-                "timestamp": { "S": "-" },
+                "timestamp": { "S": new Date().toISOString() },
 				"score" : { "N": "0" },
                 "scored" : { "N": "0" },
                 //"comments" : { "S": "this is a test item" } ,
@@ -122,6 +139,9 @@ function add_user(userid, replace) {
 }
 
 function get_user(userid) {
+    if (!ddb)
+        return Promise.resolve(null_ddb_users[userid] || { error: "no user "+userid });
+
     return new Promise(function (resolve, reject) {
         var get_item_prms = {
             "TableName": "quiz",
@@ -137,6 +157,7 @@ function get_user(userid) {
             //"ConsistentRead": false,
             //"ReturnConsumedCapacity": "TOTAL"
         };
+
         ddb.getItem(get_item_prms, function(err, data) {
             if (err) {
                 reject({ get_item_prms, err, message: err.message, stack: err.stack });
@@ -151,6 +172,19 @@ function get_user(userid) {
 
 function update_user_with_answer(userid, qid, answer) {
     //console.log("adding answer", JSON.stringify(answer, null, 4));
+
+    if (!ddb) {
+        var user = null_ddb_users[userid];
+        console.log("--- user --- ", user)
+        user.answers[qid] = answer;
+
+        if (answer.score !== undefined && answer.score !== null) {
+            user.score += answer.score;
+            user.score += 1;
+        }
+
+        return Promise.resolve(user);
+    }
 
     var dynamo_attr_val = js_value_to_dynamo_attribute_value(answer);
     //console.log("dynamo_attr_val", JSON.stringify(dynamo_attr_val, null, 4));
@@ -213,7 +247,13 @@ function update_user_with_answer(userid, qid, answer) {
 }
 
 function delete_user(userid) {
+    if (!ddb) {
+        delete null_ddb_users[userid];
+        return resolve({ "ok": true, "status": "user deleted" });
+    }
+
     return new Promise(function (resolve, reject) {
+
         var delete_prms = {
             "TableName": "quiz",
             "Key": {
@@ -236,6 +276,12 @@ function delete_user(userid) {
 }
 
 function get_users() {
+    if (!ddb) {
+        var users = [];
+        for (var u in null_ddb_users) user.push(null_ddb_users[u]);
+        return Promise.resolve(users);
+    }
+
     return new Promise(function (resolve, reject) {
         var scan_prms = {
             "TableName": "quiz",

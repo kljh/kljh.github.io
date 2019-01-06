@@ -78,9 +78,9 @@
             "Reminder: the <tt>%</tt> is the modulo operator, e,g. it returns the remainder of the Euclidean division (17 % 5 is 2)",
             "",
             "<pre>",
-            "for (var i=0; i<10; i++) {",
-            "    if (i%3 != 0);",
-            "        print(i);",
+            "for (int i=0; i<10; i++) {",
+            "    if (i%3 != 0)",
+            "        println(i);",
             "}",
             "</pre>"
         ],
@@ -106,6 +106,7 @@
             "Which of the statements are correct about the <em>recursive</em> implementation :",
             "<pre>",
             "int fibo(int k) {",
+            "    assert( k >= 0 );",
             "    if (k==0||k==1) ",
             "        return 1;",
             "    else ",
@@ -136,10 +137,11 @@
             "Which of the statements are correct about the <em>iterative</em> implementation :",
             "<pre>",
             "int fibi(int k) {",
+            "    assert( k >= 0 );",
             "    if (k==0||k==1) ",
             "        return 1;",
             "    int f0 = 1, f1 = 1, f2; ",
-            "    for (int i=2; i&lt;=k i++) {",
+            "    for (int i=2; i&lt;=k; i++) {",
             "        f2 = f0 + f1;",
             "        f0 = f1; f1 = f2;",
             "    }",
@@ -193,7 +195,7 @@
         "level": 6,
         "question": "<p>You have instructions to reach a treasure in the Caraibes.</p><p> Each instructions is made of one letter.<ul><li>Letter 'M' means move forward by one unit.</li><li>Letter 'L' means turn left (by 90 degrees).</li><li>Letter 'R' means turn right.</li></ul></p> <p>The map uses coordinates (longitude, latitude). You start at coordinates ( 0, 0 ) facing north (e.g. towards coordinate ( 0, 1 ).</p> <p>Write a <tt>find_treasure</tt> function that receives a list of instructions and return the coordinate of the treasure.<br/> </p>",
         "answer_type": "code",
-        "test_data": [ 
+        "test_data": [
             {
                 "input": [
                     "M",
@@ -213,7 +215,7 @@
         "skeleton_code": {
             "function_name" : "find_treasure",
             "js": "function find_treasure(instructions) {\n  var x=0, y=0;\n  for (var i=0; i<instructions.length; i++) {\n    var instr = instructions[i];\n    if (instr==\"M\") x = x + 7;\n    if (instr==\"L\") x = x * y;\n    if (instr==\"R\") y = y * 3 + 1;\n  }\n  return [ x, y ];\n}"
-        }, 
+        },
         "validation" : {
             "src" : "function find_treasure(instructions) {\n  var dirs = [ [1,0], [0,1], [-1,0], [0,-1] ];\n  var x=0, y=0, d=1;\n  for (var i=0; i<instructions.length; i++) {\n    var instr = instructions[i];\n    if (instr=='M') { x += dirs[d][0]; y += dirs[d][1]; }\n    if (instr=='L') d = ( d+1 ) % 4;\n    if (instr=='R') d = ( d-1 + 4 ) % 4;\n  }\n  return [x,y];\n}",
             "test_data":  [ {
@@ -227,7 +229,7 @@
         "level": 5,
         "question": "<p>Two words (or sentence) are anagrams if they have the same letter in the same order.<p>Write a <tt>test</tt> function that receives a pair of words and return a Boolean: true if the two words are anagrams, false otherwise.<br/> </p>",
         "answer_type": "code",
-        "test_data": [ 
+        "test_data": [
             {
                 "input": [ "abcd", "acdb" ],
                 "output":  true
@@ -253,7 +255,7 @@
             "function_name" : "test",
             "js": "function test(word_pair) {\n  var a=word_pair[0], b=word_pair[1];\n  var res = (a[0]==b[0]);\n  return res;\n}",
             "py": "def test(word_pair):\n  a=word_pair[0]\n  b=word_pair[1]\n  res = (a[0]==b[0])\n  return res\n"
-        }, 
+        },
         "validation" : {
             "src" : "function test(word_pair) {\n  return Array.from(word_pair[0]).sort().join('')==Array.from(word_pair[1]).sort().join('');\n}",
             "test_data":  [ {
@@ -267,7 +269,7 @@
         "level": 5,
         "question": "<p>You are given the table below.<br/>Write the SQL query to get the cities with more than 10 million habitants, with biggest cities first.<br/>Expected output is given for reference.<br/>Try to avoid implementation specific syntax. SQL dialect used: SQLite.</p>",
         "answer_type": "sql",
-        "test_data": [ 
+        "test_data": [
             {
                 "metropoles": [
                     [ "City", "Country", "Population" ],
@@ -286,6 +288,36 @@
         "skeleton_sql" : "select City, Population from metropoles"
     },
     {
+        "id": "Inner join",
+        "category": "data",
+        "level": 5,
+        "question": "<p>You are given the two tables below.<br/>Write the SQL query to get the companies (and their sector) with a headquarter in London.</p>",
+        "answer_type": "sql",
+        "test_data": [
+            {
+                "companies": [
+                    [ "Company", "Sector" ],
+                    [ "Sud-Aviation", "Aerospace"],
+                    [ "HSBC", "Bank" ],
+                    [ "Unilever", "Consumer products" ],
+                    [ "Renault-Nissan", "Motors" ],
+                    [ "Saint-Gobain", "Building materials" ] ],
+                "headquarters":  [
+                    [ "Company", "Headquarter" ],
+                    [ "Sud-Aviation", "Toulouse"],
+                    [ "HSBC", "London" ],
+                    [ "HSBC", "HK" ],
+                    [ "Unilever", "Rotterdam" ],
+                    [ "Unilever", "London" ],
+                    [ "Renault-Nissan", "Yokohama" ],
+                    [ "Renault-Nissan", "Boulogne-Billancourt "],
+                    [ "Saint-Gobain", "Courbevoie"]
+                    ]
+            }
+        ],
+        "skeleton_sql" : "select Company, Sector, Headquarter from headquarters"
+    },
+    {
         "id": "Algorithm: linear vs bsearch",
         "category": "algo",
         "level": -3,
@@ -296,42 +328,14 @@
         ],
 		"answer_list": [
 			"sorting the table does no help doing a faster search",
-			"if $n&gt;p$, it is always best to sort the table first",
-			"if $p&gt;3$, it is always best to sort the table first",
-			"the $p$ search of an ordered table requires $O(p \\log_2 n)$ operations",
-			"linear search requires $O(p \\log_2 n)$ operations"
+			"if $p&gt;n^2$, it is always best to sort the table first",
+			"if $p&gt;n$, it is always best to sort the table first",
+			"if $p&gt;\\log_2 n$, it is always best to sort the table first",
+			"always sort the table (or index it) to do a faster search"
 		],
 		"answer_type": "exclusive",
         "validation": [
-            "the $p$ search of an ordered table requires $O(p \\log_2 n)$ operations"
-        ]
-    },
-    {
-        "id": "Associative arrays",
-        "category": "algo",
-        "level": 3,
-        "question": [
-            "An array element can be directly accessed using a integer index. <br/>",
-            "An associative array (aka dictionary) is a container where records are stored using a logical index The index (or key) is often a string (or can be any type for which a comparison function is available in theory). <br/>",
-            "We consider the following containers:<br/>",
-            "<ul>",
-            "  <li>black/red tree: a form of tree that orders and balances itself at insertion</li>",
-            "  <li>hashmap: an array where index is computed from the key using a hashing function</li>",
-            "  <li>linked list: where the relevant record can be found by comparing the key to each successive element</li>",
-            "</ul>",
-            "Which of the following are correct:"
-        ],
-        "answer_list": [
-            "black/red tree in general provide an efficient implementation of associative array",
-            "hashmap in general provide an efficient implementation of associative array",
-            "an array using linear search in general provides an efficient implementation of associative array",
-            "hashmap represents a compromise between speed and storage space"
-        ],
-        "answer_type": "multiple",
-        "validation": [
-            "/tree .* efficient/",
-            "/hashmap .* efficient/",
-            "/hashmap .* compromise/"
+            "if $p&gt;\\log_2 n$, it is always best to sort the table first"
         ]
     },
     {
@@ -399,32 +403,12 @@
         ]
     },
     {
-        "id": "Array Storage",
-        "category": "cs",
-        "level": 2,
-        "question": [
-            "Arrays of double are best packed in an array of contiguous memory. Operations that require reading all elements such as scalar product can be performed quicker as memory is being read into a cache in large contiguous chunks.<br/>",
-            "When it comes to storing a matrix, alternative storage schemes are row major and column major schemes. ",
-            "We consider the equation $y := A . x$ where $A$ is a matrix and $x$ and $y$ are vectors.",
-            "Which one of the following is correct:"
-        ],
-        "answer_list": [
-			"row major storage is preferable for computing $y_i$",
-			"column major storage is preferable for computing $y_i$",
-			"storage choice is indifferent, row major is used by C and column major is used by Fortran."
-		],
-		"answer_type": "exclusive",
-        "validation": [
-            "/indifferent/"
-        ]
-    },
-    {
         "id": "Javascript closure",
         "category": "cs",
         "level": 2.5,
         "question": [
-            "What does the following code display to the console ?<br/><br/>",
-            "How would you amend it ? (please put this answer in comment box)<br/><br/>",
+            "<p>What does the following code display to the console ?<br/>",
+            "How would you amend it ? (please put this answer in comment box)</p>",
             "",
             "<pre>",
             "&lt;script&gt;",
@@ -495,18 +479,35 @@
         "category": "cs",
         "level": -3,
         "question": [
-            "Most programming languages designed after 1970 feature exceptions. <br/>",
-            "Let's assume that a function is invoked to determine whether a certain condition is true and signal it to its caller. Let's assume the condition is not an error. ",
-            "A shrewd programmer finds that he can raise an exception and leverage that feature to obtain the required execution flow while slightly reducing the number of lines in the program.<br/>",
-            "The two following implementations are equally viable and will satisfy the requirements:<br/>"
+            "Most programming languages designed after 1970 feature exceptions mechanism. <br/>",
+            "You are doing a code review of the code below using exceptions.<br/>",
+            "",
+            "<pre>",
+            "function count_ok_err_files(file_list)",
+            "{",
+            "       var nbOkFiles = 0;",
+            "       var nbErrorFiles = 0;",
+            "       for (var file in file_list) {",
+            "             try {",
+            "                    read_and_process_file(file); ",
+            "                    nbOkFiles = nbOkFiles + 1; ",
+            "             } catch(e) {",
+            "                    nbErrorFiles = nbErrorFiles +1;",
+            "             };         ",
+            "       }",
+            "       return { \"nbOkFiles\": nbOkFiles, \"nbErrorFiles\": nbErrorFiles };",
+            "}",
+            "</pre>
+
+            What is your review conclusion ?"
         ],
 		"answer_list": [
-			"An exception is raised by the callee if the condition is true, and caught by its caller. Adequate processing can be put in place in the catch statement or function continuation.",
-			"The callee  just return a boolean and the caller needs extra code handle the test of the condition and the logic involved in either case."
+			"Code is correct. It can be committed.",
+			"Code should be rewritten."
 		],
 		"answer_type": "exclusive",
         "validation": [
-            "/return a boolean/"
+            "/rewritten/"
         ]
     },
     {
@@ -515,7 +516,7 @@
         "level": 3,
         "question": [
             "Exceptions are a great mechanism to report unexpected situations.",
-            "Which of the following statements are correct ?"
+            "In C++, which of the following statements are correct ?"
         ],
         "answer_list": [
             "exceptions must not be raised in constructors.",
@@ -656,11 +657,11 @@
         "level": -3,
         "question": [
             "The function $y(t)$ verifies the ODE: $$y''+ 2 y' + cy=0$$<br>",
-            "Which of the following statements is true?"
+            "Which of the following statements is true?",
+            "CAREFUL with HTML entity in math expressions ('&lt;' becomes '<' in answers)",
+			"QUESTION MISLEADING: oscilating if c>1, exploding if c<0"
         ],
 		"answer_list": [
-			"CAREFUL with HTML entity in math expressions ('&lt;' becomes '<' in answers)",
-			"QUESTION MISLEADING: oscilating if c>1, exploding if c<0",
 			"$y(x)$ is always exponentially decaying as $t \\rightarrow +\\infty$ if $|c|&gt;1$",
 			"$y(x)$ is always exponentially exploding as $t \\rightarrow +\\infty$ if $|c|&lt;1$",
 			"$y(x)$ has always pure oscillatory behavior if $c=1$",
@@ -711,113 +712,23 @@
         ]
     },
     {
-        "id": "Option: Call Gamma",
-        "category": "mathsfi",
-        "level": 2,
-        "question": [
-            "We assume an asset $S$ follows the following normal diffusion equation:",
-            "$$dS = \\mu dt + \\sigma dW_t$$",
-            "We consider the call payoff ",
-            "$$V = E( (S-K)^+)$$",
-            "The gamma is defined as $$\\Gamma = \\frac{\\partial^2 V}{\\partial S^2}$$. ",
-            "What shape is the option gamma as a function of strike:<br/>",
-            "<img src=\"vega.png\" width=\"100%\"/>"
-        ],
-		"answer_list": [
-			"answer 1",
-			"answer 2",
-			"answer 3",
-			"None"
-		],
-		"answer_type": "exclusive",
-        "validation": [
-            "answer 1"
-        ]
-    },
-    {
-        "id": "Option: Put Gamma",
-        "category": "mathsfi",
-        "level": 2,
-        "question": [
-            "We do not make any assumption on the diffusion of $S$. We consider the <em>put</em> payoff ",
-            "$$V = E( (K-S)^+)$$",
-            "The gamma is defined as $$\\Gamma = \\frac{\\partial^2 V}{\\partial S^2}$$",
-            "At any given strike $K$,"
-        ],
-		"answer_list": [
-			"the gamma of a put is positive and exactly the same as the one of a call",
-			"the gamma of a put is opposite sign from the one of a call",
-			"none of the above unless we assume $S$ follows black-scholes SDE",
-			"call and put gamma are never the same",
-			"None"
-		],
-		"answer_type": "exclusive",
-        "validation": [
-            "/exactly the same/"
-        ]
-    },
-    {
-        "id": "Option: Call Vega",
-        "category": "mathsfi",
-        "level": 3,
-        "question": [
-            "We assume an asset $S$ follows the following normal diffusion equation:",
-            "$$dS = \\mu dt + \\sigma dW_t$$",
-            "We consider the call payoff ",
-            "$$V = E( (S-K)^+)$$",
-            "The vega is defined as $$v=\\frac{\\partial V}{\\partial \\sigma}$$.",
-            "What shape is the option vega as a function of strike $K$:",
-            "<img src=\"vega.png\" width=\"100%\"/>"
-        ],
-		"answer_list": [
-			"answer 1",
-			"answer 2",
-			"answer 3",
-			"None"
-		],
-		"answer_type": "exclusive",
-        "validation": [
-            "answer 1"
-        ]
-    },
-    {
-        "id": "Option: Binary Vega",
-        "category": "mathsfi",
-        "level": 4,
-        "question": [
-            "We assume an asset $S$ follows the following normal diffusion equation:",
-            "$$dS = \\mu dt + \\sigma dW_t$$",
-            "We consider the <em>binary</em> payoff ",
-            "$$V = E( 1_{\\{S&gt;K\\}})$$",
-            "The vega is defined as $$v=\\frac{\\partial V}{\\partial \\sigma}$$.",
-            "What shape is the option vega as a function of strike $K$:<br/>",
-            "<img src=\"vega.png\" width=\"100%\"/>"
-        ],
-		"answer_list": [
-			"answer 1",
-			"answer 2",
-			"answer 3",
-			"None"
-		],
-		"answer_type": "exclusive",
-        "validation": [
-            "answer 2"
-        ]
-    },
-    {
         "id": "Probability B-A-BA",
         "category": "probas",
         "level": 1,
-        "question": " \\[ \\int_0^\\infty e^{-\\frac{x^2}{2}} dx \\] is :",
+        "question": [
+			"We consider two events A and B, P[not A] = 0.4 and P[A and not B] = 0.2.",
+			"What is P[A and B] ?"
+		],
 		"answer_list": [
-			1,
-			"$\\sqrt{2\\pi}$",
-			"e",
-			"something else"
+			"0.2",
+			"0.4",
+			"0.5",
+			"0.6",
+			"0.8"
 		],
 		"answer_type": "exclusive",
         "validation": [
-            "/sqrt/"
+            "/0.4/"
         ]
     },
     {
@@ -936,61 +847,6 @@
 		"answer_type": "exclusive",
         "validation": [
             "E[X]"
-        ]
-    },
-    {
-        "id": "Linear regression",
-        "category": "stats_machine_learning",
-        "level": -1,
-        "question": [
-            "We consider the linear regression of a time series $y$ from $p$ time series $x_1, \\ldots x_p$. <br>",
-            "If we write the regressors in row vector format $x_t = [x_{t1}, x_{t2}, \\ldots x_{tp}]$, and denote $\\\\beta$ the vector of linear regression coefficients of $y$ w.r. to $x$, should one write:"
-        ],
-		"answer_list": [
-			"$y_t = \\beta x_t  + \\epsilon_t$",
-			"$y_t = x_t \\beta + \\epsilon_t$",
-			"it does not matter"
-		],
-		"answer_type": "exclusive",
-		"validation": [
-            "/does not matter/"
-        ]
-    },
-    {
-        "id": "Causality",
-        "category": "stats_machine_learning",
-        "level": -3,
-        "question": [
-            "<img src=\"https://imgs.xkcd.com/comics/correlation.png\" width=\"100%\"/><br/>",
-            "Which of the following statements are correct ?"
-        ],
-        "answer_list": [
-            "Causality implies Correlation.",
-            "Correlation implies Causality.",
-            "Correlation and Causality are correlated :-)"
-        ],
-        "answer_type": "multiple",
-        "validation": [
-            "/and/"
-        ]
-    },
-    {
-        "id": "Machine learning",
-        "category": "stats_machine_learning",
-        "level": 3,
-        "question": [
-            "<img src=\"https://imgs.xkcd.com/comics/machine_learning.png\" width=\"150px;\"/><br/>",
-            "What are the main pitfalls/challenges with machine learning"
-        ],
-        "answer_list": [
-            "Training time and memory consumption.",
-            "Execution time of an already trained algo.",
-            "Overfitting."
-        ],
-        "answer_type": "multiple",
-        "validation": [
-            "/memory/",
-            "/fitting/"
         ]
     }
 ]

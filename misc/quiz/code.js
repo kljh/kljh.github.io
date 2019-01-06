@@ -190,7 +190,7 @@ function code_pypyjs_try(editor) {
 
 function code_validate_output(user_output, sample_output, ts) {
     var html_short;
-    if (sample_output) {
+    if (sample_output!=undefined) {
         // check
         var validated = JSON.stringify(user_output)==JSON.stringify(sample_output);
 

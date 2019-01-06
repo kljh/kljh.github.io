@@ -1,11 +1,11 @@
-var http_rpc_server = "";
 var http_rpc_server = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
 
 $(function () {
-	if (window.location.hostname=="" || window.location.hostname=="localhost") {
+	if (window.location.hostname=="localhost") {
 		//console.warn("changing http_rpc_server")
 		//http_rpc_server = window.location.origin;
 		//http_rpc_server = "http://127.0.0.1:5000";
+		http_rpc_server = "";
 	}
 
     // code executed on startup

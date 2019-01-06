@@ -1,4 +1,5 @@
 /node_modules
 /vision/views/*
 misc/quiz/quiz.zip
+.*
 *.bak

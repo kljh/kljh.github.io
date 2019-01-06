@@ -7,7 +7,7 @@ function is_matrix(x) { return x.length!=undefined && x[0].length!=undefined; }
 function vec_make(n, x) {
     if (x===undefined) x=0.0;
 	var vec = Array(n);
-    for (var i=0; i<n; i++) 
+    for (var i=0; i<n; i++)
         vec[i] = x;
     return vec;
 }
@@ -15,7 +15,7 @@ function vec_make(n, x) {
 function vec_copy(v) {
     var n = v.length;
     var vec = Array(n);
-    for (var i=0; i<n; i++) 
+    for (var i=0; i<n; i++)
         vec[i] = v[i];
     return vec;
 }
@@ -23,7 +23,7 @@ function vec_copy(v) {
 function mtx_make(n, m) {
     var mtx = Array(n);
     for (var i=0; i<n; i++) mtx[i] = Array(m);
-    for (var i=0; i<n; i++) 
+    for (var i=0; i<n; i++)
         for (var j=0; j<m; j++)
             mtx[i][j] = 0.0;
     return mtx;
@@ -48,15 +48,15 @@ function cols(A) {
 }
 
 function mtx_diag(w) {
-    var W = mtx_make(w.length, w.length); 
+    var W = mtx_make(w.length, w.length);
     for (var k=0; k<w.length; k++) W[k][k] = w[k];
     return W;
 }
 
 function mtx_trsp(m) {
-    var t = mtx_make(m[0].length, m.length); 
-    for (var i=0; i<m.length; i++) 
-        for (var j=0; j<m[0].length; j++) 
+    var t = mtx_make(m[0].length, m.length);
+    for (var i=0; i<m.length; i++)
+        for (var j=0; j<m[0].length; j++)
             t[j][i] = m[i][j];
     return t;
 }
@@ -88,12 +88,12 @@ function mtx_prod(A, B) {
     var nA = A.length, mA = A[0].length;
     var nB = B.length, mB = B[0].length;
     if (mA!=nB) throw new Error("mtx_prod: dimension mismatch");
-    
+
     var out = mtx_make(nA, mB);
     for (var i=0; i<nA; i++) {
         for (var j=0; j<mB; j++) {
             var tmp=0;
-            for (var k=0; k<mA; k++) 
+            for (var k=0; k<mA; k++)
                 tmp += A[i][k]*B[k][j];
             out[i][j] = tmp;
         }
@@ -114,7 +114,7 @@ function mtx_get_slice(mtx, i0, j0, n, m) {
 }
 function mtx_set_slice(dest, i0, j0, src) {
 	var n=rows(src), m=cols(src);
-	require(i0+n <= rows(dest), "mtx_set_slice goes after the last row."); 
+	require(i0+n <= rows(dest), "mtx_set_slice goes after the last row.");
 	require(j0+m <= cols(dest), "mtx_set_slice goes after the last column.");
 	for (var i=0; i<n; i++)
 		for (var j=0; j<m; j++)
@@ -125,11 +125,11 @@ function mtx_vec_prod(A, b) {
     var nA = A.length, mA = A[0].length;
     var nB = b.length;
     if (mA!=nB) throw new Error("mtx_vec_prod: dimension mismatch");
-    
+
     var out = vec_make(nA);
     for (var i=0; i<nA; i++) {
         var tmp=0;
-        for (var k=0; k<mA; k++) 
+        for (var k=0; k<mA; k++)
             tmp += A[i][k]*b[k];
         out[i] = tmp;
     }
@@ -140,11 +140,11 @@ function vec_mtx_prod(a, B) {
     var mA = a.length;
     var nB = B.length, mB = B[0].length;
     if (mA!=nB) throw new Error("vec_mtx_prod: dimension mismatch");
-    
+
     var out = vec_make(mB);
     for (var j=0; j<mB; j++) {
         var tmp=0;
-        for (var k=0; k<mA; k++) 
+        for (var k=0; k<mA; k++)
             tmp += a[k]*B[k][j];
         out[j] = tmp;
     }
@@ -152,7 +152,7 @@ function vec_mtx_prod(a, B) {
 }
 
 function mtx_scalar_prod(A, b) {
-	var n=rows(A), m=cols(A); 
+	var n=rows(A), m=cols(A);
 	var res = mtx_make(n,m);
 	for (var i=0; i<n; i++)
 		for (var j=0; j<m; j++)
@@ -163,7 +163,14 @@ function mtx_scalar_prod(A, b) {
 function vec_scalar_prod(a, b) {
     var n = a.length;
     var res = vec_make(n);
-    for (var i=0; i<n; i++) 
+    for (var i=0; i<n; i++)
         res[i] = a[i] * b;
     return res;
+}
+
+if (typeof exports !="undefined") {
+	exports.vec_copy = vec_copy;
+    exports.mtx_make = mtx_make;
+    exports.mtx_copy = mtx_copy;
+    //exports = { vec_copy, mtx_make, mtx_copy };
 }
