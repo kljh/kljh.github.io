@@ -10,7 +10,6 @@ var magnet_url = "magnet:?xt=urn:btih:9819bef5f82b55a526c659eeaebdff41dcc0557a&d
 
 function magnet_info(magnet_url) {
 	var magnet_kv = magnet_url.substr("magnet:?".length).split("&").map(x => x.split("=")).map(x => [ x[0], decodeURIComponent(x[1]) ]);
-	console.log(magnet_kv);
 
 	var magnet_info = {};
 	for (var kv of magnet_kv) {
@@ -24,16 +23,16 @@ function magnet_info(magnet_url) {
 			magnet_info[k].push(v);
 		}
 	}
-	console.log(magnet_info);
 
 	magnet_info.trackers = [];
 	for (var tracker of magnet_info.tr) {
 		var protocol = tracker.split("://").shift();
 		var srv = tracker.split("://").pop();
 		var host = srv.split(":").shift();
-		var port = srv.split(":").pop();
+		var port = 1*srv.split(":").pop();
 		magnet_info.trackers.push({ protocol, host, port });
 	}
+
 	return magnet_info;
 }
 
@@ -80,9 +79,7 @@ function bdecode(txt) {
 		var p = txt[pos];
 		if ("0123456789".indexOf(p)==-1) throw new Error("string expected to start with number prefix (got "+p+"). "+txt.substr(pos, 15)+"..");
 		var e = txt.indexOf(':', pos+1);
-		console.log(":", e);
 		var n = 1*txt.substring(pos, e);
-		console.log("len", n);
 		return {
 			val: txt.substr(e+1, n),
 			end: e+1+n };
@@ -119,7 +116,6 @@ function bdecode(txt) {
 		return { val: lst, end: pos+1 };
 	}
 	function val_bdecode(txt, pos) {
-		console.log("bdecode: "+txt.substr(pos, 15))
 		var p = txt[pos];
 		switch (p) {
 			case "i" : return num_bdecode(txt, pos);
@@ -132,7 +128,7 @@ function bdecode(txt) {
 					throw new Error("unsupported '"+p+"' prefix. "+txt.substr(pos, 15)+"..");
 		}
 	}
-	console.log(txt)
+
 	var tmp = val_bdecode(txt, 0);
 	if (tmp.end != txt.length) throw new Error("encoded text only partially consuned (used "+tmp.end+" < len "+txt.length+")");
 	return tmp.val;
@@ -160,6 +156,7 @@ function send_ping(node) {
 	var msg = { t, y, q, a };
 	var benc = bencode(msg);
 	var buff = new Buffer(benc);
+
 	client.send(buff, 0, buff.length, node.port, node.host, function(err, bytes) {
 		if (err) throw err;
 		console.log('client sent UDP message to ' + node.host +':'+ node.port, bytes, buff.length, msg, benc, buff);
@@ -171,19 +168,24 @@ const dht_udp_port = 6969;
 const dht_udp_server = dgram.createSocket('udp4');
 
 dht_udp_server.on('error', (err) => {
-  console.log(`server error UDP:\n${err.stack}`);
-  server.close();
+	console.log(`server error UDP:\n${err.stack}`);
+	server.close();
 });
 
 dht_udp_server.on('message', (msg, rinfo) => {
-  console.log(`server received UDP msg: ${msg} from ${rinfo.address}:${rinfo.port}`);
+	console.log(`server received UDP msg: ${msg} ${bdecode(""+msg)} from ${rinfo.address}:${rinfo.port}`);
 });
 
 dht_udp_server.on('listening', () => {
-  const address = dht_udp_server.address();
-  console.log(`server listening UDP ${address.address}:${address.port}`);
+	const address = dht_udp_server.address();
+	console.log(`server listening UDP ${address.address}:${address.port}`);
 });
 
 dht_udp_server.bind(dht_udp_port);
 
 send_ping({ host: "localhost", port: dht_udp_port});
+
+var mgnt = magnet_info(magnet_url);
+console.log("magnet_info", mgnt);
+for (var tracker of mgnt.trackers)
+	send_ping(tracker);
