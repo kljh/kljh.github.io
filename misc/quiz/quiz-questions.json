@@ -497,9 +497,9 @@
             "       }",
             "       return { \"nbOkFiles\": nbOkFiles, \"nbErrorFiles\": nbErrorFiles };",
             "}",
-            "</pre>
-
-            What is your review conclusion ?"
+            "</pre>",
+			"",
+            "What is your review conclusion ?"
         ],
 		"answer_list": [
 			"Code is correct. It can be committed.",

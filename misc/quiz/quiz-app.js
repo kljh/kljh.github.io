@@ -1,15 +1,20 @@
 const fs = require('fs');
 const path = require('path');
 
+const rp = require('request-promise');
+const qs = require('querystring');
+
 const bDebug = true;
 
 // https://aws.amazon.com/blogs/compute/simply-serverless-using-aws-lambda-to-expose-custom-cookies-with-api-gateway/
+const oauth = require('./oauth');
 const db = require('./quiz-db');
 
 // Questions (with extra fields)
 var questions, question_map;
 function load_questions_from_file() {
-    questions = JSON.parse(fs.readFileSync(path.join(__dirname, 'quiz-questions.json')));
+    var json = fs.readFileSync(path.join(__dirname, 'quiz-questions.json'), 'utf8');
+    questions = JSON.parse(json);
     question_map = {};
     for (var q of questions)
         question_map[q.quiz_id||q.id] = q;
@@ -23,8 +28,6 @@ function quiz_server_start() {
     const express = require('express');
     const bodyParser = require('body-parser');
 
-    load_questions_from_file();
-
     const http_port = 8080;
     var app = express();
     var server = http.createServer(app);
@@ -34,6 +37,12 @@ function quiz_server_start() {
 
     app.use(bodyParser.json()); // parse JSON requests
     app.set('json spaces', 4); // pretty JSON replies
+    register(app);
+}
+
+function register(app) {
+    oauth.register(app);
+
     app.use("/quiz", async function (req, res, next) {
         var prms = req.method=="GET" ? req.query : req.body;
 
@@ -46,6 +55,8 @@ function quiz_server_start() {
             console.log("quiz error", e);
         }
     });
+
+    load_questions_from_file();
 }
 
 /*
@@ -207,6 +218,8 @@ async function quiz_questions(prms) {
     if (bDebug) load_questions_from_file();
 
     var user = await db.get_user(user_id);
+
+    if (prms.id) return question_map[prms.id];
 
     var rep = [];
     for (var id in question_map) {
@@ -390,6 +403,7 @@ async function quiz_users(prms) {
 function deep_clone(o) { return JSON.parse(JSON.stringify(o)); }
 
 module.exports = {
+    register: register,
 	quiz_aws_handler: quiz_aws_handler,
 	load_questions_from_file: load_questions_from_file,
 };

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+<title>Sign in</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="bootstrap-social.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</style>
+
+<script>
+const REDIRECT_URI = window.location.hostname == "localhost" ? "https://localhost:8486" :
+            "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default"; //to be tested
+const LINKEDIN_CLIENT_ID = "86uavxw6ur58il";
+const GITHUB_CLIENT_ID = "ef1a126cb7c698d6cdea";
+const GOOGLE_CLIENT_ID = "1008363388918-nobbenqd2rd0fjtptqovkp876bs99gem.apps.googleusercontent.com";
+
+$(function () {
+    if (localStorage["user_id"])
+        $("#user_id").val(localStorage["user_id"]);
+
+    $("#next").click(function (ev) {
+        // !! IMPORTANT FOR CROSS DOMAIN !!
+        ev.preventDefault();
+
+        var user_id = $("#user_id").val();
+        if (!user_id) return;
+
+        var http_rpc_server = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
+        if (location.hostname=="localhost") http_rpc_server = "";
+
+        $.ajax({
+            type: "GET",
+            url: http_rpc_server + "/quiz?action=register&user_id="+user_id,
+            crossDomain: true,
+            cache: false,
+            //data: { action: "register", uid: user_id },
+            contentType: "application/json",
+            dataType: "json",
+
+            success: function(data) {
+                localStorage["user_id"] = user_id;
+                window.location.href = "quiz.html"
+            },
+            error : function(e) {
+                alert("registration error. "+e);
+            }
+        });
+    });
+
+    $(".btn-linkedin").click(function (ev) {
+        // !! IMPORTANT FOR CROSS DOMAIN !!
+        ev.preventDefault();
+
+        var url = "https://www.linkedin.com/oauth/v2/authorization"
+            + "?response_type=code"
+            + "&client_id=" + LINKEDIN_CLIENT_ID
+            + "&redirect_uri=" + REDIRECT_URI + "/linkedin"
+            + "&state=" + get_state()
+            + "&scope=r_liteprofile%20r_emailaddress"
+        document.location.href = url;
+    });
+
+    $(".btn-github").click(function (ev) {
+        ev.preventDefault();
+
+        var url = "https://github.com/login/oauth/authorize"
+            + "?client_id=" + GITHUB_CLIENT_ID
+            + "&redirect_uri=" + REDIRECT_URI + "/github"
+            + "&state=fooobar"
+            + "&scope=user:email"
+        document.location.href = url;
+    });
+
+    $(".btn-google").click(function (ev) {
+        ev.preventDefault();
+
+        var url = "https://accounts.google.com/o/oauth2/v2/auth"
+            + "?response_type=code"
+            + "&client_id=" + GOOGLE_CLIENT_ID
+            + "&redirect_uri=" + REDIRECT_URI + "/google"
+            + "&state=fooobar"
+            // + "&scope=email" // https://www.googleapis.com/auth/userinfo.email
+            + "&scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"
+        document.location.href = url;
+    });
+});
+
+function get_state() {
+	var tmp = uri_args();
+	return tmp.redirect ? encodeURIComponent(tmp.redirect) : "";
+}
+
+function uri_args() {
+	var tmp = window.location.search.substr(1).split('&');
+	var kv = {};
+	for (var i=0; i<tmp.length; i++) {
+		var key = tmp[i].split('=', 1)[0];
+		var val = tmp[i].substr(key.length+1);
+		kv[key] = val ? decodeURIComponent(val) : val;
+	}
+	return kv;
+}
+</script>
+
+<style>
+body {
+    width: 100%; margin: 0px; }
+.topbar {
+    width: 100%; height: 100%; margin: 0px; padding: 5px;
+    color: #EEE; background-color: #111; font-size: larger; }
+
+.box-container {
+    width:80%; min-width:310px; margin-left: auto; margin-right: auto;
+    display: flex; flex-flow: row wrap; align-items: stretch; justify-content: space-around;
+    /* border: 1px solid #F00; */
+    }
+.box {
+    flex: 1 1 40%; min-width:310px; margin: 5px; padding: 5px;
+    /* display: inline-block; vertical-align: top; */
+    color: #444; background-color: #FCFCFC; border: 1px solid #99D;  }
+.textbox {
+    min-width: 280px; /* padding: 2px 10px; */
+    color: #444; background-color: #FCFCFC; border: 1px solid #EEF;  }
+
+.table { display: table; }
+.row { display: table-row; }
+.cell { display: table-cell; padding: 0px 5px; }
+</style>
+</head>
+
+<body>
+<div class="topbar" >
+    <span>Research &amp; Development brain-teasers</span>
+</div>
+<br/>
+
+<!--
+<div class="box-container">
+    <div class="box" >
+        <form>
+        <div><b>Login</b></div><br/>
+        <div style="width:250px; margin:auto;">
+            User:<br/>
+            <input id="user_id" type="email" placeholder="id or email" style="width:240px;">
+        </div><br/>
+        <div style="text-align: right;">
+            <input id="next" type="submit" value="Next" >
+        </div>
+        </form>
+    </div>
+</div>
+-->
+
+<div class="login-form">
+    <form action="/" method="post">
+        <h2 class="text-center">Sign in</h2>
+            <div class="text-center social-btn">
+                <a href="#" class="btn btn-block btn-social btn-linkedin"><span class="fa fa-linkedin"></span>&nbsp; Sign in with LinkedIn</a>
+                <a href="#" class="btn btn-block btn-social btn-github" ><span class="fa fa-github"></span>&nbsp; Sign in with GitHub</a>
+                <a href="#" class="btn btn-block btn-social btn-google" ><span class="fa fa-google"></span>&nbsp; Sign in with Google</a>
+            </div>
+        <div class="or-seperator"><i>or</i></div>
+        <div class="form-group">
+            <div class="input-group">
+                <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                <input type="text" class="form-control" name="email" placeholder="email" required="required">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="input-group">
+                <span class="input-group-addon"><i class="fa fa-lock"></i></span>
+                <input type="password" class="form-control" name="password" placeholder="password" required="required">
+            </div>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-success btn-block login-btn">Sign in</button>
+        </div>
+        <div class="clearfix">
+            <label class="pull-left checkbox-inline"><input type="checkbox"> Remember me</label>
+            <a href="#" class="pull-right text-success">Forgot Password?</a>
+        </div>
+
+    </form>
+    <div class="hint-text small">Don't have an account? <a href="#" class="text-success">Register Now!</a></div>
+</div>
+
+</body>
+</html>
