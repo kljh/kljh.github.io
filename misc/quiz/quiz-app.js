@@ -43,7 +43,7 @@ function quiz_server_start() {
 function register(app) {
     oauth.register(app);
 
-    app.use("/quiz", async function (req, res, next) {
+    app.use("/lambda", async function (req, res, next) {
         var prms = req.method=="GET" ? req.query : req.body;
 
         try {
@@ -104,6 +104,9 @@ async function quiz_aws_handler(event, context, callback) {
                     break;
                 case "users":
                     res = await quiz_users(req);
+                    break;
+                case "oauth":
+                    res = await oauth.lambda_oauth(req);
                     break;
                 default:
                     err = "Unhandled action '"+ req.action+"'.";

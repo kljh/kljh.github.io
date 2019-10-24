@@ -1,25 +1,45 @@
 var http_rpc_server = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
+var http_rpc_server = "https://localhost:8486/lambda";
 
 $(function () {
 	if (window.location.hostname=="localhost") {
 		//console.warn("changing http_rpc_server")
 		//http_rpc_server = window.location.origin;
 		//http_rpc_server = "http://127.0.0.1:5000";
-		http_rpc_server = "";
+		//http_rpc_server = "";
 	}
+
+	var uri_prms = uri_args();
 
     // code executed on startup
 	if (localStorage && localStorage["user_id"]) {
 		$("#user_id").text(localStorage["user_id"]);
 		next_reply_or_skip();
+	} else if (uri_prms.state) {
+		var url = http_rpc_server + "/quiz?action=oauth&" + window.location.search.substr(1);
+		$.get(url)
+		.done(function (res) {
+			res = res.result || res;
+			if (!res.email) throw new Error("authentication error");
+			localStorage["user_name"] = res.name;
+			localStorage["user_id"] = res.email;
+			$("#user_id").text(res.email);
+			next_reply_or_skip();
+		})
+		.fail(function (err) {
+			alert("authentication failed");
+			//window.location.href = "login.html";
+			return;
+		});
 	} else {
-		window.location.href = "quizlogin.html";
+		alert("no authentication")
+		//window.location.href = "login.html";
 		return;
 	}
 
 	$("#logout").click(function (ev) {
 		if (localStorage) delete localStorage["user_id"];
-		var pwd = uri_args()["pwd"];
+		var pwd = uri_prms["pwd"];
 		window.location.href = "quizlogin.html" + (pwd?"?pwd="+pwd:"");
 	});
 
@@ -162,7 +182,7 @@ $(function () {
 		if (localStorage && $("#user_id").text())
             localStorage["user_id"] = $("#user_id").text();
 
-		var pwd = uri_args()["pwd"];
+		var pwd = uri_prms["pwd"];
 		var admin = pwd=="Galilei";
 
 		$.get(http_rpc_server + "/quiz?action=questions&user_id=" + localStorage["user_id"] + (pwd?"&pwd="+pwd:""))

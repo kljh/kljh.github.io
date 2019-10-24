@@ -15,8 +15,8 @@
 </style>
 
 <script>
-const REDIRECT_URI = window.location.hostname == "localhost" ? "https://localhost:8486" :
-            "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default"; //to be tested
+const IS_LOCALHOST = window.location.hostname == "localhost";
+const REDIRECT_URI = ( IS_LOCALHOST ? "https://localhost:8486/kljh/" : "https://kljh.github.io/" ) + "misc/quiz/quiz.html";
 const LINKEDIN_CLIENT_ID = "86uavxw6ur58il";
 const GITHUB_CLIENT_ID = "ef1a126cb7c698d6cdea";
 const GOOGLE_CLIENT_ID = "1008363388918-nobbenqd2rd0fjtptqovkp876bs99gem.apps.googleusercontent.com";
@@ -61,8 +61,8 @@ $(function () {
         var url = "https://www.linkedin.com/oauth/v2/authorization"
             + "?response_type=code"
             + "&client_id=" + LINKEDIN_CLIENT_ID
-            + "&redirect_uri=" + REDIRECT_URI + "/linkedin"
-            + "&state=" + get_state()
+            + "&redirect_uri=" + REDIRECT_URI    // + "/linkedin"
+            + "&state=" + get_state("linkedin")
             + "&scope=r_liteprofile%20r_emailaddress"
         document.location.href = url;
     });
@@ -72,8 +72,8 @@ $(function () {
 
         var url = "https://github.com/login/oauth/authorize"
             + "?client_id=" + GITHUB_CLIENT_ID
-            + "&redirect_uri=" + REDIRECT_URI + "/github"
-            + "&state=fooobar"
+            + "&redirect_uri=" + REDIRECT_URI    // + "/github"
+            + "&state=" + get_state("github")
             + "&scope=user:email"
         document.location.href = url;
     });
@@ -84,17 +84,18 @@ $(function () {
         var url = "https://accounts.google.com/o/oauth2/v2/auth"
             + "?response_type=code"
             + "&client_id=" + GOOGLE_CLIENT_ID
-            + "&redirect_uri=" + REDIRECT_URI + "/google"
-            + "&state=fooobar"
+            + "&redirect_uri=" + REDIRECT_URI    // + "/google"
+            + "&state=" + get_state("google")
             // + "&scope=email" // https://www.googleapis.com/auth/userinfo.email
             + "&scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"
         document.location.href = url;
     });
 });
 
-function get_state() {
-	var tmp = uri_args();
-	return tmp.redirect ? encodeURIComponent(tmp.redirect) : "";
+function get_state(oauth_provider) {
+    var tmp = uri_args();
+    return oauth_provider;
+    return tmp.redirect ? encodeURIComponent(tmp.redirect) : "";
 }
 
 function uri_args() {
@@ -137,7 +138,7 @@ body {
 
 <body>
 <div class="topbar" >
-    <span>Research &amp; Development brain-teasers</span>
+    <span>Research &amp; Engineering Brain Teasers</span>
 </div>
 <br/>
 

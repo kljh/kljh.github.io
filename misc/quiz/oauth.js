@@ -1,9 +1,19 @@
+/*
+OAuth config:
+https://www.linkedin.com/developers/apps
+https://github.com/settings/applications
+https://console.developers.google.com/apis/credentials
+*/
+
 const rp = require('request-promise');
 const qs = require('querystring');
 
-function get_redirect_uri() {
-    //var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
-    return "https://localhost:8486"
+const IS_LOCALHOST = process.env.COMPUTERNAME == "ZENBOOK";
+const REDIRECT_URL =  ( IS_LOCALHOST ? "https://localhost:8486/kljh/" : "https://kljh.github.io/" ) + "misc/quiz/quiz.html";
+console.log("REDIRECT_URL", REDIRECT_URL);
+
+function get_redirect_uri(provider) {
+    return REDIRECT_URL;
 }
 
 function register(app) {
@@ -18,10 +28,55 @@ function register(app) {
 
     app.use("/linkedin", async function (req, res, next) {
         var prms = req.method=="GET" ? req.query : req.body;
-
         try {
-            var auth = prms;
+            res.status(200).json(linkedin_oauth(prms));
+        } catch(e) {
+            res.status(500).json({ error: e.message });
+            console.log("ERROR", e);
+        }
+    });
 
+    app.use("/github", async function (req, res, next) {
+        var prms = req.method=="GET" ? req.query : req.body;
+        try {
+            res.status(200).json(github_oauth(prms));
+        } catch(e) {
+            res.status(500).json({ error: e.message });
+            console.log("ERROR", e);
+        }
+    });
+
+    app.use("/google", async function (req, res, next) {
+        var prms = req.method=="GET" ? req.query : req.body;
+        try {
+            res.status(200).json(google_oauth(prms));
+        } catch(e) {
+            res.status(500).json({ error: e.message });
+            console.log("ERROR", e);
+        }
+    });
+}
+
+async function lambda_oauth(auth) {
+    try {
+        var provider = auth.state;
+        var user_info = false;
+        switch (provider) {
+            case "linkedin": user_info = await linkedin_oauth(auth); break;
+            case "github": user_info = await github_oauth(auth); break;
+            case "google": user_info = await google_oauth(auth); break;
+            default:
+                throw new Error("Unknown authentication provider. " + provider);
+        }
+        console.log("user_info", user_info);
+        return user_info;
+    } catch(e) {
+        console.log("ERROR", e);
+        throw e;
+    }
+}
+
+async function linkedin_oauth(auth) {
             if (auth.error)
                 throw new Error("LinkedIn authentication error. " + auth.error);
 
@@ -34,9 +89,12 @@ function register(app) {
                     code: auth_code,
                     client_id: process.env.LINKEDIN_CLIENT_ID,
                     client_secret: process.env.LINKEDIN_CLIENT_SECRET,
-                    redirect_uri: get_redirect_uri() + "/linkedin"
+                    redirect_uri: get_redirect_uri("linkedin")
                 };
 
+            //console.log("Linked access_token url", url, urlenc_data);
+
+            return await
             rp.post(url, { form: urlenc_data})
             .then(function (res_at) {
                 // use access token to request user name and email
@@ -44,6 +102,8 @@ function register(app) {
                 var res_at = JSON.parse(res_at);
                 var access_token = res_at.access_token;
                 var at = { headers: { "Authorization": "Bearer " + access_token }};
+
+                //console.log("Linked access_token", access_token);
 
                 return Promise.all([
                     rp.get("https://api.linkedin.com/v2/me", at),
@@ -64,22 +124,13 @@ function register(app) {
                     state: auth_state
                     };
 
-                res.status(200).json(user_info);
+                //console.log("Linked user_info", user_info);
+
+                return user_info;
             });
+}
 
-            //res.status(200).json(resobj);
-        } catch(e) {
-            res.status(500).json({ error: e.message });
-            console.log("ERROR", e);
-        }
-    });
-
-    app.use("/github", async function (req, res, next) {
-        var prms = req.method=="GET" ? req.query : req.body;
-
-        try {
-            var auth = prms;
-
+async function github_oauth(auth) {
             if (auth.error)
                 throw new Error("GitHub authentication error. " + auth.error);
 
@@ -92,12 +143,14 @@ function register(app) {
                     code: auth_code,
                     client_id: process.env.GITHUB_CLIENT_ID,
                     client_secret: process.env.GITHUB_CLIENT_SECRET,
-                    redirect_uri: get_redirect_uri() + "/github",
+                    redirect_uri: get_redirect_uri("github"),
                     // state: "foobar",
                 };
             var urlenc_str = urlenc_data_to_string(urlenc_data);
 
-            console.log("GitHub access_token url", url + urlenc_str);
+            //console.log("GitHub access_token url", url + urlenc_str);
+
+            return await
             rp.post(url  + urlenc_str, {
                 //form: urlenc_data,
                 headers: { "Accept": "application/json" }})
@@ -108,7 +161,7 @@ function register(app) {
                 var access_token = res_at.access_token;
                 var at = { headers: { "Authorization": "token " + access_token, "User-Agent": "kljh" }};
 
-                console.log("GitHub access_token", access_token);
+                //console.log("GitHub access_token", access_token);
                 return rp.get("https://api.github.com/user", at);
             })
             .then(function (res_info) {
@@ -120,23 +173,11 @@ function register(app) {
                     hash: mkpwd(login_info.email),
                     state: auth_state
                     };
-                res.status(200).json(user_info);
+                return user_info;
             });
+}
 
-            //res.status(200).json(resobj);
-        } catch(e) {
-            res.status(500).json({ error: e.message });
-            console.log("ERROR", e);
-        }
-    });
-
-
-    app.use("/google", async function (req, res, next) {
-        var prms = req.method=="GET" ? req.query : req.body;
-
-        try {
-            var auth = prms;
-
+async function google_oauth(auth) {
             if (auth.error)
                 throw new Error("Google authentication error. " + auth.error);
 
@@ -150,11 +191,13 @@ function register(app) {
                     client_id: process.env.GOOGLE_CLIENT_ID,
                     client_secret: process.env.GOOGLE_CLIENT_SECRET,
                     grant_type: "authorization_code",
-                    redirect_uri: get_redirect_uri() + "/google",
+                    redirect_uri: get_redirect_uri("google"),
                     // state: "foobar",
                 };
 
-            console.log(url, urlenc_data)
+            //console.log("Google access_token url", url, urlenc_data);
+
+            return await
             rp.post(url, {
                 form: urlenc_data,
                 headers: { "Content-Type": "application/x-www-form-urlencoded" }})
@@ -164,7 +207,7 @@ function register(app) {
                 var res_at = JSON.parse(res_at);
                 var access_token = res_at.access_token;
                 var at = { headers: { "Authorization": "Bearer " + access_token }};
-                console.log("Google token", access_token)
+                //console.log("Google token", access_token)
 
                 // var url = "https://www.googleapis.com/oauth2/v2/userinfo";    // email and picture only
                 var url = "https://openidconnect.googleapis.com/v1/userinfo";    // email and picture only
@@ -175,16 +218,8 @@ function register(app) {
                 user_info.hash = mkpwd(user_info.email);
                 user_info.state = auth_state;
 
-                res.status(200).json(user_info);
+                return user_info;
             });
-
-            //res.status(200).json(resobj);
-        } catch(e) {
-            res.status(500).json({ error: e.message });
-            console.log("ERROR", e);
-        }
-    });
-
 }
 
 
@@ -205,5 +240,6 @@ function urlenc_data_to_string(data) {
 
 module.exports = {
     register: register,
+    lambda_oauth: lambda_oauth,
 };
 
