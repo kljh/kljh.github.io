@@ -6,7 +6,7 @@ goto :eof
 
 :deploy
 
-7z a quiz.zip index.js quiz-app.js quiz-db.js oauth.js quiz-questions.json
+7z a quiz.zip index.js quiz-app.js quiz-db.js oauth.js quiz-questions.json node_modules
 
 :: call aws lambda list-functions
 call aws lambda update-function-code --function-name quiz --zip-file fileb://quiz.zip

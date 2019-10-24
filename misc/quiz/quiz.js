@@ -1,5 +1,7 @@
-var http_rpc_server = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
-var http_rpc_server = "https://localhost:8486/lambda";
+const IS_LOCALHOST = window.location.hostname == "localhost";
+var http_rpc_server_aws = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
+var http_rpc_server_local = "https://localhost:8486/lambda";
+var http_rpc_server = IS_LOCALHOST ? http_rpc_server_local : http_rpc_server_aws;
 
 $(function () {
 	if (window.location.hostname=="localhost") {
