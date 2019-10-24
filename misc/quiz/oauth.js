@@ -5,8 +5,8 @@ https://github.com/settings/applications
 https://console.developers.google.com/apis/credentials
 */
 
-const rp = require('request-promise');
-const qs = require('querystring');
+//const rp = require('request-promise');
+//const qs = require('querystring');
 
 const IS_LOCALHOST = process.env.COMPUTERNAME == "ZENBOOK";
 const REDIRECT_URL =  ( IS_LOCALHOST ? "https://localhost:8486/kljh/" : "https://kljh.github.io/" ) + "misc/quiz/quiz.html";
@@ -77,6 +77,8 @@ async function lambda_oauth(auth) {
 }
 
 async function linkedin_oauth(auth) {
+    const rp = require('request-promise');
+
             if (auth.error)
                 throw new Error("LinkedIn authentication error. " + auth.error);
 
@@ -131,6 +133,8 @@ async function linkedin_oauth(auth) {
 }
 
 async function github_oauth(auth) {
+    const rp = require('request-promise');
+
             if (auth.error)
                 throw new Error("GitHub authentication error. " + auth.error);
 
@@ -178,6 +182,8 @@ async function github_oauth(auth) {
 }
 
 async function google_oauth(auth) {
+    const rp = require('request-promise');
+
             if (auth.error)
                 throw new Error("Google authentication error. " + auth.error);
 

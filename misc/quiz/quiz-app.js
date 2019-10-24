@@ -1,9 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 
-const rp = require('request-promise');
-const qs = require('querystring');
-
 const bDebug = true;
 
 // https://aws.amazon.com/blogs/compute/simply-serverless-using-aws-lambda-to-expose-custom-cookies-with-api-gateway/
