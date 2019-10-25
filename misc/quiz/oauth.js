@@ -1,8 +1,11 @@
 /*
 OAuth config:
 https://www.linkedin.com/developers/apps
-https://github.com/settings/applications
+https://github.com/settings/applications/1156918
 https://console.developers.google.com/apis/credentials
+
+AWS Lambda setting :
+- allow 15s for oauth redirect execution
 */
 
 //const rp = require('request-promise');
@@ -62,6 +65,7 @@ async function lambda_oauth(auth) {
         var provider = auth.state;
         var user_info = false;
         switch (provider) {
+            case "uidpwd": user_info =  await chkpwd(auth); break;
             case "linkedin": user_info = await linkedin_oauth(auth); break;
             case "github": user_info = await github_oauth(auth); break;
             case "google": user_info = await google_oauth(auth); break;
@@ -71,7 +75,7 @@ async function lambda_oauth(auth) {
         console.log("user_info", user_info);
         return user_info;
     } catch(e) {
-        console.log("ERROR", e);
+        console.log("ERROR: " + e);
         throw e;
     }
 }
@@ -94,7 +98,7 @@ async function linkedin_oauth(auth) {
                     redirect_uri: get_redirect_uri("linkedin")
                 };
 
-            //console.log("Linked access_token url", url, urlenc_data);
+            // console.log("LinkedIn access_token url", url, urlenc_data);
 
             return await
             rp.post(url, { form: urlenc_data})
@@ -105,13 +109,14 @@ async function linkedin_oauth(auth) {
                 var access_token = res_at.access_token;
                 var at = { headers: { "Authorization": "Bearer " + access_token }};
 
-                //console.log("Linked access_token", access_token);
+                // console.log("LinkedIn access_token", access_token);
 
                 return Promise.all([
                     rp.get("https://api.linkedin.com/v2/me", at),
                     rp.get("https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))", at) ]);
             })
             .then(function (res_info) {
+                // console.log("LinkedIn api_info", res_info);
 
                 var name_info = JSON.parse(res_info[0]);
                 var email_info = JSON.parse(res_info[1]);
@@ -228,6 +233,16 @@ async function google_oauth(auth) {
             });
 }
 
+
+async function chkpwd(auth) {
+    var uid = auth.user_id || auth.uid;
+    var pwd = auth.pwd
+    var exp = mkpwd(uid);
+    if (uid==pwd)
+        return  { name: uid, email: uid, state: auth.state };
+    else
+        return { error: "not expected pwd/hash" };
+}
 
 function mkpwd(uid) {
     var crypto = require('crypto');

@@ -162,7 +162,7 @@ async function quiz_next(prms) {
     var user_id = prms.user_id || prms.uid;
     var user = await db.get_user(user_id);
     if (!user || !user.answers)
-        throw new Error("User data for '"+user_id+" 'contains no 'answers'. "+JSON.stringify(user));
+        user = await db.add_user(user_id);
 
     // save answer (if we got one)
     var quiz_id = prms.quiz_id;

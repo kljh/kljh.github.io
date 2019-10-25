@@ -30,19 +30,19 @@ $(function () {
 		})
 		.fail(function (err) {
 			alert("authentication failed");
-			//window.location.href = "login.html";
+			window.location.href = "login.html";
 			return;
 		});
 	} else {
 		alert("no authentication")
-		//window.location.href = "login.html";
+		window.location.href = "login.html";
 		return;
 	}
 
 	$("#logout").click(function (ev) {
 		if (localStorage) delete localStorage["user_id"];
 		var pwd = uri_prms["pwd"];
-		window.location.href = "quizlogin.html" + (pwd?"?pwd="+pwd:"");
+		window.location.href = "login.html" + (pwd?"?pwd="+pwd:"");
 	});
 
 	$("#show_hide_box").click(function (ev) {

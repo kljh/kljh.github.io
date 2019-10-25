@@ -23,13 +23,14 @@ const GOOGLE_CLIENT_ID = "1008363388918-nobbenqd2rd0fjtptqovkp876bs99gem.apps.go
 
 $(function () {
     if (localStorage["user_id"])
-        $("#user_id").val(localStorage["user_id"]);
+        $('input[name ="email"]').val(localStorage["user_id"]);
 
     $("#next").click(function (ev) {
         // !! IMPORTANT FOR CROSS DOMAIN !!
         ev.preventDefault();
 
-        var user_id = $("#user_id").val();
+        var user_id =$('input[name ="email"]').val();
+        var user_pwd = $('input[name ="password"]').val();
         if (!user_id) return;
 
         var http_rpc_server = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
@@ -37,7 +38,7 @@ $(function () {
 
         $.ajax({
             type: "GET",
-            url: http_rpc_server + "/quiz?action=register&user_id="+user_id,
+            url: http_rpc_server + "/lambda/quiz?action=register&user_id="+user_id+"&pwd="+user_pwd,
             crossDomain: true,
             cache: false,
             //data: { action: "register", uid: user_id },
@@ -181,7 +182,7 @@ body {
             </div>
         </div>
         <div class="form-group">
-            <button type="submit" class="btn btn-success btn-block login-btn">Sign in</button>
+            <button id="next" type="submit" class="btn btn-success btn-block login-btn">Sign in</button>
         </div>
         <div class="clearfix">
             <label class="pull-left checkbox-inline"><input type="checkbox"> Remember me</label>
