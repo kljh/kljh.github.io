@@ -40,7 +40,7 @@ function quiz_server_start() {
 function register(app) {
     oauth.register(app);
 
-    app.use("/lambda", async function (req, res, next) {
+    app.use("/lambda/quiz", async function (req, res, next) {
         var prms = req.method=="GET" ? req.query : req.body;
 
         try {
@@ -162,7 +162,7 @@ async function quiz_next(prms) {
     var user_id = prms.user_id || prms.uid;
     var user = await db.get_user(user_id);
     if (!user || !user.answers)
-        user = await db.add_user(user_id);
+        user = await db.add_user(user_id, true);
 
     // save answer (if we got one)
     var quiz_id = prms.quiz_id;

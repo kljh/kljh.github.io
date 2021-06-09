@@ -1,18 +1,26 @@
 @echo off
 
-goto :deploy
+call :deploy
 ::goto :test
+
+echo Done
+::pause
 goto :eof
 
 :deploy
 
-7z a quiz.zip index.js quiz-app.js quiz-db.js oauth.js quiz-questions.json node_modules
+@set PATH=C:\Program Files\7-Zip;%PATH%
+
+7z a quiz.zip index.js quiz-app.js quiz-db.js quiz-mail.js oauth.js quiz-questions.json
 
 :: call aws lambda list-functions
+call aws lambda update-function-configuration --function-name quiz --runtime nodejs14.x
 call aws lambda update-function-code --function-name quiz --zip-file fileb://quiz.zip
 
 del quiz.zip
 echo.
+
+goto :eof
 
 :test
 
@@ -45,4 +53,4 @@ curl --silent "%srv%/quiz?action=invalid-action"
 echo.
 echo.
 
-::pause
+goto :eof

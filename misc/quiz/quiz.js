@@ -1,16 +1,9 @@
 const IS_LOCALHOST = window.location.hostname == "localhost";
 var http_rpc_server_aws = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
-var http_rpc_server_local = "https://localhost:8486/lambda";
+var http_rpc_server_local = "/lambda";
 var http_rpc_server = IS_LOCALHOST ? http_rpc_server_local : http_rpc_server_aws;
 
 $(function () {
-	if (window.location.hostname=="localhost") {
-		//console.warn("changing http_rpc_server")
-		//http_rpc_server = window.location.origin;
-		//http_rpc_server = "http://127.0.0.1:5000";
-		//http_rpc_server = "";
-	}
-
 	var uri_prms = uri_args();
 
     // code executed on startup
@@ -340,7 +333,7 @@ function http_rpc(request_data, success, error) {
 				success(data);
 		},
 		error : function(e) {
-			alert("http_rpc error. "+e.message);
+			alert("http_rpc error. "+e.message||e.responseText);
 			if (error)
 				error(e);
 		}

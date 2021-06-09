@@ -12,5 +12,5 @@ server.listen(http_port, function () { console.log('HTTP server started on port:
 
 app.use('/', express.static(__dirname));
 
-require('./misc/quiz/quiz-app.js').quiz_install(app);
+// require('./misc/quiz/quiz-app.js').register(app);
 

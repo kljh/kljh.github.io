@@ -34,11 +34,11 @@ $(function () {
         if (!user_id) return;
 
         var http_rpc_server = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
-        if (location.hostname=="localhost") http_rpc_server = "";
+        if (location.hostname=="localhost") http_rpc_server = "/lambda";
 
         $.ajax({
             type: "GET",
-            url: http_rpc_server + "/lambda/quiz?action=register&user_id="+user_id+"&pwd="+user_pwd,
+            url: http_rpc_server + "/quiz?action=register&user_id="+user_id+"&pwd="+user_pwd,
             crossDomain: true,
             cache: false,
             //data: { action: "register", uid: user_id },
@@ -50,7 +50,7 @@ $(function () {
                 window.location.href = "quiz.html"
             },
             error : function(e) {
-                alert("registration error. "+e);
+                alert("registration error. "+e.responseText);
             }
         });
     });

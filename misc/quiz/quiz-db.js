@@ -98,7 +98,7 @@ function add_user(userid, replace) {
     if (!ddb) {
         null_ddb_users[userid] = {
             "uid": userid,
-            "timestamp": new Date().toISOString(),
+            "timestamp": "-",
             "score": 0, "scored": 0,
             "actions" : [ "created "+(new Date().toISOString()) ],
             "answers": {} };
@@ -112,7 +112,7 @@ function add_user(userid, replace) {
             //"ReturnConsumedCapacity": "TOTAL",
             "Item": {
                 "uid": { "S": "user_"+userid },
-                "timestamp": { "S": new Date().toISOString() },
+                "timestamp": { "S": "-" },
 				"score" : { "N": "0" },
                 "scored" : { "N": "0" },
                 //"comments" : { "S": "this is a test item" } ,
@@ -379,10 +379,13 @@ function test() {
 	//.then(_ => create_quiz_table_promise(ddb))
 	//.then(_ => test_dynamo_db(userid))
 	//.then(_ => add_user(userid, replace))
-	.then(_ => update_user_with_answer(userid, "q12", answer))
+	//.then(_ => update_user_with_answer(userid, "q12", answer))
 	//.then(_ => delete_user(userid0))
 	.then(_ => get_users())
 	.then(x=> console.log(JSON.stringify(x, null, 4)))
 	.catch(console.error);
 }
-// test();
+
+if (require.main === module) {
+    test();
+}
