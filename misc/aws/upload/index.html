@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:;base64,=">
+<!-- <script src="https://cdn.jsdelivr.net/npm/exif-js"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+</head>
+<body>
+
+<label for="root_input">Root folder</label>
+<input id="root_input" type="text" placeholder="Photos/ or Docs/ or ..."></input><br/>
+<label for="photos_input" checked>Photos</label>
+<input id="photos_input" type="checkbox" checked></input><br/><br/>
+<input id="file_input" type="file" multiple="multiple"></input><br/><br/>
+
+<span id=status></span>
+
+<script>
+/* global Blob */
+/* global EXIF */
+
+// const lambda_url = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
+const lambda_url = "/default";
+const chunk_size = 1024*1024;
+
+window.onload = function () {
+    document.getElementById("file_input").addEventListener("change", evt => upload(evt));
+};
+
+async function upload(evt) {
+    var root = document.getElementById("root_input").value || "";
+    var photos = document.getElementById("photos_input").checked;
+    var files = document.getElementById("file_input").files;
+    var status_elnt = document.getElementById("status");
+
+    if (root && !root.endsWith("/"))
+         root += "/";
+
+    status_elnt.innerHTML = `<p>Uploading ${files.length} file(s) ...</p>`;
+
+    for (const file of files) {
+        try {
+            var { name, size, type, lastModifiedDate } = file;
+            status_elnt.innerHTML += `<p>Uploading ${name} (${Math.round(size/1024)}kB)</p>`;
+
+            var key, infos = { name, size, type, lastModifiedDate };
+
+            // retriving photos metadata
+            var meta = null;
+            if (photos) {
+                try { 
+                    meta = await get_exif_infos(file);
+                    infos = { ...infos, ...meta };
+                    status_elnt.innerHTML += `<p>Exif metadata ${JSON.stringify(meta)}</p>`;
+                } catch (e) {
+                    status_elnt.innerHTML += `<p>Exif error ${e}</p>`;
+                }
+            }
+            
+            // using photos metadata
+            if (meta && meta.DateTime) {
+                key = root + meta.DateTime.substr(0,4) + "/" + meta.DateTime + " " + name;
+            } else {
+                key = root + name;
+            }
+
+            var res = await send_file(key, file, infos);
+            try { res = JSON.parse(res); } catch (e) {}
+
+            status_elnt.innerHTML += `<p>&#9989;  <a href="${res.url}">${key}</a></p>`;
+        } catch (e) {
+            status_elnt.innerHTML += `<p>&#10060; <b style="color: brown;">${e.message||e}<pre><br/><br/>${e.stack||""}</pre></b></p><br/>`;
+        }
+    }
+}
+
+async function send_file_multipart(name, file, meta) {
+    var status_elnt = document.getElementById("status");
+    status_elnt.innerHTML += `<p id="progress"></p>`;
+
+    // upload parts
+    var n = Math.ceil(file.size/chunk_size);
+    for (var i=0; i<n; i++) {
+        status_elnt.lastElementChild.innerHTML = `Uploading part ${i+1}/${n}...`;
+        
+        var beg = i * chunk_size;
+        var end = Math.min((i+1) * chunk_size, file.size);
+        var blob = file.slice(beg, end);
+        var http_headers = { "multipart": i+"/"+n };
+        await send_file(name+"."+i, blob, meta, http_headers);
+    }
+
+    // concatenate parts
+    status_elnt.lastElementChild.innerHTML = `Concatenateing parts...`;
+    blob = new Blob(["Done"]);
+    http_headers = { "multipart": n+"/"+n };
+    var res = await send_file(name, blob, meta, http_headers);
+    
+    status_elnt.lastElementChild.remove();
+    return res;
+}
+
+async function send_file(name, file, meta, http_headers) {
+    if (file.size>chunk_size) 
+        return await send_file_multipart(name, file, meta);
+
+    meta.name = name;
+    
+    // get rid of undefined values
+    var tmp = {}; for (var k in meta) if (meta[k] !== undefined) tmp[k] = meta[k]; meta = tmp; 
+        
+    // var urlenc = await file_to_urlencoded(file);
+    var bintxt = await file_to_binary_string(file);
+    // var base64 = btoa(bintxt);
+    
+    return new Promise((resolve, reject) => {
+        var xhr = new XMLHttpRequest;
+        var query = new URLSearchParams(meta).toString();
+        xhr.open("POST", lambda_url + "/upload?" + query);
+        // xhr.setRequestHeader('Content-Type', 'application/octet-stream'); 
+
+        if (http_headers)
+            for (var k in http_headers)
+                xhr.setRequestHeader(k, http_headers[k]);
+
+        xhr.onload = function (e) {
+            var response = xhr.response || xhr.responseText;
+            resolve(response);
+        };
+        
+        xhr.onreadystatechange = function handler() {
+            if(this.readyState == this.DONE) {
+                if (this.status != 200)
+                    reject(`Http error ${this.status}.  ${this.responseText}`);
+            }
+        };
+        
+        xhr.error = function(e) {
+            reject(`Upload error ${e}.`);
+        };
+
+        xhr.send(bintxt);
+    });
+}
+
+async function file_to_binary_string(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.addEventListener("load", function () {
+            resolve(reader.result);
+        }, false);
+        reader.readAsBinaryString(file);
+    });
+}
+
+async function file_to_urlencoded(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.addEventListener("load", function () {
+            resolve(reader.result);
+        }, false);
+        reader.readAsDataURL(file);
+    });
+}
+
+async function get_exif_infos(img) {
+    return new Promise((resolve, reject) => {
+        EXIF.getData(img, function() {
+            var all_tags = EXIF.getAllTags(this);
+
+            // extract subset 
+            var { Make, Model, DateTime, Orientation, FocalLengthIn35mmFilm, FNumber, ExposureTime, ...other } = all_tags;
+            var meta = { Make, Model, DateTime, Orientation, FocalLengthIn35mmFilm, FNumber, ExposureTime };
+            
+            // try to get timestamp
+            var timestamp = null;
+            if (DateTime) {
+                try {
+                    timestamp = new Date(meta.DateTime);
+                } catch (e) {}
+                
+                if (!isValidDate(timestamp)) 
+                try {
+                    var tok = DateTime.split(/[-: ]+/).map(x => x*1);
+                    timestamp = new Date(tok[0], tok[1]-1, tok[2], tok[3], tok[4], tok[5]);  // the month is 0-indexed
+                    if (isValidDate(timestamp)) 
+                        // meta.DateTime = DateTime.substr(0,10).replaceAll(":", "-")+DateTime.substr(10);
+                        meta.DateTime = DateTime.replaceAll(":", "-"); // do not preserve ':' in time part as it is an illegal character in a file path
+                } catch (e) {}
+                
+            }
+            if (!isValidDate(timestamp)) 
+                reject(`Couldn't extract timestamp from EXIF data. ${DateTime}`);
+            else 
+                resolve(meta);
+        });
+    });
+}
+
+function isValidDate(d) {
+  return d instanceof Date && !isNaN(d);
+}
+
+</script>
+</body>
+</html>

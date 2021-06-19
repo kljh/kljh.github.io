@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:;base64,=">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.1/codemirror.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.1/addon/dialog/dialog.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.1/addon/display/fullscreen.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.1/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.1/keymap/vim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.1/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.1/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.1/addon/dialog/dialog.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.1/addon/display/fullscreen.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.1/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.1/addon/search/search.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.1/addon/search/searchcursor.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.1/addon/search/match-highlighter.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/4.0.0/diff.min.js"></script>
+</head>
+<body>
+
+<div id="file_menu">
+    <label for="path">Path</label>
+    <input id="path" type="text" placeholder="text/abc.txt"> 
+    <a href="#" id="open">Open</a> 
+    <a href="#" id="new">New</a> 
+    <span id="status"></span>
+    <br/><br/>
+</div>
+
+<div id="edit_div">
+
+<textarea id="text" cols="80" rows="30">
+I am the very model of a modern Major-General,
+I've information vegetable, animal, and mineral,
+I know the kings of England, and I quote the fights historical
+From Marathon to Waterloo, in order categorical;
+
+I'm very well acquainted, too, with matters mathematical,
+I understand equations, both the simple and quadratical,
+About binomial theorem I'm teeming with a lot o' news,
+Hmmm... lot o' news, lot o'news... Aha!
+With many cheerful facts about the square of the hypotenuse.
+
+I'm very good at integral and differential calculus;
+I know the scientific names of beings animalculous:
+In short, in matters vegetable, animal, and mineral,
+I am the very model of a modern Major-General.
+
+I know our mythic history, King Arthur's and Sir Caradoc's;
+I answer hard acrostics, I've a pretty taste for paradox,
+I quote in elegiacs all the crimes of Heliogabalus,
+In conics I can floor peculiarities parabolous;
+
+I can tell undoubted Raphaels from Gerard Dows and Zoffanies,
+I know the croaking from The Frogs of Aristophanes!
+Then I can hum a fugue of which I've heard the music's din afore,
+Hmmm... din afore, din afore... Aha!
+And whistle all the airs from that infernal nonsense Pinafore.
+
+Then I can write a washing bill in Babylonic cuneiform,
+And tell you ev'ry detail of Caractacus's uniform:
+In short, in matters vegetable, animal, and mineral,
+I am the very model of a modern Major-General.
+
+In fact, when I know what is meant by "mamelon" and "ravelin",
+When I can tell at sight a Mauser rifle from a javelin,
+When such affairs as sorties and surprises I'm more wary at,
+And when I know precisely what is meant by "commissariat",
+
+When I have learnt what progress has been made in modern gunnery,
+When I know more of tactics than a novice in a nunnery
+In short, when I've a smattering of elemental strategy
+Hmmm... strategy... strategy, lategy, bategy... Aha! I have it!
+You'll say a better Major-General has never sat a gee.
+
+For my military knowledge, though I'm plucky and adventury,
+Has only been brought down to the beginning of the century;
+But still, in matters vegetable, animal, and mineral,
+I am the very model of a modern Major-General.
+</textarea><br><br>
+
+</div>
+
+<script>
+/* global localStorage */
+/* global Diff */
+/* global CodeMirror */
+
+// const lambda_url = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
+const lambda_url = "/default";
+
+var text_base = null;
+var cmEditor = null;
+
+window.addEventListener('DOMContentLoaded', async (event) => {
+    if (localStorage["path"]) {
+        document.getElementById("path").value = localStorage["path"];
+        var tmp = await open_handler(null, "open");
+    }
+    
+    document.getElementById("new").addEventListener("click", evt => open_handler(evt, "new"));
+    document.getElementById("open").addEventListener("click", evt => open_handler(evt, "open"));
+    document.getElementById("text").addEventListener("change", evt => change_handler());
+    text_base = document.getElementById("text").value;
+    
+    if (true) {
+        // use CodeMirror
+        var myTextarea = document.getElementById("text");
+        cmEditor = CodeMirror.fromTextArea(myTextarea, { 
+            lineNumbers: true, 
+            matchBrackets: true,
+            // fullScreen: true, 
+        });
+        cmEditor.setSize(null, 400);
+        cmEditor.on("change", throttle_change_handler);
+    }
+});
+
+function get_text() {
+    if (cmEditor)
+        return cmEditor.getValue();
+    else
+        return document.getElementById("text").value;
+}
+
+function set_text(text) {
+    if (cmEditor)
+        cmEditor.setValue(text);
+    else
+        document.getElementById("text").value = text;
+}
+
+
+async function open_handler(evt, action) {
+    if (evt) evt.preventDefault();
+    var status_elnt = document.getElementById("status");
+    var path = document.getElementById("path").value;
+    status_elnt.innerHTML = `Loading ${path}...`;
+    try {
+        if (!path) throw "Path is empty";
+        var res = await send_data({ action, path });    
+        text_base = res;
+        set_text(res);
+        localStorage["path"] = path;
+        status_elnt.innerHTML = '';        
+    } catch (e) {
+        status_elnt.innerHTML = `<p><b>${e}</b></p>`;        
+    }
+}
+
+var throttle_delay_ms = 5000;
+var throttle_handler_running = false;
+var throttle_more_changes = false;
+async function throttle_change_handler() {
+    if (throttle_handler_running) {
+        throttle_more_changes = true;
+    } else {
+        throttle_handler_running = true;
+        
+        // give time for more change to come
+        await sleep(throttle_delay_ms);
+        
+        // we're starting to process so we must be able to capture new changes while we process
+        throttle_more_changes = false;
+        
+        await change_handler();
+        throttle_handler_running = false;
+        
+        if (throttle_more_changes)
+            throttle_change_handler();
+    }
+}
+
+async function sleep(ms) {
+    return new Promise((resolve, reject) => {
+        setTimeout(resolve, ms);
+    });
+}
+
+async function change_handler() {
+    var path = document.getElementById("path").value || "text/abc.txt";
+    var text = get_text();
+    
+    var status_elnt = document.getElementById("status");
+    status_elnt.innerHTML = `Saving ...`;
+
+    var options = { context: 2 };
+    var patch = Diff.createTwoFilesPatch("old", "new", text_base, text, "", "", options);
+    //var patch = Diff.structuredPatch("old", "new", one, other, "", "", options);
+
+    var data = { path, patch };
+    console.log("patch", patch);
+    try {
+        var res = await send_data(data);    
+        if (res)
+            text_base = text;
+        status_elnt.innerHTML = '';        
+    } catch (e) {
+        status_elnt.innerHTML = `<p><b>${e}</b></p>`;        
+    }
+}
+
+async function send_data(data) {
+    return new Promise((resolve, reject) => {
+        var xhr = new XMLHttpRequest;
+        var query = ""; // new URLSearchParams(query_args).toString();
+        xhr.open("POST", lambda_url + "/delta?" + query);
+    
+        xhr.onload = function (e) {
+            var response = xhr.response || xhr.responseText;
+            resolve(response);
+        };
+        
+        xhr.onreadystatechange = function handler() {
+            if(this.readyState == this.DONE) {
+                if (this.status != 200)
+                    reject(`Http error ${this.status}.  ${this.responseText}`);
+            }
+        };
+
+        xhr.send(JSON.stringify(data, null, 2));
+    });
+}
+
+</script>
+
+</body>
+</html>
