@@ -1,1 +1,4 @@
 node_modules
+
+# ignore files prefixed with dot
+**/.*

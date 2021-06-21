@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: SIgn in by mail, phone or oauth
+Resources:
+  id:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      CodeUri: .
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: 'arn:aws:iam::933377361323:role/service-role/id-role-yk78g998'
+      Events:
+        Api1:
+          Type: Api
+          Properties:
+            Path: /id
+            Method: ANY
+      Environment:
+        Variables:
+          GITHUB_CLIENT_ID: ef1a126cb7c698d6cdea
+          GITHUB_CLIENT_SECRET: --hidden--
+          GOOGLE_CLIENT_ID: --hidden--
+          GOOGLE_CLIENT_SECRET: --hidden--
+          LINKEDIN_CLIENT_ID: 77yjhq5uheqgsg
+          LINKEDIN_CLIENT_SECRET: --hidden--
+          MAIL_FROM: Nikola McCormick <nikola.mccormick@gmail.com>
+          SMTP_USER: nikola.mccormick
+          SMTP_PASS: --hidden--
+          TWILIO_ACCOUNT_SID: ACf02b5e07d8b2be430d846bfba87a2585
+          TWILIO_AUTH_TOKEN: --hidden--
+          TWILIO_NUMBER_FROM: '+17046319290'
+          USER_HASH: --hidden--
+      Layers:
+        - 'arn:aws:lambda:eu-west-3:933377361323:layer:nodemailer:1'
+        - 'arn:aws:lambda:eu-west-3:933377361323:layer:axios:1'
+        - 'arn:aws:lambda:eu-west-3:933377361323:layer:request:1'
+        - 'arn:aws:lambda:eu-west-3:933377361323:layer:request-promise:2'

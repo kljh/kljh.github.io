@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Upload to S3
+Resources:
+  upload:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      CodeUri: .
+      Description: ''
+      MemorySize: 128
+      Timeout: 5
+      Role: 'arn:aws:iam::933377361323:role/service-role/lambda_role_s3'
+      Events:
+        Api1:
+          Type: Api
+          Properties:
+            Path: /upload
+            Method: ANY
+      Environment:
+        Variables:
+          BUCKET: kljhapp
