@@ -22,9 +22,6 @@ input.f {
 </style>
 </head>
 <body onload="init();">
-
-
-<h1>Gear</h1>
 <div id="gear"></div>
 
 <!-- SVG viewbox: x y width height -->
@@ -71,49 +68,51 @@ svg {
 <form name="gp" action="" method=""><table cellspacing="10" align="left">
 <tbody><tr>
 
-<td width="220" valign="top">
-Tooth spacing:<br>
-<input class="f" type="number" name="toothspace" value="15" size="10" onchange="UpdateGears()" onkeyup="UpdateGears()"> mm<p class="f">
-Gear 1 teeth:<br>
-<input class="f" type="number" name="g1t" value="7" size="10" onchange="UpdateGears()" onkeyup="UpdateGears()">
-<input type="checkbox" name="rack" onclick="UpdateGears()"> Rack&amp;pinion
-</p><p class="f">
-</td>
-
-<td width="220" valign="top">
-Contact angle:<br>
-<input class="f" type="number" name="contangle" value="20" size="10" onchange="UpdateGears()" onkeyup="UpdateGears()"> deg<p class="f">
-Gear 2 teeth:<br>
-<input class="f" type="number" name="g2t" value="11" size="10" onchange="UpdateGears()" onkeyup="UpdateGears()">
-<input type="checkbox" name="twogears" checked="" onclick="UpdateGears()"> Two gears
+<td width="240" valign="top">
+<p>Contact angle:<br>
+  <input class="f" type="number" name="contangle" value="20" size="10" onchange="UpdateGears()" onkeyup="UpdateGears()"> deg
 </p>
-<!-- 
-<p class="f">
-cSpokes:<br>
-<input class="f" type="number" name="spokes" value="3" size="10" onchange="UpdateGears()" onkeyup="UpdateGears()" disabled="">
-<input type="checkbox" name="showspokes" value="checked" onclick="UpdateGears()"> Show spokes
-</p> -->
+<p>Gear 1 teeth:<br>
+  <input class="f" type="number" name="g1t" value="7" size="10" onchange="UpdateGears()" onkeyup="UpdateGears()">
+  <input type="checkbox" name="rack" onclick="UpdateGears()"> Pinion &amp; Rack
+</p>
+<p>Gear 2 teeth:<br>
+  <input class="f" type="number" name="g2t" value="11" size="10" onchange="UpdateGears()" onkeyup="UpdateGears()">
+  <input type="checkbox" name="twogears" checked="" onclick="UpdateGears()"> Two gears
+</p>
 </td>
 
-<td width="200" valign="top">
-Shaft hole dia.:<br>
-<input class="f" type="number" name="shafthole" value="5" size="10" onchange="UpdateGears()" onkeyup="UpdateGears()"> mm
-<!-- 
-<p class="f">
-Show rotated:<br>
-<input class="f" type="number" name="rotation" value="0" size="10" onchange="UpdateGears()" onkeyup="UpdateGears()"> % of 1 toothspace
-</p> -->
-<p class="f"><br>
-<a id="get_svg" href="#" >Get SVG</a>
-</p></td>
+<td width="220" valign="top">
+<p>Tooth spacing:<br>
+  <input class="f" type="number" name="toothspace" value="15" size="10" onchange="UpdateGears()" onkeyup="UpdateGears()"> mm
+</p>
+<p>Shaft hole dia.:<br>
+  <input class="f" type="number" name="shafthole" value="5" size="10" onchange="UpdateGears()" onkeyup="UpdateGears()">
+</p>
+<!--  
+<p>Spokes:<br>
+  <input class="f" type="number" name="spokes" value="3" size="10" onchange="UpdateGears()" onkeyup="UpdateGears()" disabled="">
+  <input type="checkbox" name="showspokes" value="checked" onclick="UpdateGears()"> Show spokes
+</p>
+<p>Show rotated:<br>
+  <input class="f" type="number" name="rotation" value="0" size="10" onchange="UpdateGears()" onkeyup="UpdateGears()"> % of 1 toothspace
+</p>
+ -->
+<br>
+<a id="get_svg" href="#" >Get SVG</a><br>
+</td>
 
-<td width="170" valign="top">
+<td width="180" valign="top">
+<p>
 <input type="checkbox" name="pdia" onclick="UpdateGears()">Pitch diameter<br>
 <input type="checkbox" name="cline" checked onclick="UpdateGears()">Line of contact<br>
 <input type="checkbox" name="crosshair" checked onclick="UpdateGears()">Show center<br>
 <input type="checkbox" name="tipclear" onclick="UpdateGears()">Tip Clearance<br>
 <input type="checkbox" name="animate" onclick="UpdateGears()">Animate<br>
-<a href="https://woodgears.ca/gear_cutting/template.html#moretext" target="help">Explain fields (Help)</a>
+<input type="checkbox" name="zoom" onclick="UpdateGears()">Zoom<br>
+<br>
+<a href="https://woodgears.ca/gear_cutting/template.html#moretext" target="help">Explain fields (Help)</a><br>
+<p>
 </td>
 
 </tr></tbody></table>

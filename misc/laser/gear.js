@@ -50,6 +50,18 @@ function UpdateGears() {
     
     var alpha0 = Math.tan(pa) - pa;
 
+    var svg_elnt = document.getElementById("gearview");
+    if (!inputs.zoom) {
+        var wA = 2 * RA * ( 1 + 2.2/nA )
+        var wB = 2 * RB * ( 1 + 2.1/nB )
+        var w = inputs.twogears ? wA+wB : wA;
+        var h = inputs.twogears ? Math.max(wA, wB) : wA;
+        svg_elnt.setAttribute("viewBox", `${-wA} ${-h/2} ${w} ${h}`);
+    } else {
+        var d = 1.5 * inputs.toothspace;
+        svg_elnt.setAttribute("viewBox", `${-d/2} ${-d/2} ${d} ${d}`);
+    }
+
     var defs = document.getElementById("svg-defs");
     defs.innerHTML = "";
         
@@ -68,10 +80,10 @@ function UpdateGears() {
         var elnt = document.getElementById(id);
         elnt.innerHTML = "";
         if (inputs.cline)
-            elnt.appendChild(svg_node("circle", { cx: 0, cy: 0, r, class: "construct" }));
+            elnt.appendChild(svg_node("circle", { cx: 0, cy: 0, r, class: "construct cline" }));
         if (inputs.pdia) 
-            elnt.appendChild(svg_node("circle", { cx: 0, cy: 0, r: R, class: "construct" }));
-        elnt.appendChild(svg_node("circle", { cx: 0, cy: 0, r: inputs.shafthole / 2 }));
+            elnt.appendChild(svg_node("circle", { cx: 0, cy: 0, r: R, class: "construct pdia" }));
+        elnt.appendChild(svg_node("circle", { cx: 0, cy: 0, r: inputs.shafthole / 2, class: "shaft" }));
         for (var i=0; i<N; i++) {
             var transform = "rotate("+(360*(i-0.25)/N - alphaPitch * rad + alpha0)+")";
             //elnt.appendChild(svg_node("path", { transform, d }));
@@ -98,7 +110,7 @@ function UpdateGears() {
             [ -module, pitch/2 ], 
             [ -module, pitch/4+dx ], 
             [ +module, pitch/4-dx ],
-            [ +module*1.25, (pitch/4-dx)/2 ] ];
+            [ +module*1.15, (pitch/4-dx)/2 ] ];
         path = path.concat(path.map(coords => [ coords[0], -coords[1] ]).reverse())
         var d = svg_path(path);
         
@@ -114,6 +126,8 @@ function UpdateGears() {
     draw_gear("rotA", rA, nA, pa, 0);
     if (inputs.twogears)
         draw_gear("rotB", rB, nB, pa, 180*(1+1/nB));
+    else 
+        document.getElementById("rotB").innerHTML = "";
     if (inputs.rack)
         draw_rack("rack", inputs.toothspace, pa);
     translateXY("A", -RA);
@@ -128,25 +142,19 @@ function UpdateGears() {
     var elnt = document.getElementById("construct");
     elnt.innerHTML = "";
     if (inputs.crosshair) {
-        elnt.appendChild(svg_node("line", { x1: -1.4*RA, y1: 0, x2: +1.4*RB, y2: 0.0, class: "construct" }));
         elnt.appendChild(svg_node("line", { x1: -RA, y1: -0.4*rA, x2: -RA, y2: 0.4*rA, class: "construct" }));
+        elnt.appendChild(svg_node("line", { x1: -1.4*RA, y1: 0, x2: -0.6*RA, y2: 0.0, class: "construct" }));
+    }
+    if (inputs.crosshair && inputs.twogears) {
         elnt.appendChild(svg_node("line", { x1: +RB, y1: -0.4*rB, x2: +RB, y2: 0.4*rB, class: "construct" }));
+        elnt.appendChild(svg_node("line", { x1: +0.6*RB, y1: 0, x2: +1.4*RB, y2: 0.0, class: "construct" }));
     }
     if (inputs.cline) {
         elnt.appendChild(svg_node("line", { x1, y1, x2, y2, class: "construct" }));
         elnt.appendChild(svg_node("line", { x1, y1: -y1, x2, y2: -y2, class: "construct" }));
     }
-        
-
-    // Download link
-    var svg_elnt = document.getElementById("gearview");
-    var svg_xml = svg_elnt.outerHTML;
-    var blob = new Blob([svg_xml], { type: "image/svg+xml" });
-
-    var a = document.getElementById("get_svg");
-    a.download = "gear.svg";
-    a.href = URL.createObjectURL(blob);
-    a.dataset.downloadurl = [ "image/svg+xml", a.download, a.href].join(':');
+    
+     download_link();
 }
 
 
@@ -183,7 +191,7 @@ function involute(r, N, pa, basic_tip_clearance) {
             break;
     }
 
-    var Rbase = Math.max(R-1.25*dR, 0);
+    var Rbase = Math.max(R-1.15*dR, 0);
     var tip_clearance = t
     path = [].concat(
         basic_tip_clearance ? [
@@ -232,6 +240,19 @@ function tip_clearance(r, N, pa) {
 
     path = path.map(coords => [ coords[0], -coords[1] ]).reverse().concat(path);
     return path;
+}
+
+function download_link() {
+    // Download link
+    var svg_elnt = document.getElementById("gearview");
+    var svg_xml = svg_elnt.outerHTML;
+    var blob = new Blob([svg_xml], { type: "image/svg+xml" });
+
+    var a = document.getElementById("get_svg");
+    a.download = "gear.svg";
+    a.href = URL.createObjectURL(blob);
+    a.dataset.downloadurl = [ "image/svg+xml", a.download, a.href].join(':');
+
 }
 
 function get_inputs() {
