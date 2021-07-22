@@ -57,9 +57,13 @@ function UpdateGears() {
     function draw_gear(id, r, N, pa, alpha0) {
         var R = r / Math.cos(pa);
     
-        var { path, alphaPitch } = involute(r, N, pa);
+        var { path, alphaPitch } = involute(r, N, pa, !inputs.tipclear);
         var d = svg_path(path);
         defs.appendChild(svg_node("path", { id: id+"involute", d }));
+
+        var path2 = tip_clearance(r, N, pa);
+        var d2 = svg_path(path2);
+        defs.appendChild(svg_node("path", { id: id+"clearance", d: d2 }));
 
         var elnt = document.getElementById(id);
         elnt.innerHTML = "";
@@ -75,7 +79,11 @@ function UpdateGears() {
             var transform = "scale(1,-1) rotate("+(360*(i-0.25)/N - alphaPitch * rad - alpha0)+")";
             //elnt.appendChild(svg_node("path", { transform, d }));
             elnt.appendChild(svg_node("use", { href: "#"+ id+"involute", transform }));
-            
+     
+            if (inputs.tipclear) {
+                var transform = "rotate("+(360*(i+0.5)/N)+")";
+                elnt.appendChild(svg_node("use", { href: "#"+ id+"clearance", transform }));
+            }
         }
     }
 
@@ -142,7 +150,7 @@ function UpdateGears() {
 }
 
 
-function involute(r, N, pa) {
+function involute(r, N, pa, basic_tip_clearance) {
     var R = r / Math.cos(pa);
     var dR = TwoPi*R/N / Math.PI;
 
@@ -166,7 +174,7 @@ function involute(r, N, pa) {
     var alphaPitch = t_to_alpha(tPitch);
         
     var path = [];
-    var dt = 1*deg;
+    var dt = TwoPi/N / 50;
     for (var t=0; ; t+=dt) {
         var x = r * ( Math.cos(t) + t * Math.sin(t) );
         var y = r * ( Math.sin(t) - t * Math.cos(t) );
@@ -176,20 +184,54 @@ function involute(r, N, pa) {
     }
 
     var Rbase = Math.max(R-1.25*dR, 0);
+    var tip_clearance = t
     path = [].concat(
-        [
+        basic_tip_clearance ? [
         [ Rbase * Math.cos(-TwoPi/N/4 + alphaPitch), Rbase * Math.sin(-TwoPi/N/4 + alphaPitch) ],
         [ Rbase * Math.cos(-TwoPi/N/16),             Rbase * Math.sin(-TwoPi/N/16) ],
-        [ (R-dR), 0 ] ],
+        [ (R-dR), 0 ] ] : [],
         path, 
         [
         [ (R+dR) * Math.cos(TwoPi/N/4 + alphaPitch), (R+dR) * Math.sin(TwoPi/N/4 + alphaPitch) ],
         ] );
 
-    console.log("alphaPitch", alphaPitch, "(rad)");
-    console.log("alphaPitch", alphaPitch * rad, "(deg)");
+    // console.log("alphaPitch", alphaPitch, "(rad)");
+    // console.log("alphaPitch", alphaPitch * rad, "(deg)");
 
     return { path, alphaPitch };    
+}
+
+function tip_clearance(r, N, pa) {
+    var R = r / Math.cos(pa);
+    var pitch = R * TwoPi / N;
+    var module = pitch / Math.PI * 1.02;  
+
+    var path = [];    
+    var alpha = 0; 
+    var da = TwoPi / N / 25, 
+        dy = pitch / 25;
+    var x = R - module, 
+        y = pitch/4 - Math.sin(pa) * module;
+
+    for (var i=0; ; i++) {
+        // switch to polar coords
+        var d = Math.sqrt(x*x + y*y);
+        var a = Math.atan(y/x);
+        // polar coords relative to the gear referential 
+        a = a - alpha
+        // back tp cartesian coords, still relative to the gear referential  
+        var x_G = d * Math.cos(a), 
+            y_G = d * Math.sin(a);
+        path.push([ x_G, y_G ]);
+        
+        if (d > R + module/6)
+            break;
+        alpha += da;
+        y += dy;
+    }
+
+    path = path.map(coords => [ coords[0], -coords[1] ]).reverse().concat(path);
+    return path;
 }
 
 function get_inputs() {
