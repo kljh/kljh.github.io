@@ -25,29 +25,46 @@ input.f {
 
 <div id="gear"></div>
 
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+<svg 
+  xmlns="http://www.w3.org/2000/svg" 
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
   id="svg_elnt" width="100mm" height="100mm" 
   viewbox="-50 -50 100 100" >
 <style type="text/css">
+
 svg {
   stroke: black;
   stroke-width: 0.5;
   stroke-linecap: round;
+  stroke-linejoin: round;
   fill: none;
 }
 
+text {
+  fill: none;
+  font-size: 6px;
+  font-weight: lighter;
+
+}
+
 .construct {
-  stroke: grey;
-  stroke-width: 0.2;  
+  stroke: #A0B0C0; /* grey */
+  stroke-width: 0.1;
+}
+
+.keep {
+  stroke: black;
+  stroke-width: 2;  
 }
 
 .cut {
-  stroke: black;
-  stroke-width: 6;  
+  stroke: #191970; /* blue */
+  stroke-width: 0.5;  
 }
 
 .engrave {
-  stroke: brown;
+  stroke: #8B4513; /* brown */
   stroke-width: 1;  
 }
 
@@ -59,6 +76,10 @@ svg {
     inkscape:label="Grid"
     inkscape:groupmode="layer" >
   </g>
+  <g id="keep" class="keep"
+    inkscape:label="Keep"
+    inkscape:groupmode="layer" >
+  </g>
   <g id="cut" class="cut"
     inkscape:label="Cut"
     inkscape:groupmode="layer" >
@@ -67,9 +88,30 @@ svg {
     inkscape:label="Engrave"
     inkscape:groupmode="layer" >
   </g>
+  
 </svg>
 
 <br>
+
+<p> Model<br>
+<select id="model" name="model" onchange="draw()">
+  <option value="iso_grid">Iso Grid</option>
+  <option value="iso_tri">Iso Tri</option>
+  <option value="iso_tri_flip">Iso Tri Flip</option>
+  <option value="gray_code">Gray Code</option>
+  <option value="binary_code">Binary Code</option>
+  <option value="random_balance">Random arcs</option>
+  <option value="dividing_plate_1">Dividing Plate n&ordm;1</option>
+  <option value="dividing_plate_2">Dividing Plate n&ordm;2</option>
+  <option value="dividing_plate_3">Dividing Plate n&ordm;3</option>
+  <option value="dividing_plate_4">Dividing Plate n&ordm;4</option>
+  <option value="dividing_plate_5">Dividing Plate n&ordm;5</option>
+  <option value="dividing_plate_6">Dividing Plate n&ordm;6</option>
+  
+</select>
+</p>
+
+
 <a id="get_svg" href="#" >Get SVG</a><br>
 
 </body>
