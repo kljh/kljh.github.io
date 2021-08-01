@@ -4,6 +4,10 @@ const TwoPi = 2*Math.PI;
 const d2r = TwoPi / 360.;
 const r2d = 1/d2r;
 
+const namespaces = {
+    xlink: "http://www.w3.org/1999/xlink"
+};
+
 function init() {
     draw_grid();
 }
@@ -16,7 +20,7 @@ function draw_grid() {
     var defs = document.getElementById("defs");
     var L = 50;
     var t = 0.5 * L, 
-        r = 0. * L;
+        r = 0.3 * L;
     var x = Math.cos(18*d2r);
     var y = Math.sin(18*d2r);
     var X = Math.cos(36*d2r);
@@ -31,10 +35,11 @@ function draw_grid() {
     var da = `M ${2*L*x/3} ${2*L*y/3} A ${L/3} ${L/3} 0 0 1 ${4*L*x/3} ${2*L*y/3} `;
     var g = defs.appendChild(svg_node("g", { id: "rhomb" }));
     g.appendChild(svg_node("path", { d }));
+    g.appendChild(svg_text_node());
     g.appendChild(svg_node("path", { d: da, stroke: "green" }));
-    //defs.appendChild(svg_node("use", { id: "rhombF", href: "#rhomb", transform: `scale(1 -1)` }));
-    defs.appendChild(svg_node("use", { id: "rhombR", href: "#rhomb", transform: `translate(${2*L*x} 0) rotate(180)` }));
-    //defs.appendChild(svg_node("use", { id: "rhombRF", href: "#rhomb", transform: `translate(${2*L*x} 0) rotate(180) scale(1 -1)` }));
+    defs.appendChild(svg_text_node());
+    defs.appendChild(svg_node("use", { id: "rhombR", "xlink:href": "#rhomb", transform: `translate(${2*L*x} 0) rotate(180)` }));
+    defs.appendChild(svg_text_node());
     
     var d0 = `M 0 0 L ${L*X} ${L*Y} L ${2*L*X} 0 L ${L*X} ${-L*Y} Z `
     var d = `M 0 0 Q ${L*X-t} ${L*Y} ${L*X} ${L*Y} Q ${L*X+r} ${L*Y} ${2*L*X} 0 Q ${L*X+r*XX} ${-L*Y+r*YY} ${L*X} ${-L*Y} Q ${L*X-t*XX} ${-L*Y+t*YY} 0 0 `;
@@ -42,49 +47,58 @@ function draw_grid() {
     var g = defs.appendChild(svg_node("g", { id: "rhomb2" }));
     //g.appendChild(svg_node("path", { d: d0 }));
     g.appendChild(svg_node("path", { d }));
+    g.appendChild(svg_text_node());
     g.appendChild(svg_node("path", { d: da, stroke: "green" }));
-    defs.appendChild(svg_node("use", { id: "rhomb2R", href: "#rhomb2", transform: `translate(${2*L*X} 0) rotate(180)` }));
-    
+    defs.appendChild(svg_text_node());
+    defs.appendChild(svg_node("use", { id: "rhomb2R", "xlink:href": "#rhomb2", transform: `translate(${2*L*X} 0) rotate(180)` }));
+    defs.appendChild(svg_text_node());
+        
 
     var cut = document.getElementById("cut");
     var grid = document.getElementById("grid");
     
-    // cut.appendChild(svg_node("use", { href: "#rhomb2R" }));
-    cut.appendChild(svg_node("use", { href: "#rhomb2R", transform: `rotate(72)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb2R", transform: `rotate(144)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb2R", transform: `rotate(216)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb2R", transform: `rotate(288)` }));
-    
-    cut.appendChild(svg_node("use", { href: "#rhombR", transform: `translate(${-L*y} ${L*x}) rotate(54)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb", transform: `translate(${L*X} ${L*Y}) rotate(90)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb", transform: `translate(${L*X} ${L*Y}) rotate(18)` }));
-    cut.appendChild(svg_node("use", { href: "#rhombR", transform: `translate(${L*X} ${L*Y}) rotate(54)` }));
-    cut.appendChild(svg_node("use", { href: "#rhombR", transform: `rotate(18)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb", transform: `rotate(-18)` }));
-    
-    cut.appendChild(svg_node("use", { href: "#rhomb2R", transform: `translate(${L+2*L*X} 0) rotate(180)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb2R", transform: `translate(${L+L*X} ${-L*Y}) rotate(216)` }));
-    return 
-    
-    cut.appendChild(svg_node("use", { href: "#rhomb", transform: `rotate(18)` }));
-    cut.appendChild(svg_node("use", { href: "#rhombR", transform: `rotate(-18)` }));
-    return 
-    
-    cut.appendChild(svg_node("use", { href: "#rhomb2", transform: `translate(${4*L*X} 0) rotate(180)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb2", transform: `translate(${4*L*X} 0) rotate(252)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb2", transform: `translate(${4*L*X} 0) rotate(108)` }));
-    
-    cut.appendChild(svg_node("use", { href: "#rhomb", transform: `translate(${2*L*X} 0) rotate(54)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb", transform: `translate(${2*L*X} 0) rotate(234)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb", transform: `translate(${2*L*X} 0) rotate(90) translate(${-2*L*x} 0)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb", transform: `translate(${2*L*X} 0) rotate(270) translate(${-2*L*x} 0)` }));
+    function draw_penrose() {
+        // cut.appendChild(svg_node("use", { href: "#rhomb2R" }));
+        cut.appendChild(svg_node("use", { href: "#rhomb2R", transform: `rotate(72)`, stroke: "blue", fill:"purple" }));
+        cut.appendChild(svg_node("use", { href: "#rhomb2R", transform: `rotate(144)` }));
+        cut.appendChild(svg_node("use", { href: "#rhomb2R", transform: `rotate(216)` }));
+        cut.appendChild(svg_node("use", { href: "#rhomb2R", transform: `rotate(288)` }));
 
-    cut.appendChild(svg_node("use", { href: "#rhomb", transform: `translate(${-1.3*L} ${1.2*L} ) rotate(18)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb", transform: `translate(${-1.3*L} ${-1.2*L} ) rotate(-18)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb", transform: `translate(${-1.4*L} ${-1.*L} ) rotate(90)` }));
-    cut.appendChild(svg_node("use", { href: "#rhomb", transform: `translate(${3.65*L} ${-1.*L} ) rotate(90)` }));
-    //grid.appendChild(svg_node("line", { x1: 0, x2: 0, y1: -dh, y2: dh }));
+        cut.appendChild(svg_node("use", { href: "#rhombR", transform: `translate(${-L*y} ${L*x}) rotate(54)` }));
+        cut.appendChild(svg_node("use", { href: "#rhomb", transform: `translate(${L*X} ${L*Y}) rotate(90)` }));
+        cut.appendChild(svg_node("use", { href: "#rhomb", transform: `translate(${L*X} ${L*Y}) rotate(18)` }));
+        cut.appendChild(svg_node("use", { href: "#rhombR", transform: `translate(${L*X} ${L*Y}) rotate(54)` }));
+        cut.appendChild(svg_node("use", { href: "#rhombR", transform: `rotate(18)` }));
+        cut.appendChild(svg_node("use", { href: "#rhomb", transform: `rotate(-18)` }));
+
+        cut.appendChild(svg_node("use", { href: "#rhomb2R", transform: `translate(${L+2*L*X} 0) rotate(180)` }));
+        cut.appendChild(svg_node("use", { href: "#rhomb2R", transform: `translate(${L+L*X} ${-L*Y}) rotate(216)`,  }));
+    } 
     
+    function draw_print() {
+        for (var k=0; k<4; k++) {
+            var x0 = 1.2*L*k, y0 = +0.2*L*k;
+            for (var i=0; i<4; i++) {
+                cut.appendChild(svg_node("use", { "xlink:href": "#rhomb", transform: `translate(${x0} ${y0-2*L*Y*i}) rotate(18)`, stroke: "blue" }));
+                cut.appendChild(svg_text_node());
+                cut.appendChild(svg_node("use", { "xlink:href": "#rhombR", transform: `translate(${x0} ${y0-2*L*Y*i}) rotate(-18)`, stroke: "black" }));
+                cut.appendChild(svg_text_node());
+            }
+        }
+
+        for (var k=0; k<6; k++) {
+            var x0 = 1.2*L*(k+4.2), y0 = 0.2*L*2.5 + (k%2)*L*0.6;
+            for (var i=0; i<(4+(k%2)); i++) {
+                cut.appendChild(svg_node("use", { "xlink:href": "#rhomb2", transform: `translate(${x0} ${y0-2*L*Y*i})` }));
+                cut.appendChild(svg_text_node());
+            }
+        }
+
+    }
+
+    //draw_penrose();
+    draw_print();
+
     download_link();
 }
 
@@ -137,10 +151,16 @@ function svg_node(tag, attrs) {
     for (var k in attrs) {
         var ns = null, name = k;
         var tmp = k.split(":");
-        if (tmp.length==2)
-            ns = tmp[0], name = tmp[1];
+        if (tmp.length==2) {
+            ns = namespaces[tmp[0]]; 
+        }
         el.setAttributeNS(ns, name, attrs[k]);
     }
+    return el;
+}
+
+function svg_text_node(txt) {
+    var el = document.createTextNode(txt || "\n");
     return el;
 }
 
