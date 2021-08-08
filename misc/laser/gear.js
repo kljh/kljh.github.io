@@ -4,6 +4,10 @@ const TwoPi = 2*Math.PI;
 const deg = TwoPi / 360.;
 const rad = 1/deg;
 
+const namespaces = {
+    xlink: "http://www.w3.org/1999/xlink"
+};
+
 function init() {
     UpdateGears();
 
@@ -87,14 +91,14 @@ function UpdateGears() {
         for (var i=0; i<N; i++) {
             var transform = "rotate("+(360*(i-0.25)/N - alphaPitch * rad + alpha0)+")";
             //elnt.appendChild(svg_node("path", { transform, d }));
-            elnt.appendChild(svg_node("use", { href: "#"+ id+"involute", transform }));
+            elnt.appendChild(svg_node("use", { "xlink:href": "#"+ id+"involute", transform }));
             var transform = "scale(1,-1) rotate("+(360*(i-0.25)/N - alphaPitch * rad - alpha0)+")";
             //elnt.appendChild(svg_node("path", { transform, d }));
-            elnt.appendChild(svg_node("use", { href: "#"+ id+"involute", transform }));
+            elnt.appendChild(svg_node("use", { "xlink:href": "#"+ id+"involute", transform }));
      
             if (inputs.tipclear) {
                 var transform = "rotate("+(360*(i+0.5)/N)+")";
-                elnt.appendChild(svg_node("use", { href: "#"+ id+"clearance", transform }));
+                elnt.appendChild(svg_node("use", { "xlink:href": "#"+ id+"clearance", transform }));
             }
         }
     }
@@ -118,7 +122,7 @@ function UpdateGears() {
         for (var i=-3; i<=3; i++) {
             var transform = "translate(0, "+(i*pitch)+")";
             
-            elnt.appendChild(svg_node("use", { href: "#def-"+ id, transform }));
+            elnt.appendChild(svg_node("use", { "xlink:href": "#def-"+ id, transform }));
         }
 
     }
@@ -311,8 +315,9 @@ function svg_node(tag, attrs) {
     for (var k in attrs) {
         var ns = null, name = k;
         var tmp = k.split(":");
+        var tmp = k.split(":");
         if (tmp.length==2)
-            ns = tmp[0], name = tmp[1];
+            ns = namespaces[tmp[0]]; 
         el.setAttributeNS(ns, name, attrs[k]);
     }
     return el;
