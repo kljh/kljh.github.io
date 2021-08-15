@@ -30,13 +30,26 @@ function draw_grid() {
     var XX = Math.cos(72*d2r);
     var YY = Math.sin(72*d2r);
 
+    var p0 = L / ( 2*X + 2 - 2*Y/x*y);
+    var l0 = 2 * p0 / X * Y;
+    var dl = `M ${p0} ${-l0/2} l 0 ${l0} l ${l0*x} ${l0*y} l ${l0*Xx} ${-l0*Yy} l ${-l0*Xx} ${-l0*Yy} z `
+        + `M ${p0+l0*x} ${l0/2+l0*y} l ${l0/2*Xx} ${l0/2*Yy} ` 
+        + `M ${p0+l0*x} ${-l0/2-l0*y} l ${l0/2*Xx} ${-l0/2*Yy} ` 
+        + `M ${p0+l0*x+l0*Xx} ${0} l ${l0*x} ${l0*y} ` 
+        + `M ${p0+l0*x+l0*Xx} ${0} l ${l0*x} ${-l0*y} `     
+    var dl1 = `M ${L*x} ${L*y-p0/X} l ${l0*X} ${l0*Y} ${l0*X} ${-l0*Y} `
+        + `M ${L*x} ${L*y-p0/X} l ${-l0*X} ${l0*Y} ${-l0*X} ${-l0*Y} `
+        + `M ${L*x} ${L*y-p0/X} l ${l0/2*XX} ${-l0/2*YY} `
+        + `M ${L*x} ${L*y-p0/X} l ${-l0/2*XX} ${-l0/2*YY} `
+
     var d0 = `M 0 0 L ${L*x} ${L*y} L ${2*L*x} 0 L ${L*x} ${-L*y} Z `
     var d = `M 0 0 Q ${t*x} ${-t*y} ${L*x} ${L*y} Q ${2*L*x-t*Xx} ${t*Yy} ${2*L*x} 0 Q ${L*x+r*Xx} ${-L*y+r*Yy} ${L*x} ${-L*y} Q ${L*x-r*x} ${-L*y-r*y} 0 0 `;
-    var da = `M ${2*L*x/3} ${2*L*y/3} A ${L/3} ${L/3} 0 0 1 ${4*L*x/3} ${2*L*y/3} `;
+    var da = `M ${3*L*x/4} ${3*L*y/4} A ${L/4} ${L/4} 0 0 1 ${5*L*x/4} ${5*L*y/4} `;
     var g = defs.appendChild(svg_node("g", { id: "rhombL" }));
     g.appendChild(svg_node("path", { d }));
     g.appendChild(svg_text_node());
     g.appendChild(svg_node("path", { d: da, stroke: "green" }));
+    g.appendChild(svg_node("path", { d: dl1, stroke: "lightgrey" }));
     defs.appendChild(svg_text_node());
     defs.appendChild(svg_node("use", { id: "rhombR", "xlink:href": "#rhombL", transform: `translate(${2*L*x} 0) rotate(180)` }));
     defs.appendChild(svg_node("use", { id: "rhombT", "xlink:href": "#rhombL", transform: `translate(${-L*x} ${-L*y})` }));
@@ -45,12 +58,13 @@ function draw_grid() {
     
     var d0 = `M 0 0 L ${L*X} ${L*Y} L ${2*L*X} 0 L ${L*X} ${-L*Y} Z `
     var d = `M 0 0 Q ${L*X-t} ${L*Y} ${L*X} ${L*Y} Q ${L*X+r} ${L*Y} ${2*L*X} 0 Q ${L*X+r*XX} ${-L*Y+r*YY} ${L*X} ${-L*Y} Q ${L*X-t*XX} ${-L*Y+t*YY} 0 0 `;
-    var da = `M ${L*X/3} ${-L*Y/3} A ${L/3} ${L/3} 0 0 1 ${L*X/3} ${L*Y/3} `;
+    var da = `M ${L*X/4} ${-L*Y/4} A ${L/4} ${L/4} 0 0 1 ${L*X/4} ${L*Y/4} `;
     var g = defs.appendChild(svg_node("g", { id: "rhomb2L" }));
     //g.appendChild(svg_node("path", { d: d0 }));
     g.appendChild(svg_node("path", { d }));
     g.appendChild(svg_text_node());
     g.appendChild(svg_node("path", { d: da, stroke: "green" }));
+    g.appendChild(svg_node("path", { d: dl, stroke: "lightgrey" }));
     defs.appendChild(svg_text_node());
     defs.appendChild(svg_node("use", { id: "rhomb2R", "xlink:href": "#rhomb2L", transform: `translate(${2*L*X} 0) rotate(180)` }));
     defs.appendChild(svg_node("use", { id: "rhomb2T", "xlink:href": "#rhomb2L", transform: `translate(${-L*X} ${-L*Y})` }));
@@ -68,7 +82,7 @@ function draw_grid() {
         var href = ( thick ? "#rhomb2" : "#rhomb" ) + from; // Left, Right, Top or Bottom
 
         var [ x0, y0 ] = O;
-        cut.appendChild(svg_node("use", { href, transform: `translate(${x0} ${y0}) rotate(${alpha})`, stroke: color || "black"}));
+        cut.appendChild(svg_node("use", { "xlink:href": href, transform: `translate(${x0} ${y0}) rotate(${alpha})`, stroke: color || "black"}));
         
         // P diagonaly opposed to O, A and R are next to P in trigonometric order
         var c = Math.cos(alpha*d2r), s = Math.sin(alpha*d2r), f = ( u, v ) => [ x0+c*u-s*v, y0+s*u+c*v ];
@@ -90,6 +104,10 @@ function draw_grid() {
 
     function draw_penrose() {
         var A = { P: [ 0, 0 ], alpha: 0 };
+        //var B = draw_rhomb(A, "P", 1, "L", 0);
+        //var C = draw_rhomb(B, "P", 0, "L", -126);
+        //return 
+
         for (var i=0; i<5; i++) {
             var B = draw_rhomb(A, "P", 1, "L", 72*(i+1));
             var C = draw_rhomb(B, "P", 0, "L", -(72+36+18));
@@ -161,7 +179,7 @@ function download_link() {
     var blob = new Blob([svg_xml], { type: "image/svg+xml" });
 
     var a = document.getElementById("get_svg");
-    a.download = "gear.svg";
+    a.download = document.location.pathname.split('/').pop().split('.')[0] + ".svg";
     a.href = URL.createObjectURL(blob);
     a.dataset.downloadurl = [ "image/svg+xml", a.download, a.href].join(':');
 
@@ -202,9 +220,8 @@ function svg_node(tag, attrs) {
     for (var k in attrs) {
         var ns = null, name = k;
         var tmp = k.split(":");
-        if (tmp.length==2) {
+        if (tmp.length==2)
             ns = namespaces[tmp[0]]; 
-        }
         el.setAttributeNS(ns, name, attrs[k]);
     }
     return el;

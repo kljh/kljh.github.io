@@ -4,6 +4,10 @@ const TwoPi = 2*Math.PI;
 const d2r = TwoPi / 360.;
 const r2d = 1/d2r;
 
+const namespaces = {
+    xlink: "http://www.w3.org/1999/xlink"
+};
+
 function init() {
     if (localStorage["model"])
         document.getElementById("model").value = localStorage["model"];
@@ -268,7 +272,7 @@ function download_link() {
     var blob = new Blob([svg_xml], { type: "image/svg+xml" });
 
     var a = document.getElementById("get_svg");
-    a.download = "gear.svg";
+    a.download = document.location.pathname.split('/').pop().split('.')[0] + ".svg";
     a.href = URL.createObjectURL(blob);
     a.dataset.downloadurl = [ "image/svg+xml", a.download, a.href].join(':');
 
@@ -312,7 +316,7 @@ function svg_node(tag, attrs) {
         var ns = null, name = k;
         var tmp = k.split(":");
         if (tmp.length==2)
-            ns = tmp[0], name = tmp[1];
+            ns = namespaces[tmp[0]]; 
         el.setAttributeNS(ns, name, attrs[k]);
     }
     return el;

@@ -253,7 +253,7 @@ function download_link() {
     var blob = new Blob([svg_xml], { type: "image/svg+xml" });
 
     var a = document.getElementById("get_svg");
-    a.download = "gear.svg";
+    a.download = document.location.pathname.split('/').pop().split('.')[0] + ".svg";
     a.href = URL.createObjectURL(blob);
     a.dataset.downloadurl = [ "image/svg+xml", a.download, a.href].join(':');
 
