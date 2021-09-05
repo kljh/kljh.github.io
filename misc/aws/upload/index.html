@@ -9,10 +9,10 @@
 </head>
 <body>
 
-<label for="root_input">Root folder</label>
-<input id="root_input" type="text" placeholder="Photos/ or Docs/ or ..."></input><br/>
-<label for="photos_input" checked>Photos</label>
-<input id="photos_input" type="checkbox" checked></input><br/><br/>
+<label for="root_input">Target folder</label>
+<input id="root_input" type="text" placeholder="photos/ or music/ or ..."></input><br/>
+<label for="auto_input" checked>Auto </label>
+<input id="auto_input" type="checkbox" checked></input><br/><br/>
 <input id="file_input" type="file" multiple="multiple"></input><br/><br/>
 
 <span id=status></span>
@@ -25,13 +25,16 @@
 const lambda_url = "/default";
 const chunk_size = 1024*1024;
 
+const photo_exts = [ "jpeg", "jpg", "png" ];
+const audio_exts = [ "mp3", "mp4", "m4a" ];
+
 window.onload = function () {
     document.getElementById("file_input").addEventListener("change", evt => upload(evt));
 };
 
 async function upload(evt) {
     var root = document.getElementById("root_input").value || "";
-    var photos = document.getElementById("photos_input").checked;
+    var auto = document.getElementById("auto_input").checked;
     var files = document.getElementById("file_input").files;
     var status_elnt = document.getElementById("status");
 
@@ -47,10 +50,15 @@ async function upload(evt) {
 
             var key, infos = { name, size, type, lastModifiedDate };
 
+            var ext = name.split('.').pop();
+            var mime = type ? type.split('/')[0] : "";
+            var is_photo = mime == "image" || photo_exts.indexOf(ext) != -1;
+            var is_audio = mime == "audio" || audio_exts.indexOf(ext) != -1;
+
             // retriving photos metadata
             var meta = null;
-            if (photos) {
-                try { 
+            if (auto && is_photo) {
+                try {
                     meta = await get_exif_infos(file);
                     infos = { ...infos, ...meta };
                     status_elnt.innerHTML += `<p>Exif metadata ${JSON.stringify(meta)}</p>`;
@@ -59,11 +67,12 @@ async function upload(evt) {
                 }
             }
             
-            // using photos metadata
+            // using metadata
+            var used_root = root || ( is_photo ? "photos/" : ( is_audio ? "music/" : "uploads/")) ;
             if (meta && meta.DateTime) {
-                key = root + meta.DateTime.substr(0,4) + "/" + meta.DateTime + " " + name;
+                key = ( root || used_root ) + "/" + meta.DateTime.substr(0,4) + "/" + meta.DateTime + " " + name;
             } else {
-                key = root + name;
+                key = ( root || used_root ) + name;
             }
 
             var res = await send_file(key, file, infos);

@@ -1,6 +1,7 @@
 const aws = require('aws-sdk');
 const s3 = new aws.S3({apiVersion: '2006-03-01'});
-        
+const oauth = require('./oauth.min.js');
+
 // Support for binary files must be explicitly enabled in API Getway / API Settings / Binary Media Types
 // or we can use binary string 
 
@@ -11,10 +12,17 @@ exports.handler = async (event) => {
     if (event.httpMethod == "GET") 
         return await get_lambda_static_file('index.html');
         
-    var data, err;
+    var data, err, statusCode;
     try { 
-        var bucket = /* qs.bucket || */ process.env["BUCKET"];
-        var key = qs.name ? "uploads/" + qs.name : "uploads/abc.bin";
+        var user_name = oauth.user_name(event.headers);
+        if (!user_name) { statusCode = 400; throw new Error("unregistered user or expired authentication"); }
+        
+        var path = qs.name;
+        if (!path) { statusCode = 500; throw new Error("file name is required in the query string. upload?name=img.jpg"); }
+        
+        var bucket = process.env["BUCKET"];
+        var key = user_name + "/" + path;
+        
         var body_length = event.body.length;
         var body_type = typeof event.body;
         var multipart = (event.headers.multipart || "i/n").split("/");
@@ -27,17 +35,17 @@ exports.handler = async (event) => {
             var concat_response = await concatenate_parts(bucket, key, multipart[1]);
         }
         
-        console.log("make_public...");
-        var acl_response = await make_public(bucket, key);
+        // console.log("make_public...");
+        // var acl_response = await make_public(bucket, key);
         
         var url = `https://${bucket}.s3.eu-west-3.amazonaws.com/${key}`;
-        data = { url, bucket, key, body_type, body_length, put_response, acl_response, concat_response };
+        data = { url, bucket, key, body_type, body_length, put_response, /* acl_response, */ concat_response };
     } catch (e) {
         err = "" + e + "\n" + ( e.stack || "" );
     }
     
     return {
-        statusCode: data ? 200 : 500,
+        statusCode: statusCode || ( data ? 200 : 500 ),
         headers: { 
             "Access-Control-Allow-Headers" : "Content-Type",
             "Access-Control-Allow-Origin": "*",
@@ -87,20 +95,17 @@ async function write_to_s3(bucket, key, body) {
             Body: buf,
             Bucket: bucket, 
             Key: key,
+            ACL: 'public-read'
             };
         
         s3.putObject(params, function(err, data) {
             if (err) reject(err);
             else     resolve(data);
-            /*
-            data = {
-            ETag: "\"6805f2cfc46c0f04559748bb039d69ae\"", 
-            VersionId: "tpf3zF08nBplQK1XLOefGskR7mGDwcDk"
-            }*/
         });
     });
 }
 
+/*
 async function make_public(bucket, key) {
     return new Promise((resolve, reject) => {
         var params = {
@@ -115,6 +120,7 @@ async function make_public(bucket, key) {
         });
     });
 }
+*/
 
 async function delete_from_s3(bucket, key) {
     return new Promise((resolve, reject) => {

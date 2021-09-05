@@ -115,8 +115,10 @@ const GOOGLE_CLIENT_ID = "1008363388918-nobbenqd2rd0fjtptqovkp876bs99gem.apps.go
 $(function () {
     var args = uri_args();
     
-    if (localStorage["user_id"])
+    if (localStorage["user_id"]) {
         $('input[name ="email"]').val(localStorage["user_id"]);
+        $("#remember-me").prop('checked', true);
+    }
 
     if (args.redirect_after_signin)
         localStorage["redirect_after_signin"] = args.redirect_after_signin;
@@ -155,6 +157,9 @@ $(function () {
     async function process_oauth_token(args) {
         
         // check OAUTH token after redirection from OAUTH provider
+
+        document.getElementById("signin").style.display = "none";
+        document.getElementById("redirect").style.display = "block";
         
         var oauth_provider = args.state;
         console.log("processing OAUTH token from "+oauth_provider+"\n" + JSON.stringify(args));
@@ -178,11 +183,19 @@ $(function () {
         localStorage["user_email"] = data.email;
         localStorage["user_hash"] = data.hash;
         
+        document.cookie = `uid=${data.uid}; Secure; SameSite=Strict;`;
+        document.cookie = `hash=${data.hash}; Secure; SameSite=Strict;`;
+    
         // redirect 
-        if (localStorage["redirect_after_signin"])
-            window.location.href = localStorage["redirect_after_signin"];
-        else 
-            alert("Authenticated. No redirection.");
+        if (localStorage["redirect_after_signin"]) {
+            var url = localStorage["redirect_after_signin"];
+            delete localStorage["redirect_after_signin"];
+            window.location.href = url;
+        }
+        
+        document.getElementById("signin").style.display = "none";
+        document.getElementById("redirect").style.display = "none";
+        document.getElementById("authenticated").style.display = "block";
     }
     
     function clear_user_info() {
@@ -192,6 +205,15 @@ $(function () {
         delete localStorage["user_hash"];
     }
     
+    $("#remember-me").change(function (ev) {
+        if (!ev.target.checked) {
+            clear_user_info();
+            
+            // reload with no info
+            window.location.href = REDIRECT_URI;
+        }
+    });
+
     $(".btn-linkedin").click(function (ev) {
         // !! IMPORTANT FOR CROSS DOMAIN !!
         ev.preventDefault();
@@ -319,7 +341,7 @@ body {
 </div>
 -->
 
-<div class="login-form">
+<div class="login-form" id="signin">
     <form action="/" method="post">
         <h2 class="text-center">Sign in</h2>
             <div class="text-center social-btn">
@@ -343,16 +365,33 @@ body {
         <div class="form-group">
             <button id="next" type="submit" class="btn btn-success btn-block login-btn">Next</button>
         </div>
-        <!-- 
         <div class="clearfix">
-            <label class="pull-left checkbox-inline"><input type="checkbox"> Remember me</label>
+            <label class="pull-left checkbox-inline"><input id="remember-me" type="checkbox"> Remember me</label>
             <!-- <a href="#" class="pull-right text-success">Forgot Password?</a> -->
         </div>
-        -->
 
     </form>
     <!-- <div class="hint-text small">Don't have an account? <a href="#" class="text-success">Register Now!</a></div> -->
 </div>
+
+<div class="login-form" id="redirect" style="display: none;"><form>
+    <h2>Verifying authentication</h2>
+    A bit of patience...
+    <div class="spinner-grow" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+</form></div>
+
+<div class="login-form" id="authenticated" style="display: none;"><form>
+    <h2>Authenticated.</h2>
+    <ul>
+        <li><a href="/upload">Upload</a></li>
+        <li><a href="/fs">Explore</a></li>
+        <li><a href="/delta">Text editor</a></li>
+        <li><a href="/photos">Photos</a></li>
+        <li><a href="/audio">Music & videos</a></li>
+    </ul>
+</form></div>
 
 </body>
 </html>

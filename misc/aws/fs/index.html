@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:;base64,=">
+<script  type="text/javascript"  src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.30.2/jquery.fancytree-all-deps.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.30.2/skin-lion/ui.fancytree.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+
+<style type="text/css">
+  th { color: lightgrey; }
+  /* .fancytree-ext-table { width: 80%; } */
+  .alignCenter { text-align: center; }
+  .alignRight  { text-align: right; }
+</style>
+
+<script>
+/* global $ */
+
+
+$(document).ready(init);
+
+function init() {
+    var args = uri_args();
+
+    var qs = new URLSearchParams({ ...args });
+    $.post("https://aws.kljh.org/fs?"+qs)
+    .then(data => {
+    	build_fancy_tree(data);
+    });
+}
+
+var home = "";
+function build_fancy_tree(index) {
+	home = index.Home; // path to home folder (kljh/)
+	
+	function s3_to_fancy_source(index) {
+		var prefix = index.Prefix;
+		
+		var folders = new Set();
+		var src = [];
+		for (var item of index.Contents) {
+			var name_split = item.Key.substr(prefix.length).split("/");
+			var name = name_split[0];
+
+			if (name_split.length>1) {
+				// folder (put aside)
+				folders.add( prefix+name );
+			} else {
+				// file
+				src.push({ title: name, key: prefix+name, ...item });
+			} 
+		}
+
+		// folders (put on top)
+		folders = Array.from(folders.keys()).sort();
+		folders = folders.map( key => { 
+			var name = key.split("/").pop();
+			return { title: name, key, folder: true, lazy: true }; 
+		});
+		src = folders.concat(src);
+		return src;
+	}
+
+	var src =  s3_to_fancy_source(index);
+
+	// too early to register events on item yet to be created 
+	// $(".abi").click(e => { console.log("icon click", e); });
+	
+	$("#treegrid").fancytree({
+		// extensions: [ "edit", "filter" ],
+		extensions: [ "edit", "table" ],
+		checkbox: true,
+		table: {
+			indentation: 20,       // 20 px per level 
+			checkboxColumnIdx: 0,  // render the checkboxes into the 1st column
+			nodeColumnIdx: 2,      // render the node title into the 3rd column	
+		},
+		source: src,
+		lazyLoad: function(event, target) {
+			var path = target.node.key.substr(home.length)+"/"
+			var qs = new URLSearchParams({ path });
+			
+			// target.result can be a jQurey deferred
+			target.result = $.post("https://aws.kljh.org/fs?"+qs)
+				.then(data => {
+					var src =  s3_to_fancy_source(data);
+					return src;
+				});
+			
+		},
+		renderColumns: function(event, data) {
+			var meta = data.node.data;
+			var $TDs = $(data.node.tr).find(">td");
+			$(data.node.tr).attr("data-key", data.node.key);
+			
+			var ext = data.node.key.split(".").pop();
+			var text_extensions = new Set(["txt", "html", "js", "css", "json", "yaml", "xml" ]);
+			
+			var actions_folder = '<a href="#" onclick="action(this)"><i class="bi-image"></i></a>  <a href="#" onclick="action(this)"><i class="bi-music-note-list"></i></a>';
+			var actions_open   = '<a href="#" onclick="action(this)"><i class="bi-file-earmark-arrow-down"></i></a>  ';
+			var actions_text   = actions_open + '<a href="#" onclick="action(this)"><i class="bi-pencil-square"></i></a>';
+			var actions = meta.Size ? ( text_extensions.has(ext) ? actions_text : actions_open ) : actions_folder;
+			
+			var size = meta.Size ? (Math.ceil(meta.Size/1024)+"kB") : "";
+			
+			// $TDs.eq(0) rendered with checkbox  
+			// $TDs.eq(1).text(data.node.getIndexHier());
+			// $TDs.eq(2) rendered with node title  
+			$TDs.eq(3).text(size);
+			$TDs.eq(4).html(actions);
+			
+		},
+		tooltip: function(event, data) {
+			var meta = data.node.data;
+			return "Size: " + meta.Size + "\n"
+				+ "Last Modified: " + meta.LastModified + "\n";
+		},
+		activate: function(event, data) {
+		},
+		select: function(event, data) {
+		}
+	});
+}
+
+function action(e) {
+	console.log("action", this);
+	var action = e.firstElementChild.className.split("-")[1]; 
+	var key = e.parentElement.parentElement.getAttribute("data-key");
+	var path = key.substr(home.length);
+	
+	var url;
+	var qs = new URLSearchParams({ path });
+    if (action=="image")
+		url = "https://aws.kljh.org/photos?"+qs;
+	else if (action=="music")
+		url = "https://aws.kljh.org/audio?"+qs;
+	else if (action=="pencil")
+		url = "https://aws.kljh.org/delta?"+qs;
+	else if (action=="file")
+		url = "https://kusers.s3.eu-west-3.amazonaws.com/"+home+path;
+	else 
+		throw new Error("Unknown action "+action);
+	
+	// window.open(url, "_blank"); // new window
+	window.location = url;
+}
+
+
+function uri_args() {
+	var tmp = window.location.search.substr(1).split('&');
+	var kv = {};
+	for (var i=0; i<tmp.length; i++) {
+		var key = tmp[i].split('=', 1)[0];
+		var val = tmp[i].substr(key.length+1);
+		kv[key] = val ? decodeURIComponent(val) : val;
+	}
+	return kv;
+}
+
+</script>
+</head>
+<body>
+<div id="path"></div>
+<div id="content"></div>
+<div id="tree"></div>
+
+<!-- tree grid -->
+<table id="treegrid">
+<colgroup>
+<col width="30px"></col>
+<col width="10px"></col>
+<col width="*"></col>
+<col width="50px"></col>
+<col width="30px"></col>
+</colgroup>
+<thead>
+  <tr> <th></th> <th></th> <th>Name</th> <th>Size</th> <th>Action</th> </tr>
+</thead>
+<!-- Optionally define a row that serves as template, when new nodes are created: -->
+<tbody>
+  <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td class="alignRight"></td>
+    <td class="alignCenter">
+      <!-- <input type="checkbox" name="like"> -->
+    </td>
+  </tr>
+</tbody>
+</table>
+
+</body>
+</html>

@@ -32,7 +32,7 @@
 
 <div id="edit_div">
 
-<textarea id="text" cols="80" rows="30">
+<textarea id="text" cols="80" rows="45">
 I am the very model of a modern Major-General,
 I've information vegetable, animal, and mineral,
 I know the kings of England, and I quote the fights historical
@@ -114,7 +114,7 @@ window.addEventListener('DOMContentLoaded', async (event) => {
             matchBrackets: true,
             // fullScreen: true, 
         });
-        cmEditor.setSize(null, 400);
+        cmEditor.setSize(null, 800);
         cmEditor.on("change", throttle_change_handler);
     }
 });

@@ -1,6 +1,8 @@
 // apply diff to text files on s3
 
 const aws = require('aws-sdk');
+const s3 = new aws.S3({apiVersion: '2006-03-01'});
+const oauth = require('./oauth.min.js');
 const diff = require('diff');
 
 exports.handler = async (event) => {
@@ -10,15 +12,18 @@ exports.handler = async (event) => {
     if (event.httpMethod == "GET") 
         return await get_lambda_static_file('index.html');
 
-    var data, err;
+    var data, err, statusCode;
     try {
-        data = await handle_request(prms);
+        var user_name = oauth.user_name(event.headers);
+        if (!user_name) { statusCode = 400; throw new Error("unregistered user or expired authentication"); }
+        
+        data = await handle_request(prms, user_name);
     } catch (e) {
         err = "" + ( e.stack || e );
     }
     
     return {
-        statusCode: data ? 200 : 500,
+        statusCode: statusCode || ( data ? 200 : 500 ),
         headers: { 
             "Access-Control-Allow-Headers" : "Content-Type",
             "Access-Control-Allow-Origin": "*",
@@ -44,9 +49,9 @@ async function get_lambda_static_file(filename) {
     });
 }
 
-async function handle_request(prms) {
+async function handle_request(prms, user_name) {
     var bucket = /* prms.bucket || */ process.env["BUCKET"];
-    var key = prms.path;
+    var key = user_name + "/" + prms.path;
 
     if (prms.action == "new")
         return await write_text_to_s3(bucket, key, prms.text || "\n");
@@ -104,7 +109,6 @@ async function read_text_from_s3(bucket, key) {
             Key: key,
             };
         
-        var s3 = new aws.S3({apiVersion: '2006-03-01'});
         s3.getObject(params, function(err, data) {
             if (err) reject(err);
             else resolve(data.Body.toString()); 
@@ -114,14 +118,17 @@ async function read_text_from_s3(bucket, key) {
 
 async function write_text_to_s3(bucket, key, text) {
     return new Promise((resolve, reject) => {
+        var ext = key.split(".").pop();
+        if (ext=="js") ext = "javascript";
         
         var params = {
             Body: text,
             Bucket: bucket, 
             Key: key,
+            ContentType: "text/"+ext, 
+            ACL: 'public-read'
             };
         
-        var s3 = new aws.S3({apiVersion: '2006-03-01'});
         s3.putObject(params, function(err, data) {
             if (err) reject(err);
             else     resolve(data);
