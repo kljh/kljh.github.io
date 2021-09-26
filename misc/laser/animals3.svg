@@ -11,6 +11,7 @@
    sodipodi:docname="animals3.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <sodipodi:namedview
@@ -23,9 +24,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="0.49507648"
-     inkscape:cx="607.98687"
-     inkscape:cy="221.17795"
+     inkscape:zoom="0.70014387"
+     inkscape:cx="310.65044"
+     inkscape:cy="200.67304"
      inkscape:window-width="1920"
      inkscape:window-height="1017"
      inkscape:window-x="-8"
@@ -39,7 +40,8 @@
      inkscape:groupmode="layer"
      id="layer4"
      inkscape:label="Photo"
-     style="display:inline" />
+     style="display:inline"
+     sodipodi:insensitive="true" />
   <g
      inkscape:groupmode="layer"
      id="layer2"
@@ -300,8 +302,9 @@
          id="path10993" />
       <path
          style="fill:none;stroke:#ff0000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         d="m 526.82584,25.296839 c 14.18156,-0.574928 23.95535,7.090783 23.95535,7.090783"
-         id="path11028" />
+         d="m 527.47608,30.591641 c 17.61854,-4.940817 21.81885,5.047175 21.81885,5.047175"
+         id="path11028"
+         sodipodi:nodetypes="cc" />
       <path
          style="fill:none;stroke:#ff0000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          d="m 456.30134,70.33288 c 3.06628,9.007207 11.88183,15.331418 9.00719,5.557639"
@@ -313,8 +316,9 @@
          id="path11338" />
       <path
          style="fill:none;stroke:#ff0000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         d="m 515.13565,26.446696 c 9.77376,6.324209 12.6484,11.690205 15.52305,18.972628 2.87464,7.282426 12.64843,5.365999 16.28963,14.181564"
-         id="path11373" />
+         d="m 516.43613,35.178475 c 8.2875,1.586754 11.34792,2.958426 14.22257,10.240849 2.87464,7.282426 12.64843,5.365999 16.28963,14.181564"
+         id="path11373"
+         sodipodi:nodetypes="csc" />
       <path
          style="fill:none;stroke:#ff0000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          d="m 542.15728,40.436614 c 9.19885,6.707497 17.24784,12.64842 13.41498,22.997128 -3.83286,10.348706 -4.59944,14.373204 -3.83286,17.439487"
@@ -520,10 +524,130 @@
          rx="1.736895"
          ry="1.7034931" />
     </g>
+    <path
+       style="fill:none;stroke:#ffff00;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 195.60109,39.681368 c 8.68448,-12.425479 13.22712,-18.972236 21.10995,-22.446026 7.88283,-3.47379 28.85918,-7.6156163 35.40594,-9.7533332"
+       id="path1833"
+       sodipodi:nodetypes="csc" />
+    <path
+       style="fill:none;stroke:#ffff00;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 185.04611,73.617623 c 4.00822,7.882832 26.01036,29.396387 45.11621,34.607077"
+       id="path1868"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#ffff00;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 116.77278,84.974245 c 10.15416,-0.801645 17.07116,-3.001225 20.84274,-10.020549 4.80986,-8.951688 6.68037,-21.644382 4.40904,-32.199361"
+       id="path1903"
+       sodipodi:nodetypes="csc" />
+    <path
+       style="fill:none;stroke:#ffff00;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 139.48602,129.99991 c 16.16648,1.46968 35.40594,-5.21069 41.41827,-1.06887 6.01233,4.14183 8.099,8.34382 4.75882,18.8988"
+       id="path1938"
+       sodipodi:nodetypes="csc" />
+    <path
+       style="fill:none;stroke:#ffff00;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 226.9988,140.02045 c 6.68037,-8.15004 16.77697,-12.71615 25.11817,-9.88694 9.5062,3.22437 10.68858,18.30421 8.68448,24.71736"
+       id="path1973"
+       sodipodi:nodetypes="csc" />
+    <path
+       style="fill:none;stroke:#ffff00;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 37.810866,133.20648 c 0.534429,9.75333 3.607397,20.97635 9.486118,28.85918 5.943479,7.96967 11.356621,6.27954 12.559086,21.24356"
+       id="path2008"
+       sodipodi:nodetypes="csc" />
+    <path
+       style="fill:none;stroke:#ffff00;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 48.232235,25.25178 c 10.822191,-0.400822 21.307899,-6.96484 28.257946,-4.342237 8.763853,3.307043 11.824246,14.362786 11.289817,25.853012"
+       id="path2043"
+       sodipodi:nodetypes="csc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:none;fill-opacity:1;stroke:#00ff00;stroke-width:0.264583"
+       id="text2630"><textPath
+         xlink:href="#path2043"
+         id="textPath7596"><tspan
+           id="tspan2628"
+           style="fill:none;stroke:#00ff00;stroke-width:0.264583"><tspan
+             style="font-size:7.76111px;fill:none;stroke:#00ff00"
+             id="tspan5064">Esther </tspan><tspan
+             style="font-size:4.93889px;fill:none;stroke:#00ff00"
+             id="tspan3808">2021-09-10</tspan></tspan></textPath></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:none;fill-opacity:1;stroke:#00ff00;stroke-width:0.264583"
+       id="text5798"><textPath
+         xlink:href="#path1833"
+         id="textPath7611"><tspan
+           id="tspan5796"
+           style="fill:none;stroke:#00ff00;stroke-width:0.264583"><tspan
+             style="font-size:7.76111px;fill:none;stroke:#00ff00"
+             id="tspan5792">Esther </tspan><tspan
+             style="font-size:4.93889px;fill:none;stroke:#00ff00"
+             id="tspan5794">2021-09-10</tspan></tspan></textPath></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:none;fill-opacity:1;stroke:#00ff00;stroke-width:0.264583"
+       id="text7124"><textPath
+         xlink:href="#path1903"
+         id="textPath7601"><tspan
+           id="tspan7122"
+           style="fill:none;stroke:#00ff00;stroke-width:0.264583"><tspan
+             style="font-size:7.76111px;fill:none;stroke:#00ff00"
+             id="tspan7118">Esther </tspan><tspan
+             style="font-size:4.93889px;fill:none;stroke:#00ff00"
+             id="tspan7120">2021-09-10</tspan></tspan></textPath></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:none;fill-opacity:1;stroke:#00ff00;stroke-width:0.264583"
+       id="text7552"><textPath
+         xlink:href="#path1868"
+         id="textPath7606"><tspan
+           id="tspan7550"
+           style="fill:none;stroke:#00ff00;stroke-width:0.264583"><tspan
+             style="font-size:7.76111px;fill:none;stroke:#00ff00"
+             id="tspan7546">Esther </tspan><tspan
+             style="font-size:4.93889px;fill:none;stroke:#00ff00"
+             id="tspan7548">2021-09-10</tspan></tspan></textPath></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:none;fill-opacity:1;stroke:#00ff00;stroke-width:0.264583"
+       id="text7560"><textPath
+         xlink:href="#path1938"
+         id="textPath7591"><tspan
+           id="tspan7558"
+           style="fill:none;stroke:#00ff00;stroke-width:0.264583"><tspan
+             style="font-size:7.76111px;fill:none;stroke:#00ff00"
+             id="tspan7554">Esther </tspan><tspan
+             style="font-size:4.93889px;fill:none;stroke:#00ff00"
+             id="tspan7556">2021-09-10</tspan></tspan></textPath></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:none;fill-opacity:1;stroke:#00ff00;stroke-width:0.264583"
+       id="text7576"><textPath
+         xlink:href="#path1973"
+         id="textPath7616"><tspan
+           id="tspan7574"
+           style="fill:none;stroke:#00ff00;stroke-width:0.264583"><tspan
+             style="font-size:7.76111px;fill:none;stroke:#00ff00"
+             id="tspan7570">Esther </tspan><tspan
+             style="font-size:4.93889px;fill:none;stroke:#00ff00"
+             id="tspan7572">2021-09-10</tspan></tspan></textPath></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:none;fill-opacity:1;stroke:#00ff00;stroke-width:0.264583"
+       id="text7584"><textPath
+         xlink:href="#path2008"
+         id="textPath7586"><tspan
+           id="tspan7582"
+           style="fill:none;stroke:#00ff00;stroke-width:0.264583"><tspan
+             style="font-size:7.76111px;fill:none;stroke:#00ff00"
+             id="tspan7578">Esther </tspan><tspan
+             style="font-size:4.93889px;fill:none;stroke:#00ff00"
+             id="tspan7580">2021-09-10</tspan></tspan></textPath></text>
   </g>
   <g
      inkscape:groupmode="layer"
      id="layer3"
      inkscape:label="Engrave"
-     style="display:inline" />
+     style="display:inline"
+     sodipodi:insensitive="true" />
 </svg>
