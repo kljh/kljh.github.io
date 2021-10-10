@@ -9,8 +9,10 @@ function draw_delta() {
     
     // Dimensions in mm
     var radius_working_area = 110;
-    var radius_outter = 120;
-    var radius_outter_corner = 50;
+    var radius_outer = 120;
+    var radius_inner = 100;
+    var radius_outer_corner = 50;
+    var radius_inner_corner = radius_outer_corner * radius_inner / radius_outer;
     var m3_x0 = 18;
     var thickness = 5;
 
@@ -25,26 +27,44 @@ function draw_delta() {
     g.appendChild(svg_node("circle", { cx: +m3_x0, cy: 0, r: 1.6 }));
     //g.appendChild(svg_node("circle", { cx: -40, cy: 0, r: 1.6 }));
     //g.appendChild(svg_node("circle", { cx: +40, cy: 0, r: 1.6 }));
+    
+    // Disc cut
+    var g = defs.appendChild(svg_node("g", { id: "disk_outer" }));
+    var x = radius_outer * Math.tan(30*d2r);
+    var dx = radius_outer_corner * Math.tan(30*d2r);
+    //g.appendChild(svg_node("line", { x1: -x, y1: -10, x2: x, y2: -10 }));
+    //g.appendChild(svg_node("circle", { cx: x-dx, cy: -10+radius_outer_corner, r: radius_outer_corner }));
+    // A rx ry x-axis-rotation large-arc-flag sweep-flag x y
+    var x0 = -x+dx - radius_outer_corner * Math.sin(30*d2r), 
+        y0 = -10+radius_outer_corner - radius_outer_corner * Math.cos(30*d2r),
+        x1 = -x+dx,
+        y1 = -10;
+    var d = `M ${x0} ${y0} A ${radius_outer_corner} ${radius_outer_corner} 0 0 1 ${x1} ${y1}`
+        + ` L ${-x1} ${y1} A ${radius_outer_corner} ${radius_outer_corner} 0 0 1 ${-x0} ${y0}`;
+    g.appendChild(svg_node("path", { d }));
+    
+    var g = defs.appendChild(svg_node("g", { id: "disk_inner" }));
+    var x = radius_inner * Math.tan(30*d2r);
+    var dx = radius_inner_corner * Math.tan(30*d2r);
+    var x0 = -x+dx - radius_inner_corner * Math.sin(30*d2r), 
+        y0 = 10+radius_inner_corner - radius_inner_corner * Math.cos(30*d2r),
+        x1 = -x+dx,
+        y1 = 10;
+    var d = `M ${x0} ${y0} A ${radius_inner_corner} ${radius_inner_corner} 0 0 1 ${x1} ${y1}`
+        + ` L ${-x1} ${y1} A ${radius_inner_corner} ${radius_inner_corner} 0 0 1 ${-x0} ${y0}`;
+    g.appendChild(svg_node("path", { d }));
 
-    // pulley is 18mm x 8.5mm
-    g.appendChild(svg_node("rect", { x: -11, y: -5, width: 22, height: 10, rx: .5, ry: 1.5 })); 
+    var g = defs.appendChild(svg_node("g", { id: "base_rods" }));
+    g.appendChild(svg_node("use", { "xlink:href": "#rods" }));
+    g.appendChild(svg_node("use", { "xlink:href": "#disk_outer" }));
+    g.appendChild(svg_node("use", { "xlink:href": "#disk_inner" }));
 
     var g = defs.appendChild(svg_node("g", { id: "pulley_motor" }));
     g.appendChild(svg_node("use", { "xlink:href": "#rods" }));
-    
-    // Disc cut
-    var x = radius_outter * Math.tan(30*d2r);
-    var dx = radius_outter_corner * Math.tan(30*d2r);
-    //g.appendChild(svg_node("line", { x1: -x, y1: -10, x2: x, y2: -10 }));
-    //g.appendChild(svg_node("circle", { cx: x-dx, cy: -10+radius_outter_corner, r: radius_outter_corner }));
-    // A rx ry x-axis-rotation large-arc-flag sweep-flag x y
-    var x0 = -x+dx - radius_outter_corner * Math.sin(30*d2r), 
-        y0 = -10+radius_outter_corner - radius_outter_corner * Math.cos(30*d2r),
-        x1 = -x+dx,
-        y1 = -10;
-    var d = `M ${x0} ${y0} A ${radius_outter_corner} ${radius_outter_corner} 0 0 1 ${x1} ${y1}`
-        + ` L ${-x1} ${y1} A ${radius_outter_corner} ${radius_outter_corner} 0 0 1 ${-x0} ${y0}`;
-    g.appendChild(svg_node("path", { d }));
+    g.appendChild(svg_node("use", { "xlink:href": "#disk_outer" }));
+
+    // pulley is 18mm x 8.5mm
+    g.appendChild(svg_node("rect", { x: -11, y: -5, width: 22, height: 10, rx: .5, ry: 1.5 })); 
 
     // motor holes are 30mm appart, 15mm and 40mm from the face plate
     g.appendChild(svg_node("circle", { cx: -15, cy: 25, r: 2.5 }));
@@ -59,22 +79,27 @@ function draw_delta() {
     g.appendChild(svg_node("rect", { x: -40, y: -10, width: 80, height: 20, rx: 10, ry: 10 })); 
 
     var y0 = 0;
-    cut.appendChild(svg_node("use", { "xlink:href": "#pulley_motor", transform: `rotate(0)   translate(${0} ${-radius_working_area})` }));
-    cut.appendChild(svg_node("use", { "xlink:href": "#pulley_motor", transform: `rotate(60)  translate(${0} ${-radius_working_area})` }));
-    cut.appendChild(svg_node("use", { "xlink:href": "#pulley_motor", transform: `rotate(120) translate(${0} ${-radius_working_area})` }));
-    cut.appendChild(svg_node("use", { "xlink:href": "#pulley_motor", transform: `rotate(180) translate(${0} ${-radius_working_area})` }));
-    cut.appendChild(svg_node("use", { "xlink:href": "#pulley_motor", transform: `rotate(240) translate(${0} ${-radius_working_area})` }));
-    cut.appendChild(svg_node("use", { "xlink:href": "#pulley_motor", transform: `rotate(300) translate(${0} ${-radius_working_area})` }));
+    var used_def = "#pulley_motor";
+    var used_def = "#base_rods";
+    cut.appendChild(svg_node("use", { "xlink:href": used_def, transform: `rotate(0)   translate(${0} ${-radius_working_area})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": used_def, transform: `rotate(60)  translate(${0} ${-radius_working_area})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": used_def, transform: `rotate(120) translate(${0} ${-radius_working_area})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": used_def, transform: `rotate(180) translate(${0} ${-radius_working_area})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": used_def, transform: `rotate(240) translate(${0} ${-radius_working_area})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": used_def, transform: `rotate(300) translate(${0} ${-radius_working_area})` }));
+    
     // disc cut
-    cut.appendChild(svg_node("circle", { cx: 0, cy: 0, r: 45 }));
+    //cut.appendChild(svg_node("circle", { cx: 0, cy: 0, r: 45 }));
     //cut.appendChild(svg_node("circle", { cx: 0, cy: 0, r: radius_working_area+15 }));
     
 
-    cut.appendChild(svg_node("use", { "xlink:href": "#step", transform: `rotate(90) translate(${-80} ${130})` }));
-    cut.appendChild(svg_node("use", { "xlink:href": "#step", transform: `rotate(90) translate(${-80} ${-130})` }));
-    cut.appendChild(svg_node("use", { "xlink:href": "#step", transform: `rotate(90) translate(${80} ${130})` }));
-    cut.appendChild(svg_node("use", { "xlink:href": "#step", transform: `rotate(90) translate(${80} ${-130})` }));
-
+    cut.appendChild(svg_node("use", { "xlink:href": "#step", transform: `rotate(90) translate(${-80} ${125})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": "#step", transform: `rotate(90) translate(${-80} ${-125})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": "#step", transform: `rotate(90) translate(${-80} ${-148})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": "#step", transform: `rotate(90) translate(${80} ${125})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": "#step", transform: `rotate(90) translate(${80} ${-125})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": "#step", transform: `rotate(90) translate(${80} ${-148})` }));
+    
     download_link();
 }
 
