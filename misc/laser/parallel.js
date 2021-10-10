@@ -29,16 +29,17 @@ function draw_delta() {
     // Disc cut
     var x = radius_outter * Math.tan(30*d2r);
     var dx = radius_outter_corner * Math.tan(30*d2r);
-    g.appendChild(svg_node("line", { x1: -x, y1: -10, x2: x, y2: -10 }));
+    //g.appendChild(svg_node("line", { x1: -x, y1: -10, x2: x, y2: -10 }));
     //g.appendChild(svg_node("circle", { cx: x-dx, cy: -10+radius_outter_corner, r: radius_outter_corner }));
     // A rx ry x-axis-rotation large-arc-flag sweep-flag x y
     var x0 = -x+dx - radius_outter_corner * Math.sin(30*d2r), 
         y0 = -10+radius_outter_corner - radius_outter_corner * Math.cos(30*d2r),
         x1 = -x+dx,
         y1 = -10;
-    g.appendChild(svg_node("path", { d: `M ${x0} ${y0} A ${radius_outter_corner} ${radius_outter_corner} 0 0 1 ${x1} ${y1}` }));
-    g.appendChild(svg_node("path", { d: `M ${-x0} ${y0} A ${radius_outter_corner} ${radius_outter_corner} 0 0 0 ${-x1} ${y1}` }));
- 
+    var d = `M ${x0} ${y0} A ${radius_outter_corner} ${radius_outter_corner} 0 0 1 ${x1} ${y1}`
+        + `L ${-x1} ${y1} A ${radius_outter_corner} ${radius_outter_corner} 0 0 1 ${-x0} ${y0};`
+    g.appendChild(svg_node("path", { d }));
+    
     var g = defs.appendChild(svg_node("g", { id: "pulley_motor" }));
     g.appendChild(svg_node("use", { "xlink:href": "#rods" }));
     // pulley is 18mm x 8.5mm
