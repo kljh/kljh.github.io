@@ -26,6 +26,12 @@ function draw_delta() {
     //g.appendChild(svg_node("circle", { cx: -40, cy: 0, r: 1.6 }));
     //g.appendChild(svg_node("circle", { cx: +40, cy: 0, r: 1.6 }));
 
+    // pulley is 18mm x 8.5mm
+    g.appendChild(svg_node("rect", { x: -11, y: -5, width: 22, height: 10, rx: .5, ry: 1.5 })); 
+
+    var g = defs.appendChild(svg_node("g", { id: "pulley_motor" }));
+    g.appendChild(svg_node("use", { "xlink:href": "#rods" }));
+    
     // Disc cut
     var x = radius_outter * Math.tan(30*d2r);
     var dx = radius_outter_corner * Math.tan(30*d2r);
@@ -37,13 +43,9 @@ function draw_delta() {
         x1 = -x+dx,
         y1 = -10;
     var d = `M ${x0} ${y0} A ${radius_outter_corner} ${radius_outter_corner} 0 0 1 ${x1} ${y1}`
-        + `L ${-x1} ${y1} A ${radius_outter_corner} ${radius_outter_corner} 0 0 1 ${-x0} ${y0};`
+        + ` L ${-x1} ${y1} A ${radius_outter_corner} ${radius_outter_corner} 0 0 1 ${-x0} ${y0}`;
     g.appendChild(svg_node("path", { d }));
-    
-    var g = defs.appendChild(svg_node("g", { id: "pulley_motor" }));
-    g.appendChild(svg_node("use", { "xlink:href": "#rods" }));
-    // pulley is 18mm x 8.5mm
-    g.appendChild(svg_node("rect", { x: -11, y: -5, width: 22, height: 10, rx: .5, ry: 1.5 })); 
+
     // motor holes are 30mm appart, 15mm and 40mm from the face plate
     g.appendChild(svg_node("circle", { cx: -15, cy: 25, r: 2.5 }));
     g.appendChild(svg_node("circle", { cx: +15, cy: 25, r: 2.5 }));
@@ -51,6 +53,10 @@ function draw_delta() {
     g.appendChild(svg_node("circle", { cx: +15, cy: 50, r: 2.5 }));
     g.appendChild(svg_node("rect", { x: -25, y: 10, width: 50, height: 53, rx: 5, ry: 5, stroke: "red" })); 
         
+
+    var g = defs.appendChild(svg_node("g", { id: "step" }));
+    g.appendChild(svg_node("use", { "xlink:href": "#rods" }));
+    g.appendChild(svg_node("rect", { x: -40, y: -10, width: 80, height: 20, rx: 10, ry: 10 })); 
 
     var y0 = 0;
     cut.appendChild(svg_node("use", { "xlink:href": "#pulley_motor", transform: `rotate(0)   translate(${0} ${-radius_working_area})` }));
@@ -63,6 +69,12 @@ function draw_delta() {
     cut.appendChild(svg_node("circle", { cx: 0, cy: 0, r: 45 }));
     //cut.appendChild(svg_node("circle", { cx: 0, cy: 0, r: radius_working_area+15 }));
     
+
+    cut.appendChild(svg_node("use", { "xlink:href": "#step", transform: `rotate(90) translate(${-80} ${130})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": "#step", transform: `rotate(90) translate(${-80} ${-130})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": "#step", transform: `rotate(90) translate(${80} ${130})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": "#step", transform: `rotate(90) translate(${80} ${-130})` }));
+
     download_link();
 }
 
