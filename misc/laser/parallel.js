@@ -91,23 +91,34 @@ function draw_delta() {
         L ${x4} ${-y2} L ${x3} ${-y2} L ${x3} ${-y1} L ${x2} ${-y1} L ${x2} ${-y2} L ${x1} ${-y2}  Z` })); 
 
     var g = defs.appendChild(svg_node("g", { id: "spacer" }));
-    var w = 92, h = y1 * 2, x2 = 39;
+    var w = 80, h = 56, x2 = 18, wn = 5, hn = 2.5, ws = 3, hs = 15, yn = 10;
     g.appendChild(svg_node("rect", { x: -w/2, y: -h/2, width: w, height: h })); 
-    g.appendChild(svg_node("rect", { x: -x2-2, y: -h/2, width: 4, height: 15 })); 
-    g.appendChild(svg_node("rect", { x: -x2-2, y: h/2-15, width: 4, height: 15 })); 
-    g.appendChild(svg_node("rect", { x: +x2-2, y: -h/2, width: 4, height: 15 })); 
-    g.appendChild(svg_node("rect", { x: +x2-2, y: h/2-15, width: 4, height: 15 })); 
-    g.appendChild(svg_node("rect", { x: -x2-3.5, y: -h/2+10, width: 7, height: 3 })); 
-    g.appendChild(svg_node("rect", { x: -x2-3.5, y: h/2-10-3, width: 7, height: 3 })); 
-    g.appendChild(svg_node("rect", { x: +x2-3.5, y: -h/2+10, width: 7, height: 3 })); 
-    g.appendChild(svg_node("rect", { x: +x2-3.5, y: h/2-10-3, width: 7, height: 3 })); 
+    g.appendChild(svg_node("rect", { x: -x2-ws/2, y: -h/2, width: ws, height: hs })); 
+    g.appendChild(svg_node("rect", { x: -x2-ws/2, y: h/2-hs, width: ws, height: hs })); 
+    g.appendChild(svg_node("rect", { x: +x2-ws/2, y: -h/2, width: ws, height: hs })); 
+    g.appendChild(svg_node("rect", { x: +x2-ws/2, y: h/2-hs, width: ws, height: hs })); 
+    g.appendChild(svg_node("rect", { x: -x2-wn/2, y: -h/2+yn, width: wn, height: hn })); 
+    g.appendChild(svg_node("rect", { x: -x2-wn/2, y: h/2-yn-hn, width: wn, height: hn })); 
+    g.appendChild(svg_node("rect", { x: +x2-wn/2, y: -h/2+yn, width: wn, height: hn })); 
+    g.appendChild(svg_node("rect", { x: +x2-wn/2, y: h/2-yn-hn, width: wn, height: hn })); 
 
     //g.appendChild(svg_node("path", { d: `M ${x1} ${y2} L ${x2} ${y2} L ${x2} ${y1} L ${x3} ${y1} L ${x3} ${y2} L ${x4} ${y2}
     //    L ${x4} ${-y2} L ${x3} ${-y2} L ${x3} ${-y1} L ${x2} ${-y1} L ${x2} ${-y2} L ${x1} ${-y2}  Z` })); 
 
     var g = defs.appendChild(svg_node("g", { id: "traveler" }));
-    var w = 60+15, h = 25;
+    var w = 60+15, h = 25, x1 = 30-7.5, x2 = 37.5;
     g.appendChild(svg_node("rect", { x: -w/2, y: -h/2, width: w, height: h })); 
+    g.appendChild(svg_node("circle", { cx: 0, cy: -h/5, r: 2.5 }));
+    g.appendChild(svg_node("circle", { cx: 0, cy: +h/5, r: 2.5 }));
+    var r = 2, y1 = 15.5/2;
+    g.appendChild(svg_node("circle", { cx: -x1, cy: -y1, r }));
+    g.appendChild(svg_node("circle", { cx: -x1, cy: +y1, r }));
+    g.appendChild(svg_node("circle", { cx: -x2, cy: -y1, r }));
+    g.appendChild(svg_node("circle", { cx: -x2, cy: +y1, r }));
+    g.appendChild(svg_node("circle", { cx: +x1, cy: -y1, r }));
+    g.appendChild(svg_node("circle", { cx: +x1, cy: +y1, r }));
+    g.appendChild(svg_node("circle", { cx: +x2, cy: -y1, r }));
+    g.appendChild(svg_node("circle", { cx: +x2, cy: +y1, r }));
     
     var y0 = 0;
     var used_def = "#pulley_motor";
