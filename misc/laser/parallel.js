@@ -13,45 +13,49 @@ function draw_delta() {
     var radius_inner = 100;
     var radius_outer_corner = 50;
     var radius_inner_corner = radius_outer_corner * radius_inner / radius_outer;
-    var m3_x0 = 18;
-    var thickness = 6;
+
+    var M3 = { nut_width: 5.5, nut_height: 2.4, tap_diam: 2.7, clear_diam: 3.2 };
+    var M4 = { nut_width: 7.0, nut_height: 3.2, tap_diam: 3.5, clear_diam: 4.2 };
+    var M5 = { nut_width: 8.0, nut_height: 4.7, tap_diam: 4.4, clear_diam: 5.2 };
+    var M6 = { nut_width: 10., nut_height: 5.2, tap_diam: 5.4, clear_diam: 6.2 };
+    
+    var thickness = 6;    
+    var rod_x = 30, rod_diam = 8;
+    var rod_screw_x = 18, rod_screw = M3;
 
     var cut = document.getElementById("cut");
 
-    var g = defs.appendChild(svg_node("g", { id: "rods" }));
+    function holes_pair(r, x, d) {
+        g.appendChild(svg_node("circle", { cx: -x, cy: 0, r: d/2 }));
+        g.appendChild(svg_node("circle", { cx: +x, cy: 0, r: d/2 }));
+    } 
+
     // rods are on each side of the pulley
-    // g.appendChild(svg_node("circle", { cx: -30, cy: 0, r: 4 }));
-    // g.appendChild(svg_node("circle", { cx: +30, cy: 0, r: 4 }));
-    // M3 (1.6) or M4 (2.1) holes,  M5 in the center
-    g.appendChild(svg_node("circle", { cx: -m3_x0, cy: 0, r: 2.1 }));
-    g.appendChild(svg_node("circle", { cx: +m3_x0, cy: 0, r: 2.1 }));
-    g.appendChild(svg_node("circle", { cx: 0, cy: 0, r: 2.6 }));
+    var g = defs.appendChild(svg_node("g", { id: "rods" }));
+    holes_pair(r, rod_x, rod_diam);
+    holes_pair(r, rod_screw_x, rod_screw.clear_diam);
+    
+    g.appendChild(svg_node("circle", { cx: 0, cy: 0, r: M5.clear_diam/2 }));  // M5 shaft for pulley
     
     // Disc cut
-    var g = defs.appendChild(svg_node("g", { id: "disk_outer" }));
-    var x = radius_outer * Math.tan(30*d2r);
-    var dx = radius_outer_corner * Math.tan(30*d2r);
-    //g.appendChild(svg_node("line", { x1: -x, y1: -10, x2: x, y2: -10 }));
-    //g.appendChild(svg_node("circle", { cx: x-dx, cy: -10+radius_outer_corner, r: radius_outer_corner }));
-    // A rx ry x-axis-rotation large-arc-flag sweep-flag x y
-    var x0 = -x+dx - radius_outer_corner * Math.sin(30*d2r), 
-        y0 = -10+radius_outer_corner - radius_outer_corner * Math.cos(30*d2r),
-        x1 = -x+dx,
-        y1 = -10;
-    var d = `M ${x0} ${y0} A ${radius_outer_corner} ${radius_outer_corner} 0 0 1 ${x1} ${y1}`
-        + ` L ${-x1} ${y1} A ${radius_outer_corner} ${radius_outer_corner} 0 0 1 ${-x0} ${y0}`;
-    g.appendChild(svg_node("path", { d }));
+    function hexa_cut(g, radius, corner_radius) {
+        var x = radius * Math.tan(30*d2r);
+        var dx = corner_radius * Math.tan(30*d2r);
+        // A rx ry x-axis-rotation large-arc-flag sweep-flag x y
+        var x0 = -x+dx - corner_radius * Math.sin(30*d2r), 
+            y0 = (radius_working_area-radius) + corner_radius - corner_radius * Math.cos(30*d2r),
+            x1 = -x+dx,
+            y1 = (radius_working_area-radius);
+        var d = `M ${x0} ${y0} A ${corner_radius} ${corner_radius} 0 0 1 ${x1} ${y1}`
+            + ` L ${-x1} ${y1} A ${corner_radius} ${corner_radius} 0 0 1 ${-x0} ${y0}`;
+        g.appendChild(svg_node("path", { d }));
+    }
     
+    var g = defs.appendChild(svg_node("g", { id: "disk_outer" }));
+    hexa_cut(g, radius_outer, radius_outer_corner);
+
     var g = defs.appendChild(svg_node("g", { id: "disk_inner" }));
-    var x = radius_inner * Math.tan(30*d2r);
-    var dx = radius_inner_corner * Math.tan(30*d2r);
-    var x0 = -x+dx - radius_inner_corner * Math.sin(30*d2r), 
-        y0 = 10+radius_inner_corner - radius_inner_corner * Math.cos(30*d2r),
-        x1 = -x+dx,
-        y1 = 10;
-    var d = `M ${x0} ${y0} A ${radius_inner_corner} ${radius_inner_corner} 0 0 1 ${x1} ${y1}`
-        + ` L ${-x1} ${y1} A ${radius_inner_corner} ${radius_inner_corner} 0 0 1 ${-x0} ${y0}`;
-    g.appendChild(svg_node("path", { d }));
+    hexa_cut(g, radius_inner, radius_inner_corner);
 
     var g = defs.appendChild(svg_node("g", { id: "base_rods" }));
     g.appendChild(svg_node("use", { "xlink:href": "#rods" }));
@@ -61,6 +65,7 @@ function draw_delta() {
     var g = defs.appendChild(svg_node("g", { id: "pulley_motor" }));
     g.appendChild(svg_node("use", { "xlink:href": "#rods" }));
     g.appendChild(svg_node("use", { "xlink:href": "#disk_outer" }));
+    g.appendChild(svg_node("use", { "xlink:href": "#disk_inner", "stroke": "red" }));
 
     // pulley is 18mm x 8.5mm
     g.appendChild(svg_node("rect", { x: -11, y: -5, width: 22, height: 10, rx: .5, ry: 1.5 })); 
@@ -81,17 +86,15 @@ function draw_delta() {
     var x1 = 0, x2 = 15, x3 = 50, x4 = 65, y1 = 27, y2 = y1+thickness;
     
     var g = defs.appendChild(svg_node("g", { id: "spacer_holes" }));
-    g.appendChild(svg_node("rect", { x: -thickness/2, y: -75-x1, width: thickness, height: 15 })); 
-    g.appendChild(svg_node("rect", { x: -thickness/2, y: -75-x3, width: thickness, height: 15 })); 
-    g.appendChild(svg_node("circle", { cx: -10, cy: -95, r: 2.5 }));
-    g.appendChild(svg_node("circle", { cx: +10, cy: -95, r: 2.5 }));
+    g.appendChild(svg_node("rect", { x: -thickness/2, y: -75-x1, width: thickness, height: 15 }));
+    g.appendChild(svg_node("rect", { x: -thickness/2, y: -75-x3, width: thickness, height: 15 }));
 
     var g = defs.appendChild(svg_node("g", { id: "spacer1" }));
     g.appendChild(svg_node("path", { d: `M ${x1} ${y2} L ${x2} ${y2} L ${x2} ${y1} L ${x3} ${y1} L ${x3} ${y2} L ${x4} ${y2}
         L ${x4} ${-y2} L ${x3} ${-y2} L ${x3} ${-y1} L ${x2} ${-y1} L ${x2} ${-y2} L ${x1} ${-y2}  Z` })); 
 
-    var g = defs.appendChild(svg_node("g", { id: "spacer" }));
-    var w = 80, h = 56, x2 = 18, wn = 5, hn = 2.5, ws = 3, hs = 15, yn = 10;
+    var g = defs.appendChild(svg_node("g", { id: "spacer2" }));
+    var w = 80, h = 56, x2 = 18, wn = 5.5, hn = 2.5, ws = 3, hs = 15, yn = 10;
     g.appendChild(svg_node("rect", { x: -w/2, y: -h/2, width: w, height: h })); 
     g.appendChild(svg_node("rect", { x: -x2-ws/2, y: -h/2, width: ws, height: hs })); 
     g.appendChild(svg_node("rect", { x: -x2-ws/2, y: h/2-hs, width: ws, height: hs })); 
@@ -127,9 +130,10 @@ function draw_delta() {
         cut.appendChild(svg_node("use", { "xlink:href": used_def, transform: `rotate(${theta})   translate(${0} ${-radius_working_area})` }));
         cut.appendChild(svg_node("use", { "xlink:href": "#spacer_holes", transform: `rotate(${theta+30})   translate(${0} ${0})` }));
     }
-    cut.appendChild(svg_node("use", { "xlink:href": "#spacer", transform: `translate(${0} ${150})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": "#spacer1", transform: `translate(${50} ${155})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": "#spacer2", transform: `translate(${0} ${155})` }));
 
-    cut.appendChild(svg_node("use", { "xlink:href": "#traveler", transform: `translate(${-100} ${150})` }));
+    cut.appendChild(svg_node("use", { "xlink:href": "#traveler", transform: `translate(${-100} ${140})` }));
 
     // disc cut
     cut.appendChild(svg_node("circle", { cx: 0, cy: 0, r: 45 }));
