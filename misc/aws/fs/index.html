@@ -27,8 +27,11 @@ function init() {
 
     var qs = new URLSearchParams({ ...args });
     $.post("https://aws.kljh.org/fs?"+qs)
-    .then(data => {
+    .done(data => {
     	build_fancy_tree(data);
+    })
+    .fail(err => {
+    	alert("Please Authenticate. " + err);
     });
 }
 
@@ -100,9 +103,10 @@ function build_fancy_tree(index) {
 			var text_extensions = new Set(["txt", "html", "js", "css", "json", "yaml", "xml" ]);
 			
 			var actions_folder = '<a href="#" onclick="action(this)"><i class="bi-image"></i></a>  <a href="#" onclick="action(this)"><i class="bi-music-note-list"></i></a>';
-			var actions_open   = '<a href="#" onclick="action(this)"><i class="bi-file-earmark-arrow-down"></i></a>  ';
+			var actions_down   = '<a href="#" onclick="action(this)"><i class="bi-file-earmark-arrow-down"></i></a>';
+			var actions_open   = '<a href="#" onclick="action(this)"><i class="bi-file-earmark-image"></i></a>';
 			var actions_text   = actions_open + '<a href="#" onclick="action(this)"><i class="bi-pencil-square"></i></a>';
-			var actions = meta.Size ? ( text_extensions.has(ext) ? actions_text : actions_open ) : actions_folder;
+			var actions = meta.Size ? ( text_extensions.has(ext) ? actions_text : (actions_down+actions_open) ) : actions_folder;
 			
 			var size = meta.Size ? (Math.ceil(meta.Size/1024)+"kB") : "";
 			
@@ -128,6 +132,7 @@ function build_fancy_tree(index) {
 function action(e) {
 	console.log("action", this);
 	var action = e.firstElementChild.className.split("-")[1]; 
+	var download = e.firstElementChild.className.split("-").pop() == "down";
 	var key = e.parentElement.parentElement.getAttribute("data-key");
 	var path = key.substr(home.length);
 	
@@ -144,8 +149,10 @@ function action(e) {
 	else 
 		throw new Error("Unknown action "+action);
 	
-	// window.open(url, "_blank"); // new window
-	window.location = url;
+	if (download)
+		window.open(url, "_blank"); // new window
+	else
+		window.location = url;
 }
 
 
