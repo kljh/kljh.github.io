@@ -30,6 +30,8 @@ const chunk_size = 1024*1024;
 const photo_exts = [ "jpeg", "jpg", "png" ];
 const audio_exts = [ "mp3", "mp4", "m4a" ];
 
+const cookie_keyvals = Object.fromEntries(document.cookie.split(';').map(kv => kv.split('=')));
+
 window.onload = function () {
     document.getElementById("file_input").addEventListener("change", evt => upload(evt));
 };
@@ -134,7 +136,7 @@ async function send_file(name, file, meta, http_headers) {
     
     return new Promise((resolve, reject) => {
         var xhr = new XMLHttpRequest;
-        var query = new URLSearchParams({ ...meta }).toString();  // uid, hash
+        var query = new URLSearchParams({ ...meta, ...cookie_keyvals }).toString();
         xhr.open("POST", lambda_url + "/upload?" + query);
         // xhr.setRequestHeader('Content-Type', 'application/octet-stream'); 
 
@@ -280,7 +282,7 @@ async function get_existing_files(args) {
 async function list_files(args) {
     var fs = new Promise((resolve, reject) => {
     
-        var qs = new URLSearchParams({ ...args });  // uid, hash
+        var qs = new URLSearchParams({ ...args, ...cookie_keyvals });
         $.ajax({
             url: "https://aws.kljh.org/fs?"+qs,
             type : "POST"
