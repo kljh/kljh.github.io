@@ -25,7 +25,7 @@ $(document).ready(init);
 function init() {
     var args = uri_args();
 
-    var qs = new URLSearchParams({ ...args });
+    var qs = new URLSearchParams({ ...args });  // uid, hash
     $.post("https://aws.kljh.org/fs?"+qs)
     .done(data => {
     	build_fancy_tree(data);
@@ -84,7 +84,7 @@ function build_fancy_tree(index) {
 		source: src,
 		lazyLoad: function(event, target) {
 			var path = target.node.key.substr(home.length)+"/"
-			var qs = new URLSearchParams({ path });
+			var qs = new URLSearchParams({ path });  // uid, hash
 			
 			// target.result can be a jQurey deferred
 			target.result = $.post("https://aws.kljh.org/fs?"+qs)

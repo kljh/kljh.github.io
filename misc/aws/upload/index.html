@@ -6,6 +6,8 @@
 <link rel="icon" href="data:;base64,=">
 <!-- <script src="https://cdn.jsdelivr.net/npm/exif-js"></script> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body>
 
@@ -21,8 +23,8 @@
 /* global Blob */
 /* global EXIF */
 
-// const lambda_url = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
-const lambda_url = "/default";
+const lambda_url = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
+// const lambda_url = "/default";
 const chunk_size = 1024*1024;
 
 const photo_exts = [ "jpeg", "jpg", "png" ];
@@ -35,13 +37,17 @@ window.onload = function () {
 async function upload(evt) {
     var root = document.getElementById("root_input").value || "";
     var auto = document.getElementById("auto_input").checked;
-    var files = document.getElementById("file_input").files;
+    var files = Array.from(document.getElementById("file_input").files);
+    var check_duplicates = true;
     var status_elnt = document.getElementById("status");
 
     if (root && !root.endsWith("/"))
          root += "/";
 
-    status_elnt.innerHTML = `<p>Uploading ${files.length} file(s) ...</p>`;
+    status_elnt.innerHTML = ""
+    if (check_duplicates) 
+        files = await remove_duplicates(files, status_elnt);
+    status_elnt.innerHTML += `<p>Uploading ${files.length} file(s) ...</p>`;
 
     for (const file of files) {
         try {
@@ -69,10 +75,12 @@ async function upload(evt) {
             
             // using metadata
             var used_root = root || ( is_photo ? "photos/" : ( is_audio ? "music/" : "uploads/")) ;
+            if (used_root.endsWith('/'))
+                used_root = used_root.slice(0, -1);
             if (meta && meta.DateTime) {
-                key = ( root || used_root ) + "/" + meta.DateTime.substr(0,4) + "/" + meta.DateTime + " " + name;
+                key = used_root + "/" + meta.DateTime.substr(0,4) + "/" + meta.DateTime + " " + name;
             } else {
-                key = ( root || used_root ) + name;
+                key = used_root + "/" + name;
             }
 
             var res = await send_file(key, file, infos);
@@ -126,7 +134,7 @@ async function send_file(name, file, meta, http_headers) {
     
     return new Promise((resolve, reject) => {
         var xhr = new XMLHttpRequest;
-        var query = new URLSearchParams(meta).toString();
+        var query = new URLSearchParams({ ...meta }).toString();  // uid, hash
         xhr.open("POST", lambda_url + "/upload?" + query);
         // xhr.setRequestHeader('Content-Type', 'application/octet-stream'); 
 
@@ -212,6 +220,98 @@ function isValidDate(d) {
   return d instanceof Date && !isNaN(d);
 }
 
+async function remove_duplicates(files, status_elnt) {
+    status_elnt.innerHTML += `<p>Getting existing files...</p>`;
+    var t0 = new Date();
+    var existing_files = await get_existing_files();
+    var t1 = new Date();
+    status_elnt.innerHTML += `<p>(took ${t1-t0}ms)</p>`;
+
+    status_elnt.innerHTML += `<p>Checking files already uploaded...</p>`;
+    var t0 = new Date();
+    var skip_files = new Set((await async_filter(files, f => skip_file_check(f, existing_files))).map(f => f.name));
+    var keep_files = files.filter(f => !skip_files.has(f.name));
+    var t1 = new Date();
+    status_elnt.innerHTML += `<p>(took ${t1-t0}ms)</p>`;
+
+    if (skip_files.size>0)
+        status_elnt.innerHTML += `<p>&#x26A0;&#xFE0F; Skipping ${skip_files.size} files already uploaded.</p>`;
+    return keep_files;
+} 
+
+async function async_filter(my_array, my_callback) {
+  const fail = Symbol()
+  var promises = my_array.map(async item => (await my_callback(item)) ? item : fail);
+  var selected = (await Promise.all(promises)).filter(i => i!==fail);
+  return selected;
+}
+
+async function skip_file_check(file, existing_files) {
+    var same_size = existing_files.by_size[file.size];
+    if (!same_size)
+        // no file with that size => do not skip
+        return false;
+    
+    var hash = await calculate_hash(file);
+    var same_hash = existing_files.by_hash[hash];
+    if (!same_hash)
+         // no file with that hash  => do not skip
+        return false;
+    
+    // found file with that size and hash => already upladed => skip file
+    return true;
+}
+
+async function calculate_hash(file) {
+    var data0 = await file.arrayBuffer();
+    var data1 = CryptoJS.lib.WordArray.create(data0);
+    var hash1 = CryptoJS.MD5(data1).toString();
+    return hash1;
+   
+}
+
+async function get_existing_files(args) {
+    var files = await list_files();
+    var by_size = fs_by_key(files, "Size");
+    var by_hash = fs_by_key(files, "ETag");
+    return { files, by_size, by_hash };
+}
+
+async function list_files(args) {
+    var fs = new Promise((resolve, reject) => {
+    
+        var qs = new URLSearchParams({ ...args });  // uid, hash
+        $.ajax({
+            url: "https://aws.kljh.org/fs?"+qs,
+            type : "POST"
+        })
+        .done(data => {
+            console.log(data);
+            resolve(data);
+        })
+        .fail(err => {
+            console.error(err);
+            reject(err);
+        });
+    });
+
+    return fs;
+}
+
+function fs_by_key(fs, key) {
+    // key should be Size or ETag
+    var by_key = {};
+    for (var f of fs.Contents) {
+        var k = f[key];
+        if (k.replace) // get rid of quotes in AWS Etags
+            k = k.replace(/"/g, '');
+        if (!by_key[k])
+            by_key[k] = [];
+        by_key[k].push(f);
+    }
+    return by_key;
+}
+            
 </script>
 </body>
 </html>
