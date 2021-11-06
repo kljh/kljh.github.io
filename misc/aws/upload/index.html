@@ -13,8 +13,10 @@
 
 <label for="root_input">Target folder</label>
 <input id="root_input" type="text" placeholder="photos/ or music/ or ..."></input><br/>
-<label for="auto_input" checked>Auto </label>
-<input id="auto_input" type="checkbox" checked></input><br/><br/>
+<label for="auto_input" checked>Auto target folder</label>
+<input id="auto_input" type="checkbox" checked></input><br/>
+<label for="check_duplicates" checked>Skip duplicates upload </label>
+<input id="check_duplicates" type="checkbox" checked></input><br/><br/>
 <input id="file_input" type="file" multiple="multiple"></input><br/><br/>
 
 <span id=status></span>
@@ -30,7 +32,7 @@ const chunk_size = 1024*1024;
 const photo_exts = [ "jpeg", "jpg", "png" ];
 const audio_exts = [ "mp3", "mp4", "m4a" ];
 
-const cookie_keyvals = Object.fromEntries(document.cookie.split(';').map(kv => kv.split('=')));
+const cookie_keyvals = Object.fromEntries(document.cookie.split(';').map(kv => kv.split('=').map(x => x.trim())));
 
 window.onload = function () {
     document.getElementById("file_input").addEventListener("change", evt => upload(evt));
@@ -40,7 +42,7 @@ async function upload(evt) {
     var root = document.getElementById("root_input").value || "";
     var auto = document.getElementById("auto_input").checked;
     var files = Array.from(document.getElementById("file_input").files);
-    var check_duplicates = true;
+    var check_duplicates = document.getElementById("check_duplicates").checked;;
     var status_elnt = document.getElementById("status");
 
     if (root && !root.endsWith("/"))
