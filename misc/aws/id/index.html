@@ -183,8 +183,8 @@ $(function () {
         localStorage["user_email"] = data.email;
         localStorage["user_hash"] = data.hash;
         
-        document.cookie = `uid=${data.uid}; Secure; SameSite=Strict;`;
-        document.cookie = `hash=${data.hash}; Secure; SameSite=Strict;`;
+        document.cookie = `uid=${data.uid}; path=/; Secure; SameSite=Strict;`;
+        document.cookie = `hash=${data.hash}; path=/; Secure; SameSite=Strict;`;
     
         // redirect 
         if (localStorage["redirect_after_signin"]) {
@@ -385,11 +385,11 @@ body {
 <div class="login-form" id="authenticated" style="display: none;"><form>
     <h2>Authenticated.</h2>
     <ul>
-        <li><a href="/upload">Upload</a></li>
-        <li><a href="/fs">Explore</a></li>
-        <li><a href="/delta">Text editor</a></li>
-        <li><a href="/photos">Photos</a></li>
-        <li><a href="/audio">Music & videos</a></li>
+        <li><a href="../upload">Upload</a></li>
+        <li><a href="../fs">Explore</a></li>
+        <li><a href="../delta">Text editor</a></li>
+        <li><a href="../photos">Photos</a></li>
+        <li><a href="../audio">Music & videos</a></li>
     </ul>
 </form></div>
 
