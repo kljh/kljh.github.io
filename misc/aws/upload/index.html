@@ -32,7 +32,7 @@ const chunk_size = 1024*1024;
 const photo_exts = [ "jpeg", "jpg", "png" ];
 const audio_exts = [ "mp3", "mp4", "m4a" ];
 
-const cookie_keyvals = Object.fromEntries(document.cookie.split(';').map(kv => kv.split('=').map(x => x.trim())));
+const prms = get_params();
 
 window.onload = function () {
     document.getElementById("file_input").addEventListener("change", evt => upload(evt));
@@ -138,7 +138,7 @@ async function send_file(name, file, meta, http_headers) {
     
     return new Promise((resolve, reject) => {
         var xhr = new XMLHttpRequest;
-        var query = new URLSearchParams({ ...meta, ...cookie_keyvals }).toString();
+        var query = new URLSearchParams({ ...meta, ...prms }).toString();
         xhr.open("POST", lambda_url + "/upload?" + query);
         // xhr.setRequestHeader('Content-Type', 'application/octet-stream'); 
 
@@ -284,7 +284,7 @@ async function get_existing_files(args) {
 async function list_files(args) {
     var fs = new Promise((resolve, reject) => {
     
-        var qs = new URLSearchParams({ ...args, ...cookie_keyvals });
+        var qs = new URLSearchParams({ ...args, ...prms });
         $.ajax({
             url: "https://aws.kljh.org/fs?"+qs,
             type : "POST"
@@ -315,7 +315,18 @@ function fs_by_key(fs, key) {
     }
     return by_key;
 }
-            
+
+function get_params() {
+    var cookies = Object.fromEntries(document.cookie.split(';')
+        .map(kv => kv.split('=').map(x => x.trim())));
+    
+    var query = Object.fromEntries(window.location.search.substring(1).split('&')
+        .map(x => x.split('='))
+        .map(kv => [ decodeURIComponent(kv[0]), decodeURIComponent(kv[1]) ]));
+
+    return { ...cookies, ...query };
+}
+     
 </script>
 </body>
 </html>

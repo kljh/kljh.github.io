@@ -185,17 +185,23 @@ $(function () {
         
         document.cookie = `uid=${data.uid}; path=/; Secure; SameSite=Strict;`;
         document.cookie = `hash=${data.hash}; path=/; Secure; SameSite=Strict;`;
+
+        var prms = new URLSearchParams(data);
     
         // redirect 
         if (localStorage["redirect_after_signin"]) {
             var url = localStorage["redirect_after_signin"];
             delete localStorage["redirect_after_signin"];
+            if (url.startsWith("http"))
+                url += "?" + prms;
             window.location.href = url;
         }
         
         document.getElementById("signin").style.display = "none";
         document.getElementById("redirect").style.display = "none";
         document.getElementById("authenticated").style.display = "block";
+
+        document.getElementById("beta_upload_link").href += "?" + prms;
     }
     
     function clear_user_info() {
@@ -247,8 +253,8 @@ $(function () {
             + "&redirect_uri=" + REDIRECT_URI    // + "/google"
             + "&state=" + get_state("google")
             // + "&scope=email" // https://www.googleapis.com/auth/userinfo.email
-            // + "&scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
-            + "&scope=openid";   // try-it as per https://developers.google.com/identity/protocols/oauth2/scopes
+            + "&scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
+            // + "&scope=openid";   // try-it as per https://developers.google.com/identity/protocols/oauth2/scopes
         document.location.href = url;
     });
     
@@ -386,7 +392,7 @@ body {
 <div class="login-form" id="authenticated" style="display: none;"><form>
     <h2>Authenticated.</h2>
     <ul>
-        <li><a href="../upload">Upload</a></li>
+        <li><a href="../upload">Upload</a> (<a id="beta_upload_link" href="https://kljh.github.io/misc/aws/upload/">beta</a>)</li>
         <li><a href="../fs">Explore</a></li>
         <li><a href="../delta">Text editor</a></li>
         <li><a href="../photos">Photos</a></li>
