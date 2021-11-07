@@ -108,7 +108,7 @@ console.log("REDIRECT_URI", REDIRECT_URI);
 const API_URL = "https://aws.kljh.org";
 // if (IS_LOCALHOST) API_URL = "";
 
-const LINKEDIN_CLIENT_ID = "77yjhq5uheqgsg";
+const LINKEDIN_CLIENT_ID = "77k1tltx3oew8e";  // updated 2021-22-07
 const GITHUB_CLIENT_ID = "ef1a126cb7c698d6cdea";
 const GOOGLE_CLIENT_ID = "1008363388918-nobbenqd2rd0fjtptqovkp876bs99gem.apps.googleusercontent.com";
 
@@ -247,7 +247,8 @@ $(function () {
             + "&redirect_uri=" + REDIRECT_URI    // + "/google"
             + "&state=" + get_state("google")
             // + "&scope=email" // https://www.googleapis.com/auth/userinfo.email
-            + "&scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
+            // + "&scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
+            + "&scope=openid";   // try-it as per https://developers.google.com/identity/protocols/oauth2/scopes
         document.location.href = url;
     });
     
