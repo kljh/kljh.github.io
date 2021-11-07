@@ -135,7 +135,7 @@ $(function () {
         ev.preventDefault();
 
         var user_id =$('input[name="email"]').val();
-        var user_pwd = $('input[name="password"]').val();
+        var user_pwd = $("#remember-me").prop('checked') ? $('input[name="password"]').val() : undefined;
         if (!user_id) return;
 
         
