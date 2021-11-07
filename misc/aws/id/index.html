@@ -117,7 +117,6 @@ $(function () {
     
     if (localStorage["user_id"]) {
         $('input[name="email"]').val(localStorage["user_id"]);
-        $('input[name="password"]').val("");
         $("#remember-me").prop('checked', true);
     }
 
@@ -134,10 +133,9 @@ $(function () {
         // !! IMPORTANT FOR CROSS DOMAIN !!
         ev.preventDefault();
 
-        var user_id =$('input[name="email"]').val();
-        var user_pwd = $("#remember-me").prop('checked') ? $('input[name="password"]').val() : undefined;
+        var user_id = $('input[name="email"]').val();
+        var user_pwd = document.getElementById("emailcode").style.display == "block" ? $('input[name="password"]').val() : undefined;
         if (!user_id) return;
-
         
         if (!user_pwd) {
             // ask for OTP 
