@@ -117,6 +117,7 @@ $(function () {
     
     if (localStorage["user_id"]) {
         $('input[name="email"]').val(localStorage["user_id"]);
+        $('input[name="password"]').val("");
         $("#remember-me").prop('checked', true);
     }
 
@@ -133,8 +134,8 @@ $(function () {
         // !! IMPORTANT FOR CROSS DOMAIN !!
         ev.preventDefault();
 
-        var user_id =$('input[name ="email"]').val();
-        var user_pwd = $('input[name ="password"]').val();
+        var user_id =$('input[name="email"]').val();
+        var user_pwd = $('input[name="password"]').val();
         if (!user_id) return;
 
         
