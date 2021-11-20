@@ -62,11 +62,15 @@ async function photoscan(img) {
   
 	var avg = img.clone().blur(50);	
 	
+	/*
 	const img_grey = await getGreyscale(img);
 	const avg_grey = await getGreyscale(avg);
 	for (var k=0; k<size; k++)
 		img_grey[k] = Math.min(Math.max(128+(img_grey[k]-avg_grey[k])*5, 0), 255)
 	var new_img = await sharp(Uint8Array.from(img_grey), { raw: { width, height, channels: 1 } });
+	*/
+	
+	var new_img = await img //.composite([{ input: avg, blend: 'difference' }]);
 	
 	var jpg = await new_img
 		// .threshold(60)    keep only dark text 
@@ -90,7 +94,11 @@ async function getGreyscale(img) {
 }
 
 if (true) {
-	var img_path = "img.jpg";
-	read_and_write_to_disk(img_path, make_output_path(img_path)).catch(console.error);
-	//read_and_write_to_s3(BUCKET, KEY, make_output_path(KEY)).catch(console.error);
+	//var img_path = "img.jpg";
+	//read_and_write_to_disk(img_path, make_output_path(img_path)).catch(console.error);
+	
+	var bucket = "kusers";
+	var keys = ["motia/photos/2021/2021-11-19 17-35-48 IMG-8648.jpg","motia/photos/2021/2021-11-19 17-35-56 IMG-8649.jpg","motia/photos/2021/2021-11-19 17-36-05 IMG-8651.jpg","motia/photos/2021/2021-11-19 17-36-24 IMG-8652.jpg","motia/photos/2021/2021-11-19 17-36-36 IMG-8654.jpg","motia/photos/2021/2021-11-19 17-36-56 IMG-8655.jpg","motia/photos/2021/2021-11-19 17-37-03 IMG-8656.jpg","motia/photos/2021/2021-11-19 17-37-12 IMG-8657.jpg","motia/photos/2021/2021-11-19 17-37-19 IMG-8658.jpg","motia/photos/2021/2021-11-19 17-37-41 IMG-8659.jpg","motia/photos/2021/2021-11-19 17-37-49 IMG-8660.jpg","motia/photos/2021/2021-11-19 17-37-55 IMG-8661.jpg","motia/photos/2021/2021-11-19 17-38-03 IMG-8662.jpg"];
+	for (var key of keys)
+		read_and_write_to_s3(bucket, key, make_output_path(key)).catch(console.error);
 }
