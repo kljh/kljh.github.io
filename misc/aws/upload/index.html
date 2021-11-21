@@ -49,6 +49,10 @@ async function upload(evt) {
          root += "/";
 
     status_elnt.innerHTML = ""
+    
+    // smaller files first
+    files.sort((a, b) => a.size - b.size);
+    
     if (check_duplicates) 
         files = await remove_duplicates(files, status_elnt);
     status_elnt.innerHTML += `<p>Uploading ${files.length} file(s) ...</p>`;
@@ -82,7 +86,8 @@ async function upload(evt) {
             if (used_root.endsWith('/'))
                 used_root = used_root.slice(0, -1);
             if (meta && meta.DateTime) {
-                key = used_root + "/" + meta.DateTime.substr(0,4) + "/" + meta.DateTime.substr(0,7) + "/" + meta.DateTime + " " + name;
+                var iso_date = meta.DateTime.replace(/:/g, "-");
+                key = ( root || used_root ) + iso_date.substr(0,4) + "/" + iso_date.substr(0,7) + "/" + iso_date + " " + name;
             } else {
                 key = used_root + "/" + name;
             }
