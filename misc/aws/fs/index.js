@@ -6,13 +6,13 @@ exports.handler = async (event) => {
     var qs = event.queryStringParameters || {};
     var prms = qs; // JSON.parse(event.body);
     
-    if (event.httpMethod == "GET") 
+    if (event.httpMethod == "GET" && Object.keys(qs).length==0) 
         return await get_lambda_static_file('index.html');
 
     var data, err, statusCode;
     try {
-        var user_name = oauth.user_name(event.headers);
-        if (!user_name) { statusCode = 400; throw new Error("unregistered user or expired authentication"); }
+        var user_name = oauth.user_name(event.headers, prms);
+        if (!user_name) { statusCode = 400; throw new Error("unregistered user or expired authentication. " + JSON.stringify(prms)); }
         
         prms.httpMethod = event.httpMethod;
         data = await handle_request(prms, user_name);

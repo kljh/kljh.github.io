@@ -9,12 +9,12 @@ exports.handler = async (event) => {
     var qs = event.queryStringParameters || {};
     // console.log("qs = " + JSON.stringify(qs, null, 4));
     
-    if (event.httpMethod == "GET") 
+    if (event.httpMethod == "GET" && Object.keys(qs).length==0) 
         return await get_lambda_static_file('index.html');
         
     var data, err, statusCode;
     try { 
-        var user_name = oauth.user_name(event.headers);
+        var user_name = oauth.user_name(event.headers, qs);
         if (!user_name) { statusCode = 400; throw new Error("unregistered user or expired authentication"); }
         
         var path = qs.name;

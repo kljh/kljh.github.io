@@ -22,10 +22,11 @@
 
 $(document).ready(init);
 
+var prms = Object.fromEntries([ ...new URLSearchParams(document.location.search.substring(1)).entries() ]);
 function init() {
     var args = uri_args();
 
-    var qs = new URLSearchParams({ ...args });  // uid, hash
+    var qs = new URLSearchParams({ ...args, ...prms });
     $.post("https://aws.kljh.org/fs?"+qs)
     .done(data => {
     	build_fancy_tree(data);
@@ -36,6 +37,7 @@ function init() {
 }
 
 var home = "";
+var keys = [];  // selected keys
 function build_fancy_tree(index) {
 	home = index.Home; // path to home folder (kljh/)
 	
@@ -84,7 +86,7 @@ function build_fancy_tree(index) {
 		source: src,
 		lazyLoad: function(event, target) {
 			var path = target.node.key.substr(home.length)+"/"
-			var qs = new URLSearchParams({ path });  // uid, hash
+			var qs = new URLSearchParams({ path, prms });
 			
 			// target.result can be a jQurey deferred
 			target.result = $.post("https://aws.kljh.org/fs?"+qs)
@@ -101,12 +103,15 @@ function build_fancy_tree(index) {
 			
 			var ext = data.node.key.split(".").pop();
 			var text_extensions = new Set(["txt", "html", "js", "css", "json", "yaml", "xml" ]);
+			var isFolder = !meta.Size;
 			
-			var actions_folder = '<a href="#" onclick="action(this)"><i class="bi-image"></i></a>  <a href="#" onclick="action(this)"><i class="bi-music-note-list"></i></a>';
-			var actions_down   = '<a href="#" onclick="action(this)"><i class="bi-file-earmark-arrow-down"></i></a>';
-			var actions_open   = '<a href="#" onclick="action(this)"><i class="bi-file-earmark-image"></i></a>';
-			var actions_text   = actions_open + '<a href="#" onclick="action(this)"><i class="bi-pencil-square"></i></a>';
-			var actions = meta.Size ? ( text_extensions.has(ext) ? actions_text : (actions_down+actions_open) ) : actions_folder;
+			var action_image = '<a href="#" onclick="action(this)"><i class="image bi-image"></i></a>';
+			var action_music = '<a href="#" onclick="action(this)"><i class="music bi-music-note-list"></i></a>';
+			var action_open  = '<a href="#" onclick="action(this)"><i class="open  bi-file-earmark-arrow-down"></i></a>';
+			var action_edit  = '<a href="#" onclick="action(this)"><i class="edit  bi-pencil-square"></i></a>';
+			var action_pdf   = '<a href="#" onclick="action(this)"><i class="pdf   bi-file-earmark-pdf"></i></a>';
+			var actions = isFolder ? action_image + action_music + action_pdf : (
+				( action_open + ( text_extensions.has(ext) ? action_edit : "" )));
 			
 			var size = meta.Size ? (Math.ceil(meta.Size/1024)+"kB") : "";
 			
@@ -125,26 +130,29 @@ function build_fancy_tree(index) {
 		activate: function(event, data) {
 		},
 		select: function(event, data) {
+			keys = data.tree.getSelectedNodes().map(x => x.key);
 		}
 	});
 }
 
 function action(e) {
 	console.log("action", this);
-	var action = e.firstElementChild.className.split("-")[1]; 
+	var action = e.firstElementChild.className.replace(/^bi-/,"").replace(/^file-earmark/, "").replace(/-square$/, "").split("-")[1]; 
 	var download = e.firstElementChild.className.split("-").pop() == "down";
 	var key = e.parentElement.parentElement.getAttribute("data-key");
 	var path = key.substr(home.length);
 	
 	var url;
-	var qs = new URLSearchParams({ path });
+	var qs = new URLSearchParams({ path, keys, prms });
     if (action=="image")
 		url = "https://aws.kljh.org/photos?"+qs;
 	else if (action=="music")
 		url = "https://aws.kljh.org/audio?"+qs;
-	else if (action=="pencil")
+	else if (action=="edit")
 		url = "https://aws.kljh.org/delta?"+qs;
-	else if (action=="file")
+	else if (action=="pdf")
+		url = "http://localhost:8080/photoscan?"+qs;
+	else if (action=="open")
 		url = "https://kusers.s3.eu-west-3.amazonaws.com/"+home+path;
 	else 
 		throw new Error("Unknown action "+action);
