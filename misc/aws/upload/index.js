@@ -45,7 +45,7 @@ exports.handler = async (event) => {
     }
     
     return {
-        statusCode: statusCode || ( data ? 200 : 500 ),
+        statusCode: statusCode || ( data ? 200 : 207 ),
         headers: { 
             "Access-Control-Allow-Headers" : "Content-Type,Multipart",
             "Access-Control-Allow-Origin": "*",

@@ -12,5 +12,7 @@ server.listen(http_port, function () { console.log('HTTP server started on port:
 
 app.use('/', express.static(__dirname));
 
+app.get('/photoscan', function (req, res) { res.sendfile('./misc/photoscan/index.html'); });
+
 // require('./misc/quiz/quiz-app.js').register(app);
 

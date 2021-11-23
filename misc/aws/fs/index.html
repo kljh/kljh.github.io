@@ -86,7 +86,7 @@ function build_fancy_tree(index) {
 		source: src,
 		lazyLoad: function(event, target) {
 			var path = target.node.key.substr(home.length)+"/"
-			var qs = new URLSearchParams({ path, prms });
+			var qs = new URLSearchParams({ path, ...prms });
 			
 			// target.result can be a jQurey deferred
 			target.result = $.post("https://aws.kljh.org/fs?"+qs)
@@ -137,13 +137,13 @@ function build_fancy_tree(index) {
 
 function action(e) {
 	console.log("action", this);
-	var action = e.firstElementChild.className.replace(/^bi-/,"").replace(/^file-earmark/, "").replace(/-square$/, "").split("-")[1]; 
-	var download = e.firstElementChild.className.split("-").pop() == "down";
+	var action = e.firstElementChild.className.split(" ")[0]; 
+	var download = action == "open";
 	var key = e.parentElement.parentElement.getAttribute("data-key");
 	var path = key.substr(home.length);
 	
 	var url;
-	var qs = new URLSearchParams({ path, keys, prms });
+	var qs = new URLSearchParams({ path, keys, ...prms });
     if (action=="image")
 		url = "https://aws.kljh.org/photos?"+qs;
 	else if (action=="music")
