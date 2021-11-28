@@ -87,7 +87,7 @@ async function upload(evt) {
                 used_root = used_root.slice(0, -1);
             if (meta && meta.DateTime) {
                 var iso_date = meta.DateTime.replace(/:/g, "-");
-                key = used_root  + "/" +  iso_date.substr(0,4) + "/" + iso_date.substr(0,7) + "/" + iso_date + " " + name;
+                key = used_root + "/" +  iso_date.substr(0,4) + "/" + iso_date.substr(0,7) + "/" + iso_date + " " + name;
             } else {
                 key = used_root + "/" + name;
             }
@@ -143,7 +143,7 @@ async function send_file(name, file, meta, http_headers) {
     
     return new Promise((resolve, reject) => {
         var xhr = new XMLHttpRequest;
-        var query = new URLSearchParams({ ...meta, ...prms }).toString();
+        var query = new URLSearchParams({ ...prms, ...meta }).toString();
         xhr.open("POST", lambda_url + "/upload?" + query);
         // xhr.setRequestHeader('Content-Type', 'application/octet-stream'); 
 
@@ -289,7 +289,7 @@ async function get_existing_files(args) {
 async function list_files(args) {
     var fs = new Promise((resolve, reject) => {
     
-        var qs = new URLSearchParams({ ...args, ...prms });
+        var qs = new URLSearchParams({ ...prms, ...args });
         $.ajax({
             url: "https://aws.kljh.org/fs?"+qs,
             type : "POST"
