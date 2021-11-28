@@ -57,10 +57,13 @@ async function upload(evt) {
         files = await remove_duplicates(files, status_elnt);
     status_elnt.innerHTML += `<p>Uploading ${files.length} file(s) ...</p>`;
 
+    var iFile = 0, nbFile = files.length; 
     for (const file of files) {
         try {
+            iFile = iFile + 1;
+            
             var { name, size, type, lastModifiedDate } = file;
-            status_elnt.innerHTML += `<p>Uploading ${name} (${Math.round(size/1024)}kB)</p>`;
+            status_elnt.innerHTML += `<p>Uploading ${iFile}/${nbFile} ${name} (${Math.round(size/1024)}kB)</p>`;
 
             var key, infos = { name, size, type, lastModifiedDate };
 
