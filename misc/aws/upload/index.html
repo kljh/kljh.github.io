@@ -87,7 +87,7 @@ async function upload(evt) {
                 used_root = used_root.slice(0, -1);
             if (meta && meta.DateTime) {
                 var iso_date = meta.DateTime.replace(/:/g, "-");
-                key = ( root || used_root ) + iso_date.substr(0,4) + "/" + iso_date.substr(0,7) + "/" + iso_date + " " + name;
+                key = used_root  + "/" +  iso_date.substr(0,4) + "/" + iso_date.substr(0,7) + "/" + iso_date + " " + name;
             } else {
                 key = used_root + "/" + name;
             }
