@@ -42,7 +42,7 @@ function read_and_write_to_s3(bucket, keyIn, keyOut)  {
 			Body: buffer,
 			Bucket: bucket,
 			Key: keyOut,
-			ContentType: 'image/',
+			ContentType: 'image/' + format,
 			ACL: 'public-read'
 		  }).promise());
 }

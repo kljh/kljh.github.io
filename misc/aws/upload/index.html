@@ -44,6 +44,7 @@ async function upload(evt) {
     var files = Array.from(document.getElementById("file_input").files);
     var check_duplicates = document.getElementById("check_duplicates").checked;;
     var status_elnt = document.getElementById("status");
+    var folder_contents = {};
 
     if (root && !root.endsWith("/"))
          root += "/";
@@ -53,8 +54,10 @@ async function upload(evt) {
     // smaller files first
     files.sort((a, b) => a.size - b.size);
     
-    if (check_duplicates) 
-        files = await remove_duplicates(files, status_elnt);
+    files = await skip_too_big(files, status_elnt);
+
+    //if (check_duplicates) 
+    //    files = await remove_duplicates(files, status_elnt);
     status_elnt.innerHTML += `<p>Uploading ${files.length} file(s) ...</p>`;
 
     var iFile = 0, nbFile = files.length; 
@@ -90,15 +93,22 @@ async function upload(evt) {
                 used_root = used_root.slice(0, -1);
             if (meta && meta.DateTime) {
                 var iso_date = meta.DateTime.replace(/:/g, "-");
-                key = used_root + "/" +  iso_date.substr(0,4) + "/" + iso_date.substr(0,7) + "/" + iso_date + " " + name;
+                key = used_root + "/" +  iso_date.substr(0,4) + "/" + iso_date.substr(0,7) + "/" + iso_date;
+                // key = key + " " + name; // keep original name (random on iPhones)
+                key = key + "." + name.split(".").pop().toLowerCase(); // just keep suffix 
             } else {
                 key = used_root + "/" + name;
             }
 
-            var res = await send_file(key, file, infos);
-            try { res = JSON.parse(res); } catch (e) {}
+            var upload_key = await check_key(key, infos, folder_contents);
+            if (upload_key) { 
+                var res = await send_file(upload_key, file, infos);
+                try { res = JSON.parse(res); } catch (e) {}
 
-            status_elnt.innerHTML += `<p>&#9989;  <a href="${res.url}">${key}</a></p>`;
+                status_elnt.innerHTML += `<p>&#9989;  <a href="${res.url}">${key}</a></p>`;
+            } else {
+                status_elnt.innerHTML += `<p>&#x1F6C8; Skipping ${key} already uploaded.</p>`; 
+            }
         } catch (e) {
             status_elnt.innerHTML += `<p>&#10060; <b style="color: brown;">${e.message||e}<pre><br/><br/>${e.stack||""}</pre></b></p><br/>`;
         }
@@ -232,6 +242,53 @@ function isValidDate(d) {
   return d instanceof Date && !isNaN(d);
 }
 
+function skip_too_big(files, status_elnt) {
+    var threshold = 5;
+    status_elnt.innerHTML += `<p>Filtering files above ${threshold}MB ...</p>`;
+    
+    threshold *= 1024*1024;
+    for (var f of files) 
+        if (f.size>threshold) 
+            status_elnt.innerHTML += `<p>&#x26A0;&#xFE0F; Skipping ${f.name} (${(f.size/1024/1024).toFixed(2)}MB) file too big.</p>`; 
+
+    return files.filter(f => f.size<threshold);
+}
+
+async function check_key(key, infos, folder_contents) {
+    var tmp = key.split("/");
+    var file = tmp.pop();
+    var folder = tmp.join("/");
+    
+    folder_contents[folder] = await get_existing_folder(folder, folder_contents);
+
+    if (!folder_contents[folder][key]) {
+        // no collision
+        folder_contents[folder][key] = { Size: infos.size };
+        return key;
+    } else if (folder_contents[folder][key].Size == infos.size) {
+        // collision (same name, same size already there)
+        return;
+    } else {
+        // collision (new file => new key)
+        var tmp = file.split();
+        var ext = tmp.pop();
+        var name = tmp.join(".");
+        var extra = infos.size;
+        key = `${folder}/${name} - ${extra}.${ext}`;
+        return check_key(key, infos, folder_contents);
+    }
+}
+
+async function get_existing_folder(folder, folder_contents) {
+    if (!folder_contents[folder]) {
+        var tmp = await get_existing_files({ path: folder+"/", delimiter: "/" })
+        for (var k in tmp.by_key) 
+            tmp.by_key[k] = tmp.by_key[k][0];
+        folder_contents[folder] = tmp.by_key;
+    }
+    return folder_contents[folder];
+}
+
 async function remove_duplicates(files, status_elnt) {
     status_elnt.innerHTML += `<p>Getting existing files...</p>`;
     var t0 = new Date();
@@ -283,10 +340,19 @@ async function calculate_hash(file) {
 }
 
 async function get_existing_files(args) {
-    var files = await list_files();
+    var files = await list_files(args);
+
+    files.Contents = files.Contents.map(f => {
+        if (f.Key && f.Key.startsWith(files.Home))
+            f.Key = f.Key.substr(files.Home.length);
+        if (f.ETag &&  f.ETag.replace) // get rid of quotes in AWS Etags
+            f.ETag = f.ETag.replace(/"/g, '');
+        return f;
+    })
+    var by_key = fs_by_key(files, "Key");
     var by_size = fs_by_key(files, "Size");
     var by_hash = fs_by_key(files, "ETag");
-    return { files, by_size, by_hash };
+    return { files, by_key, by_size, by_hash };
 }
 
 async function list_files(args) {
@@ -295,7 +361,7 @@ async function list_files(args) {
         var qs = new URLSearchParams({ ...prms, ...args });
         $.ajax({
             url: "https://aws.kljh.org/fs?"+qs,
-            type : "POST"
+            type: "POST",
         })
         .done(data => {
             console.log(data);
@@ -315,8 +381,6 @@ function fs_by_key(fs, key) {
     var by_key = {};
     for (var f of fs.Contents) {
         var k = f[key];
-        if (k.replace) // get rid of quotes in AWS Etags
-            k = k.replace(/"/g, '');
         if (!by_key[k])
             by_key[k] = [];
         by_key[k].push(f);

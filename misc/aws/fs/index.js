@@ -21,7 +21,7 @@ exports.handler = async (event) => {
     }
     
     return {
-        statusCode: statusCode || ( data ? 200 : 500 ),
+        statusCode: statusCode || ( data ? 200 : 207 ),
         headers: { 
             "Access-Control-Allow-Headers" : "Content-Type",
             "Access-Control-Allow-Origin": "*",
@@ -59,6 +59,7 @@ async function list_s3(bucket, key, user_name) {
         var params = {
             Bucket: bucket, 
             Prefix: key,
+            // Delimiter: "/"
             };
         
         s3.listObjects(params, function(err, data) {
@@ -70,3 +71,35 @@ async function list_s3(bucket, key, user_name) {
         });
     });
 }
+
+async function copy_s3(bucket, key_src, key_dest) {
+    var params = {
+        Bucket: bucket, 
+        CopySource: bucket + "/" + key_src,
+        Key: key_dest, 
+        ACL: 'public-read'
+        // Delimiter: "/"
+        };
+    
+    return s3.copyObject(params).promise();
+}
+
+async function delete_s3(bucket, key) {
+    var params = {
+        Bucket: bucket, 
+        Key: key,
+        };
+    
+    return s3.deleteObject(params).promise();
+}
+
+async function move_s3(bucket, key_src, key_dest) {
+    var res1 = await copy_s3(bucket, key_src, key_dest);
+    var res2 = await delete_s3(bucket, key_src);
+    return res1;
+}
+
+exports.list_s3 = list_s3;
+exports.copy_s3 = copy_s3;
+exports.delete_s3 = delete_s3;
+exports.move_s3 = move_s3;

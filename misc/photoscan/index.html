@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://unpkg.com/mathjs@10.0.0/lib/browser/math.js"></script>
 <script>
 function init() {
 	var prms = new URLSearchParams(document.location.search.substring(1));
@@ -14,9 +15,79 @@ function init() {
 	console.log(JSON.stringify(keys));
 	
 	for (var key of keys)
-		document.write(`<img src="https://kusers.s3.eu-west-3.amazonaws.com/${key}" width="100%">`);
+		document.write(`<div class="clip"><img class="persp" src="https://kusers.s3.eu-west-3.amazonaws.com/${key}" width="100%"></div>`);
+
+	// homography
+	
+	var iImg = 0, nbImg = keys.length;
+	var iCorner = 0;
+	var corners = []
+	
+	document.addEventListener("keydown", keyHandler);
+	keyHandler({});
+	
+	function keyHandler(ev) {
+		var key = ev.code || "";
+		
+		if (key == "KeyN") 				iImg = (iImg+1) % nbImg;
+		if (key == "KeyP") 				iImg = (iImg-1+nbImg) % nbImg;
+		if (key == "KeyC") 				iCorner = (iCorner+1) % 4;
+		
+		var img = document.getElementsByTagName("img")[iImg];
+		corners[iImg] = corners[iImg] ||  [[ 0, 0], [ img.width, 0 ], [ 0, img.height ], [ img.width, img.height ]];
+		var current_corner = corners[iImg][iCorner];
+		console.log("Image", iImg, "/", nbImg, "corner", [ "top-left", "top_right", "bottom-left", "bottom-right" ][iCorner]);
+		
+		if (key == "ArrowUp" || key == "KeyW") 		current_corner[1]++;
+		if (key == "ArrowDown" || key == "KeyS") 		current_corner[1]--;
+		if (key == "ArrowLeft" || key == "KeyA") 		current_corner[0]++;
+		if (key == "ArrowRight" || key == "KeyD")		current_corner[0]--;
+		
+		updateHomography(img, corners[iImg]);
+	}
+	
+	function updateHomography(img, clipping_corners) {
+		var { width, height } = img;
+		
+		// Homography is a plane to plane 3d reprojection 
+		// It can be descripbes as : alpha.v = H.u where vectors u = [ u1, u2, 1 ] and v = [ v1, v2, 1 ] are coordinates of matching points in the two plane
+		// H is a 3x3 matrix with eight unknowns : h11, h12, h13, h21, h22, h23, h31, and h32. Because the equation is invariant w.r. to a scaling factor alpha, h33 can be set to 1.
+
+		// For 4 pairs or u, v vectors 
+		//    ( h11.u1 + h12.u2 + h13 )  /  ( h31.u1 + h32.u2 + 1 )  =  v1
+		//    ( h21.u1 + h22.u2 + h23 )  /  ( h31.u1 + h32.u2 + 1 )  =  v2
+		// which becomes
+		//    h11.u1 + h12.u2 + h13 - h31.u1.v1 - h32.u2.v1   =  v1
+		//    h21.u1 + h22.u2 + h23 - h31.u1.v2 - h32.u2.v2   =  v2
+		// hence a linear system 
+		//    A.h = b
+		
+		var A = [], b = [];
+		for (var k=0; k<4; k++) {
+			var u = clipping_corners[k];
+			var v =  [[ 0, 0], [ width, 0 ], [ 0, height ], [ width, height ]][k];
+			A[2*k+0] = [ u[0], u[1], 1,  0, 0, 0,  -u[0]*v[0], -u[1]*v[0] ]; 		b[2*k+0] = v[0];
+			A[2*k+1] = [ 0, 0, 0,  u[0], u[1], 1,  -u[0]*v[1], -u[1]*v[1] ]; 		b[2*k+1] = v[1];
+		}
+		var h = math.lusolve(A,b).map(x => x[0]);
+		
+		var i = 0;
+		var H = [[ h[i++], h[i++], 0, h[i++] ], [ h[i++], h[i++], 0, h[i++] ], [ 0, 0, 1, 0 ], [ h[i++], h[i++], 0, 1 ]];  
+		
+		H = math.transpose(H);
+		var transfo = "matrix3d(" + [].concat(...H).join(", ") + ")";
+		img.style.transform = transfo;
+	}	
 }
 </script>
+<style>
+.clip { 
+	overflow: hidden;
+}
+.persp {
+	transform-origin: top left;
+}
+</style>
 </head>
 <body>
 
