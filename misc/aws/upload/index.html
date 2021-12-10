@@ -29,7 +29,7 @@ const lambda_url = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/defau
 // const lambda_url = "/default";
 const chunk_size = 1024*1024;
 
-const photo_exts = [ "jpeg", "jpg", "png" ];
+const photo_exts = [ "jpeg", "jpg", "png", "mov" ];
 const audio_exts = [ "mp3", "mp4", "m4a" ];
 
 const prms = get_params();
@@ -70,7 +70,7 @@ async function upload(evt) {
 
             var key, infos = { name, size, type, lastModifiedDate };
 
-            var ext = name.split('.').pop();
+            var ext = name.split('.').pop().toLowerCase();
             var mime = type ? type.split('/')[0] : "";
             var is_photo = mime == "image" || photo_exts.indexOf(ext) != -1;
             var is_audio = mime == "audio" || audio_exts.indexOf(ext) != -1;
@@ -95,8 +95,8 @@ async function upload(evt) {
                 var iso_date = meta.DateTime.replace(/:/g, "-");
                 key = used_root + "/" +  iso_date.substr(0,4) + "/" + iso_date.substr(0,7) + "/" + iso_date;
                 // key = key + " " + name; // keep original name (random on iPhones)
-                key = key + "." + name.split(".").pop().toLowerCase(); // just keep suffix 
-            } else if (is_photo && infos && infos.lastModifiedDate) {
+                key = key + "." + ext; // just keep extension 
+            } else if ((is_photo||is_audio) && infos && infos.lastModifiedDate) {
                 var modif_date = new Date(infos.lastModifiedDate).toISOString().substr(0, 19).replace(/:/g, "-").replace("T", " ")
                 key = used_root + "/" +  modif_date.substr(0,4) + "/" + modif_date.substr(0,7) + "/" + modif_date;
                 key = key + " " + name; // keep original name (random on iPhones)
