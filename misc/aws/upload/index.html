@@ -96,18 +96,22 @@ async function upload(evt) {
                 key = used_root + "/" +  iso_date.substr(0,4) + "/" + iso_date.substr(0,7) + "/" + iso_date;
                 // key = key + " " + name; // keep original name (random on iPhones)
                 key = key + "." + name.split(".").pop().toLowerCase(); // just keep suffix 
+            } else if (is_photo && infos && infos.lastModifiedDate) {
+                var modif_date = new Date(infos.lastModifiedDate).toISOString().substr(0, 19).replace(/:/g, "-").replace("T", " ")
+                key = used_root + "/" +  modif_date.substr(0,4) + "/" + modif_date.substr(0,7) + "/" + modif_date;
+                key = key + " " + name; // keep original name (random on iPhones)
             } else {
                 key = used_root + "/" + name;
             }
 
-            var upload_key = await check_key(key, infos, folder_contents);
+            var upload_key = check_duplicates ? await check_key(key, infos, folder_contents) : key;
             if (upload_key) { 
                 var res = await send_file(upload_key, file, infos);
                 try { res = JSON.parse(res); } catch (e) {}
 
                 status_elnt.innerHTML += `<p>&#9989;  <a href="${res.url}">${key}</a></p>`;
             } else {
-                status_elnt.innerHTML += `<p>&#x1F6C8; Skipping ${key} already uploaded.</p>`; 
+                status_elnt.innerHTML += `<p>&#x1F197; Skipping ${key} already uploaded.</p>`; 
             }
         } catch (e) {
             status_elnt.innerHTML += `<p>&#10060; <b style="color: brown;">${e.message||e}<pre><br/><br/>${e.stack||""}</pre></b></p><br/>`;
@@ -243,7 +247,7 @@ function isValidDate(d) {
 }
 
 function skip_too_big(files, status_elnt) {
-    var threshold = 5;
+    var threshold = 25;
     status_elnt.innerHTML += `<p>Filtering files above ${threshold}MB ...</p>`;
     
     threshold *= 1024*1024;
