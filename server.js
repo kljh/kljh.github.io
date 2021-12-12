@@ -2,7 +2,6 @@
 
 const http = require('http');
 const express = require('express');
-const axios = require('axios');
 
 const http_port = process.env['PORT'] || 8080;
 
@@ -47,9 +46,9 @@ function foward_to_aws(req, res) {
 	
 }
 
-app.get('/upload', function (req, res) { res.sendfile('./misc/aws/upload/index.html'); });
-app.get('/photos', function (req, res) { res.sendfile('./misc/aws/photos/index.html'); });
-app.get('/photoscan', function (req, res) { res.sendfile('./misc/photoscan/index.html'); });
+app.get('/upload', function (req, res) { res.sendFile('./misc/aws/upload/index.html', { root: __dirname, }); });
+app.get('/photos', function (req, res) { res.sendFile('./misc/aws/photos/index.html', { root: __dirname, }); });
+app.get('/photoscan', function (req, res) { res.sendFile('./misc/photoscan/index.html', { root: __dirname, }); });
 
 // require('./misc/quiz/quiz-app.js').register(app);
 

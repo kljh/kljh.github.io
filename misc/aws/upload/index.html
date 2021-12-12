@@ -22,12 +22,17 @@
 <span id=status></span>
 
 <script>
+'use strict';
+
 /* global Blob */
 /* global EXIF */
 
 const lambda_url = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
 // const lambda_url = "/default";
 const chunk_size = 1024*1024;
+const aws_multipart_chunk_size = 5*1024*1024;
+const aws_multipart_threshold = 5*1024*1024;
+const too_big_size = 25*1024*1024;
 
 const photo_exts = [ "jpeg", "jpg", "png", "mov" ];
 const audio_exts = [ "mp3", "mp4", "m4a" ];
@@ -109,13 +114,16 @@ async function upload(evt) {
                 var res = await send_file(upload_key, file, infos);
                 try { res = JSON.parse(res); } catch (e) {}
 
-                status_elnt.innerHTML += `<p>&#9989;  <a href="${res.url}">${key}</a></p>`;
+                status_elnt.innerHTML += `<p>&#9989; ${iFile}/${nbFile} <a href="${res.url}">${key}</a></p>`;
             } else {
-                status_elnt.innerHTML += `<p>&#x1F197; Skipping ${key} already uploaded.</p>`; 
+                status_elnt.innerHTML += `<p>&#x1F197; ${iFile}/${nbFile} Skipping ${key} already uploaded.</p>`; 
             }
         } catch (e) {
-            status_elnt.innerHTML += `<p>&#10060; <b style="color: brown;">${e.message||e}<pre><br/><br/>${e.stack||""}</pre></b></p><br/>`;
+            status_elnt.innerHTML += `<p>&#10060; ${iFile}/${nbFile} <b style="color: brown;">${e.message||e}<pre><br/><br/>${e.stack||""}</pre></b></p>`;
         }
+        
+        // autoscroll 
+        status_elnt.lastElementChild.scrollIntoView({ behavior: "smooth" });
     }
 }
 
@@ -145,8 +153,53 @@ async function send_file_multipart(name, file, meta) {
     return res;
 }
 
+async function send_file_multipart_aws(name, file, meta) {
+    var status_elnt = document.getElementById("status");
+    status_elnt.innerHTML += `<p id="Creating multipart upload"></p>`;
+
+    var qs = { ...prms, multipart: "create", name, ...meta };
+    var createRes = await http_request("GET", lambda_url + "/upload", qs);
+    console.log(createRes);
+    var bucket = createRes.Bucket;
+    var key = createRes.Key;
+    var uploadId = createRes.UploadId;
+    
+    // upload parts
+    var parts = [];
+    var n = Math.ceil(file.size/aws_multipart_chunk_size);
+    for (var i=0; i<n; i++) {
+        status_elnt.lastElementChild.innerHTML = `Uploading part ${i+1}/${n}...`;
+        
+        var beg = i * aws_multipart_chunk_size;
+        var end = Math.min((i+1) * aws_multipart_chunk_size, file.size);
+        var blob = file.slice(beg, end);
+        
+        // var s3_url = "https://" + bucket + ".s3.amazonaws.com";
+        var s3_url = "https://" + bucket + ".s3.eu-west-3.amazonaws.com";
+        var qs = { uploadId, partNumber: i + 1 };
+        var part = await http_request("PUT", s3_url + "/" + key, qs, null, blob);
+        
+        var qs = { ...prms, multipart: "part", bucket, key, uploadId, partNumber: i + 1 };
+        var part = await http_request("POST", lambda_url + "/upload", qs, null, blob);
+        
+        part.PartNumber = i+1; 
+        parts.push(part)
+    }
+    
+    // concatenate parts
+    status_elnt.lastElementChild.innerHTML = `Concatenateing parts...`;
+    var qs = { ...prms, multipart: "complete", bucket, key, uploadId, parts };
+    var completeRes = await http_request("POST", lambda_url + "/upload", qs);
+    console.log(completeRes);
+    
+    status_elnt.lastElementChild.remove();
+    return { completeRes, createRes, parts };
+}
+
 async function send_file(name, file, meta, http_headers) {
-    if (file.size>chunk_size) 
+    if (file.size > aws_multipart_threshold) 
+        return await send_file_multipart_aws(name, file, meta);
+    else if (file.size > chunk_size) 
         return await send_file_multipart(name, file, meta);
 
     meta.name = name;
@@ -158,10 +211,14 @@ async function send_file(name, file, meta, http_headers) {
     var bintxt = await file_to_binary_string(file);
     // var base64 = btoa(bintxt);
     
+    return http_request("POST", lambda_url + "/upload", { ...prms, ...meta }, null, bintxt);
+}
+
+async function http_request(verb, url, qs_prms, http_headers, body) {
     return new Promise((resolve, reject) => {
         var xhr = new XMLHttpRequest;
-        var query = new URLSearchParams({ ...prms, ...meta }).toString();
-        xhr.open("POST", lambda_url + "/upload?" + query);
+        var query = new URLSearchParams(qs_prms).toString();
+        xhr.open(verb, url + "?" + query);
         // xhr.setRequestHeader('Content-Type', 'application/octet-stream'); 
 
         if (http_headers)
@@ -170,6 +227,13 @@ async function send_file(name, file, meta, http_headers) {
 
         xhr.onload = function (e) {
             var response = xhr.response || xhr.responseText;
+            try { 
+                // if (xhr.getResponseHeader("Content-Type") == "application/json")
+                    response = JSON.parse(response);
+            } catch(e) {
+                console.error(e);
+                console.warn(response);
+            };
             resolve(response);
         };
         
@@ -184,7 +248,7 @@ async function send_file(name, file, meta, http_headers) {
             reject(`Upload error ${e}.`);
         };
 
-        xhr.send(bintxt);
+        xhr.send(body);
     });
 }
 
@@ -247,7 +311,7 @@ function isValidDate(d) {
 }
 
 function skip_too_big(files, status_elnt) {
-    var threshold = 25;
+    var threshold = too_big_size;
     status_elnt.innerHTML += `<p>Filtering files above ${threshold}MB ...</p>`;
     
     threshold *= 1024*1024;
