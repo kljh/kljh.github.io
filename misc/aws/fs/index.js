@@ -51,21 +51,31 @@ async function handle_request(prms, user_name) {
     var bucket = process.env["BUCKET"];
     var key = user_name + "/" + ( prms.path || "" );
 
-    return await list_s3(bucket, key, user_name);
+    var data = await list_s3(bucket, key);
+    data.Home = user_name+"/";
+    return data;
 }
 
-async function list_s3(bucket, key, user_name) {
+async function list_s3(bucket, key, nextToken) {
     return new Promise((resolve, reject) => {
         var params = {
             Bucket: bucket, 
             Prefix: key,
             // Delimiter: "/"
             };
+            
+        if (nextToken)
+            params.ContinuationToken = nextToken;
         
-        s3.listObjects(params, function(err, data) {
-            if (err) reject(err);
-            else {
-                data.Home = user_name+"/";
+        s3.listObjectsV2(params, async function(err, data) {
+            if (err) {
+                reject(err);
+            } else {
+                if (data.IsTruncated ) {
+                    console.log("list_s3 continues on " + data.NextContinuationToken);
+                    next = await list_s3(bucket, key, data.NextContinuationToken);
+                    data.Contents = data.Contents.concat(next.Contents);
+                }
                 resolve(data); 
             }
         });

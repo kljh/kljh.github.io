@@ -29,13 +29,13 @@
 
 const lambda_url = "https://5nn8oaty7b.execute-api.eu-west-3.amazonaws.com/default";
 // const lambda_url = "/default";
-const chunk_size = 1024*1024;
-const aws_multipart_chunk_size = 5*1024*1024;
-const aws_multipart_threshold = 5*1024*1024;
-const too_big_size = 25*1024*1024;
+
+const chunk_size = 5*1024*1024;
+const too_big_size = 125*1024*1024;
 
 const photo_exts = [ "jpeg", "jpg", "png", "mov" ];
 const audio_exts = [ "mp3", "mp4", "m4a" ];
+const apple_uid_re = /^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/;
 
 const prms = get_params();
 
@@ -76,6 +76,7 @@ async function upload(evt) {
             var key, infos = { name, size, type, lastModifiedDate };
 
             var ext = name.split('.').pop().toLowerCase();
+            var bare = name.substr(0, name.length-ext.length-1);
             var mime = type ? type.split('/')[0] : "";
             var is_photo = mime == "image" || photo_exts.indexOf(ext) != -1;
             var is_audio = mime == "audio" || audio_exts.indexOf(ext) != -1;
@@ -96,7 +97,13 @@ async function upload(evt) {
             var used_root = root || ( is_photo ? "photos/" : ( is_audio ? "music/" : "uploads/")) ;
             if (used_root.endsWith('/'))
                 used_root = used_root.slice(0, -1);
-            if (meta && meta.DateTime) {
+
+            var nameIsAlreadyValidDate = bare.length == 19 && !isNaN(new Date(bare.substr(0,10)).getTime());
+            var nameIsAppleUID = apple_uid_re.test(bare);
+
+            if (nameIsAlreadyValidDate) {
+                key = used_root + "/" +  name.substr(0,4) + "/" + name.substr(0,7) + "/" + name;
+            } else if (meta && meta.DateTime) {
                 var iso_date = meta.DateTime.replace(/:/g, "-");
                 key = used_root + "/" +  iso_date.substr(0,4) + "/" + iso_date.substr(0,7) + "/" + iso_date;
                 // key = key + " " + name; // keep original name (random on iPhones)
@@ -104,15 +111,17 @@ async function upload(evt) {
             } else if ((is_photo||is_audio) && infos && infos.lastModifiedDate) {
                 var modif_date = new Date(infos.lastModifiedDate).toISOString().substr(0, 19).replace(/:/g, "-").replace("T", " ")
                 key = used_root + "/" +  modif_date.substr(0,4) + "/" + modif_date.substr(0,7) + "/" + modif_date;
-                key = key + " " + name; // keep original name (random on iPhones)
+                key = key + ( !nameIsAppleUID ? " " + name : ext ); // keep original name (random on iPhones)
             } else {
                 key = used_root + "/" + name;
             }
 
             var upload_key = check_duplicates ? await check_key(key, infos, folder_contents) : key;
-            if (upload_key) { 
-                var res = await send_file(upload_key, file, infos);
-                try { res = JSON.parse(res); } catch (e) {}
+            if (upload_key) {
+                var qs = { ...prms, multipart: "presign_post", name: upload_key, ...meta };
+                var presigned_infos = await http_request("GET", lambda_url + "/upload", qs);
+                
+                var res = await send_file_multipart(presigned_infos, file)
 
                 status_elnt.innerHTML += `<p>&#9989; ${iFile}/${nbFile} <a href="${res.url}">${key}</a></p>`;
             } else {
@@ -127,9 +136,11 @@ async function upload(evt) {
     }
 }
 
-async function send_file_multipart(name, file, meta) {
+async function send_file_multipart(presigned_infos, file) {
     var status_elnt = document.getElementById("status");
     status_elnt.innerHTML += `<p id="progress"></p>`;
+
+    var { bucket, key } = presigned_infos.fields;
 
     // upload parts
     var n = Math.ceil(file.size/chunk_size);
@@ -139,86 +150,66 @@ async function send_file_multipart(name, file, meta) {
         var beg = i * chunk_size;
         var end = Math.min((i+1) * chunk_size, file.size);
         var blob = file.slice(beg, end);
-        var http_headers = { "multipart": i+"/"+n };
-        await send_file(name+"."+i, blob, meta, http_headers);
+        
+        var part_key = key + ( n==1 ? "" : `.${i}` );
+        await send_file_presigned_post(presigned_infos, blob, part_key);
     }
 
     // concatenate parts
-    status_elnt.lastElementChild.innerHTML = `Concatenateing parts...`;
-    blob = new Blob(["Done"]);
-    http_headers = { "multipart": n+"/"+n };
-    var res = await send_file(name, blob, meta, http_headers);
-    
+    var res = { url: `https://${bucket}.s3.eu-west-3.amazonaws.com/${key}` };
+    // if (n>1) 
+    {
+        status_elnt.lastElementChild.innerHTML = `Concatenating parts...`;
+        // (and make public) 
+
+        var qs = { ...prms, multipart: "concatenate_parts", bucket, key, nb_parts: n };
+        var agg = await http_request("GET", lambda_url + "/upload", qs);
+    }
+
     status_elnt.lastElementChild.remove();
     return res;
 }
 
-async function send_file_multipart_aws(name, file, meta) {
-    var status_elnt = document.getElementById("status");
-    status_elnt.innerHTML += `<p id="Creating multipart upload"></p>`;
-
-    var qs = { ...prms, multipart: "create", name, ...meta };
-    var createRes = await http_request("GET", lambda_url + "/upload", qs);
-    console.log(createRes);
-    var bucket = createRes.Bucket;
-    var key = createRes.Key;
-    var uploadId = createRes.UploadId;
+async function send_file_presigned_post(presigned, file, optional_part_key) {
+    // Note: CORS access required on S3 bucket
+    var post_url = presigned.url;
     
-    // upload parts
-    var parts = [];
-    var n = Math.ceil(file.size/aws_multipart_chunk_size);
-    for (var i=0; i<n; i++) {
-        status_elnt.lastElementChild.innerHTML = `Uploading part ${i+1}/${n}...`;
-        
-        var beg = i * aws_multipart_chunk_size;
-        var end = Math.min((i+1) * aws_multipart_chunk_size, file.size);
-        var blob = file.slice(beg, end);
-        
-        // var s3_url = "https://" + bucket + ".s3.amazonaws.com";
-        var s3_url = "https://" + bucket + ".s3.eu-west-3.amazonaws.com";
-        var qs = { uploadId, partNumber: i + 1 };
-        var part = await http_request("PUT", s3_url + "/" + key, qs, null, blob);
-        
-        var qs = { ...prms, multipart: "part", bucket, key, uploadId, partNumber: i + 1 };
-        var part = await http_request("POST", lambda_url + "/upload", qs, null, blob);
-        
-        part.PartNumber = i+1; 
-        parts.push(part)
-    }
+    var formData = new FormData();
+    for (var k in presigned.fields)
+        if (k != "key" || !optional_part_key)
+            formData.append(k, presigned.fields[k]);
+    if (optional_part_key)
+        formData.append("key", optional_part_key);
+    formData.append("file", file);
+    // console.log("formData", Array.from(formData.entries()));
     
-    // concatenate parts
-    status_elnt.lastElementChild.innerHTML = `Concatenateing parts...`;
-    var qs = { ...prms, multipart: "complete", bucket, key, uploadId, parts };
-    var completeRes = await http_request("POST", lambda_url + "/upload", qs);
-    console.log(completeRes);
-    
-    status_elnt.lastElementChild.remove();
-    return { completeRes, createRes, parts };
+    var res = await http_request("POST", post_url, null, null, formData);
+    return res;
 }
 
-async function send_file(name, file, meta, http_headers) {
-    if (file.size > aws_multipart_threshold) 
-        return await send_file_multipart_aws(name, file, meta);
-    else if (file.size > chunk_size) 
-        return await send_file_multipart(name, file, meta);
 
-    meta.name = name;
+async function send_file(name, file, meta, http_headers) {
     
+    if (file.size > multipart_threshold || presigned_infos) 
+        return await send_file_multipart(name, file, meta, presigned_infos);
+    
+    meta.name = name;
+
     // get rid of undefined values
     var tmp = {}; for (var k in meta) if (meta[k] !== undefined) tmp[k] = meta[k]; meta = tmp; 
-        
+
     // var urlenc = await file_to_urlencoded(file);
     var bintxt = await file_to_binary_string(file);
     // var base64 = btoa(bintxt);
-    
+
     return http_request("POST", lambda_url + "/upload", { ...prms, ...meta }, null, bintxt);
 }
 
 async function http_request(verb, url, qs_prms, http_headers, body) {
     return new Promise((resolve, reject) => {
         var xhr = new XMLHttpRequest;
-        var query = new URLSearchParams(qs_prms).toString();
-        xhr.open(verb, url + "?" + query);
+        var query = qs_prms ? new URLSearchParams(qs_prms).toString() : null;
+        xhr.open(verb, url + ( query ? "?" + query : "" ));
         // xhr.setRequestHeader('Content-Type', 'application/octet-stream'); 
 
         if (http_headers)
@@ -230,16 +221,13 @@ async function http_request(verb, url, qs_prms, http_headers, body) {
             try { 
                 // if (xhr.getResponseHeader("Content-Type") == "application/json")
                     response = JSON.parse(response);
-            } catch(e) {
-                console.error(e);
-                console.warn(response);
-            };
+            } catch(e) {};
             resolve(response);
         };
         
         xhr.onreadystatechange = function handler() {
             if(this.readyState == this.DONE) {
-                if (this.status != 200)
+                if (this.status < 200 || this.status >= 207)
                     reject(`Http error ${this.status}.  ${this.responseText}`);
             }
         };
@@ -312,9 +300,8 @@ function isValidDate(d) {
 
 function skip_too_big(files, status_elnt) {
     var threshold = too_big_size;
-    status_elnt.innerHTML += `<p>Filtering files above ${threshold}MB ...</p>`;
-    
-    threshold *= 1024*1024;
+    status_elnt.innerHTML += `<p>Filtering files above ${(threshold/1024/1024).toFixed(0)}MB ...</p>`;
+
     for (var f of files) 
         if (f.size>threshold) 
             status_elnt.innerHTML += `<p>&#x26A0;&#xFE0F; Skipping ${f.name} (${(f.size/1024/1024).toFixed(2)}MB) file too big.</p>`; 
@@ -432,11 +419,9 @@ async function list_files(args) {
             type: "POST",
         })
         .done(data => {
-            console.log(data);
             resolve(data);
         })
         .fail(err => {
-            console.error(err);
             reject(err);
         });
     });

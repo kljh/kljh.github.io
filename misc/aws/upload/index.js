@@ -1,11 +1,12 @@
 const aws = require('aws-sdk');
 const s3 = new aws.S3({apiVersion: '2006-03-01'});
-const oauth = require('./oauth.min.js');
 
 // Support for binary files must be explicitly enabled in API Getway / API Settings / Binary Media Types
 // or we can use binary string 
 
 exports.handler = async (event) => {
+    const oauth = require('./oauth.min.js');
+    
     var qs = event.queryStringParameters || {};
     // console.log("qs = " + JSON.stringify(qs, null, 4));
     
@@ -23,23 +24,37 @@ exports.handler = async (event) => {
         var bucket = process.env["BUCKET"];
         var key = user_name + "/" + path;
         
-        var body_length = event.body.length;
-        var body_type = typeof event.body;
-        var multipart = (event.headers.multipart || "i/n").split("/");
-        
-        if (!multipart || multipart.length != 2 || multipart[0] != multipart[1]) {
-            console.log("write_to_s3... ");
-            var put_response = await write_to_s3(bucket, key, event.body);
+        if (qs.multipart) {
+            var uploadId = qs.UploadId || qs.uploadId;
+            switch (qs.multipart) {
+                case "presign_post":
+                    data = await aws_presigned_post_url(bucket, key);
+                    break;
+                case "concatenate_parts":
+                    data = await concatenate_multiparts(qs.bucket, qs.key, qs.nb_parts*1);
+                    break;
+                default:
+                    err = `Multipart upload action unknown ${qs.multipart}`;
+            }
         } else {
-            console.log("concatenate_parts...");
-            var concat_response = await concatenate_parts(bucket, key, multipart[1]);
+            var body_length = event.body.length;
+            var body_type = typeof event.body;
+            var multipart = (event.headers.multipart || "i/n").split("/");
+            
+            if (!multipart || multipart.length != 2 || multipart[0] != multipart[1]) {
+                console.log("write_to_s3... ");
+                var put_response = await write_to_s3(bucket, key, event.body);
+            } else {
+                console.log("concatenate_parts...");
+                var concat_response = await concatenate_parts(bucket, key, multipart[1]);
+            }
+            
+            // console.log("make_public...");
+            // var acl_response = await make_public(bucket, key);
+            
+            var url = `https://${bucket}.s3.eu-west-3.amazonaws.com/${key}`;
+            data = { url, bucket, key, body_type, body_length, put_response, /* acl_response, */ concat_response };
         }
-        
-        // console.log("make_public...");
-        // var acl_response = await make_public(bucket, key);
-        
-        var url = `https://${bucket}.s3.eu-west-3.amazonaws.com/${key}`;
-        data = { url, bucket, key, body_type, body_length, put_response, /* acl_response, */ concat_response };
     } catch (e) {
         err = "" + e + "\n" + ( e.stack || "" );
     }
@@ -50,6 +65,7 @@ exports.handler = async (event) => {
             "Access-Control-Allow-Headers" : "Content-Type,Multipart",
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+            "Content-Type": data ? "application/json" : "text/plain",
         },
         body: data ? JSON.stringify(data) : err,
     };
@@ -64,7 +80,7 @@ async function get_lambda_static_file(filename) {
                 reject(err);
             else 
                 resolve({
-                    statusCode: 200,
+                    statusCode: 207,
                     headers: { "Content-Type": "text/html" },
                     body: data });
         });
@@ -105,7 +121,6 @@ async function write_to_s3(bucket, key, body) {
     });
 }
 
-/*
 async function make_public(bucket, key) {
     return new Promise((resolve, reject) => {
         var params = {
@@ -120,7 +135,7 @@ async function make_public(bucket, key) {
         });
     });
 }
-*/
+
 
 async function delete_from_s3(bucket, key) {
     return new Promise((resolve, reject) => {
@@ -155,3 +170,112 @@ async function concatenate_parts(bucket, key, n) {
 	
 	return res;
 }
+
+
+async function aws_presigned_post_url(bucket, key) {
+    var pre = new Promise((resolve, reject) => {
+        s3.createPresignedPost({
+            Bucket: bucket,
+            Conditions: [
+                [ 'starts-with', '$key', 'kljh/' ]
+            ]
+        }, function(err, data) {
+            if (err) { 
+                reject(err);
+            } else {
+                // data.fields.bucket = bucket;
+                data.fields.key = key;
+                resolve(data);
+            }
+        });
+    });
+    
+    return pre;
+}
+
+async function concatenate_multiparts(bucket, key, nb_parts) {
+    if (nb_parts==1)
+        return make_public(bucket, key);
+        
+    var mp =  await create_aws_multipart(bucket, key);
+    
+    var parts = new Array(nb_parts);
+    for (var i=0; i<nb_parts; i++) 
+        parts[i] = await part_copy_aws_multipart(bucket, key, mp.UploadId, i);
+    
+    var res = await complete_aws_multipart(bucket, key, mp.UploadId, parts);
+    
+    var cleanup = new Array(nb_parts);
+    for (var i=0; i<nb_parts; i++) 
+        cleanup[i] = delete_from_s3(bucket, `${key}.${i}`);
+    await Promise.all(cleanup);
+    
+    return { bucket, key, nb_parts, mp, parts, res };
+}
+
+async function create_aws_multipart(bucket, key) {
+    var mp = await s3.createMultipartUpload({
+        Bucket: bucket,
+        Key: key,
+        ACL: "public-read"
+    }).promise();
+    return mp;
+}
+
+async function part_copy_aws_multipart(bucket, key, uploadId, i) {
+    return new Promise((resolve, reject) => {
+        s3.uploadPartCopy({
+            Bucket: bucket, 
+            Key: key, 
+            PartNumber: i+1,  // one based 
+            CopySource: `/${bucket}/${key}.${i}`, 
+            UploadId: uploadId
+        }, function(err, data) {
+            if (err) {
+                reject(err, err.stack);
+            } else {
+                var { ETag, LastModified } = data.CopyPartResult;
+                var part = { ETag, PartNumber: i+1 };
+                resolve(part);
+            }
+        });
+    });
+}
+
+async function complete_aws_multipart(bucket, key, uploadId, parts) {
+    var mp = await s3.completeMultipartUpload({
+        Bucket: bucket,
+        Key: key,
+        UploadId: uploadId,
+        MultipartUpload: {
+            Parts: parts
+        },
+    }).promise();
+    return mp;
+}
+
+async function abort_aws_multipart(bucket, key, uploadId) {
+    var mp = await s3.abortMultipartUpload({
+        Bucket: bucket,
+        Key: key,
+        UploadId: uploadId
+    }).promise();
+    
+    //await delete_from_s3(bucket, key+".multipart");
+    return mp;
+}
+
+async function list_aws_multiparts(bucket) {
+    var mp = await s3.listMultipartUploads({
+        Bucket: bucket,
+    }).promise();
+    return mp;
+}
+
+function cleanup_aws_multiparts(bucket) {
+    list_aws_multiparts(bucket)
+        .then(x => Promise.all(x.Uploads.map(up => abort_aws_multipart(bucket, up.Key, up.UploadId))))
+        .then(console.log)
+        .catch(console.error);
+}
+// cleanup_aws_multiparts("kusers");

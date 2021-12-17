@@ -8,17 +8,19 @@ const S3 = new AWS.S3({
 
 
 const bucket = "kusers";
-for (var user of [ "kljh", "motia", "patou", "narinder", "takako", ]) {
-	var root_key = user + "/photos/";
+const users = [ "kljh", "motia", "narinder", "patou", "takako", ];
+for (var user of users) {
+	var root_key = user + "/";
 	(user => s3.list_s3(bucket, root_key)
 		.then(data => data.Contents.length)
-		.then(n => console.log(user, n)))(user);
+		.then(n => console.log("User ", user, "#photos", n)))(user);
 		
-	//iso_rename(bucket, root_key);
-	// duplicate_delete(bucket, root_key);
-	//create_thumbnails(bucket, root_key);
-	//image_compress("C:\\Users\\kljh\\Documents\\Admin\\Passport Claude 14FV06317.png")
+	// iso_rename(bucket, root_key);
+	duplicate_delete(bucket, root_key);
+	// create_thumbnails(bucket, root_key);
 }
+
+// image_compress("C:\\Users\\kljh\\Downloads\\LHS Welding.JPG")
 
 function iso_rename(bucket, root_key) {
 	s3.list_s3(bucket, root_key)
@@ -31,13 +33,14 @@ function iso_rename(bucket, root_key) {
 function duplicate_delete(bucket, root_key) {
 	s3.list_s3(bucket, root_key)
 		.then(duplicate_etags)
-		//.then(delete_all)
+		//.then(select_incomplete_multiparts)
+		// .then(delete_all)
 		.then(console.log)
 		.catch(console.error);
 	
-	delete_all([])
-		.then(console.log)
-		.catch(console.error);
+	//delete_all([])
+	//	.then(console.log)
+	//	.catch(console.error);
 }
 
 function create_thumbnails(bucket, root_key) {
@@ -107,7 +110,13 @@ function duplicate_etags(data) {
 	
 	// return list of keys to delete
 	return [].concat(...keys_per_tag);
-} 
+}
+
+function select_incomplete_multiparts(data) {
+	return data.Contents
+		.filter(x => !isNaN(x.Key.split(".").pop()))
+		.map(x => x.Key);
+}
 
 async function photos_name_with_iso_date(data) {
 	var existing_files = data.Contents.map(x => x.Key);
