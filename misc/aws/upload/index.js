@@ -177,7 +177,7 @@ async function aws_presigned_post_url(bucket, key) {
         s3.createPresignedPost({
             Bucket: bucket,
             Conditions: [
-                [ 'starts-with', '$key', 'kljh/' ]
+                [ 'starts-with', '$key', key ]
             ]
         }, function(err, data) {
             if (err) { 
