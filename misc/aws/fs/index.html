@@ -144,14 +144,14 @@ function action(e) {
 	
 	var url;
 	var qs = new URLSearchParams({ path, keys, ...prms });
-    if (action=="image")
+	if (action=="image")
 		url = "https://aws.kljh.org/photos?"+qs;
 	else if (action=="music")
 		url = "https://aws.kljh.org/audio?"+qs;
 	else if (action=="edit")
 		url = "https://aws.kljh.org/delta?"+qs;
 	else if (action=="pdf")
-		url = "http://localhost:8080/photoscan?"+qs;
+		url = "https://kljh.github.io/misc/photoscan?"+qs;
 	else if (action=="open")
 		url = "https://kusers.s3.eu-west-3.amazonaws.com/"+home+path;
 	else 

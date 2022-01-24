@@ -9,8 +9,9 @@ const S3 = new AWS.S3({
 
 const bucket = "kusers";
 const users = [ "kljh", "motia", "narinder", "patou", "takako", ];
+const path = ""; // "temp/2022/2022-01/";
 for (var user of users) {
-	var root_key = user + "/";
+	var root_key = user + "/" + path;
 	(user => s3.list_s3(bucket, root_key)
 		.then(data => data.Contents.length)
 		.then(n => console.log("User ", user, "#photos", n)))(user);
@@ -47,8 +48,9 @@ function create_thumbnails(bucket, root_key) {
 	var keys = s3.list_s3(bucket, root_key)
 		.then(data => data.Contents.map(x => x.Key))
 		.then(keys => {
-			var photos = keys.filter(key => key.indexOf("/.thumbs/")==-1 && ( key.endsWith(".jpeg") || key.endsWith(".jpg") ));
+			var photos = keys.filter(key => key.indexOf("/.thumbs/")==-1 && ( key.endsWith(".jpeg") || key.endsWith(".jpg") || key.endsWith(".png") ));
 			var thumbs = keys.filter(key => key.indexOf("/.thumbs/")!=-1);
+			console.log("#keys", keys.length);
 			console.log("#photos", photos.length);
 			console.log("#thumbs", thumbs.length);
 			// console.log("photos", photos);
