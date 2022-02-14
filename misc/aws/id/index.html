@@ -118,7 +118,18 @@ const GOOGLE_CLIENT_ID = "1008363388918-nobbenqd2rd0fjtptqovkp876bs99gem.apps.go
 
 $(function () {
     var args = uri_args();
-    
+
+    var { user_id, user_hash } = localStorage;
+    if (user_id  && user_hash) {
+        var prms = new URLSearchParams({ action: "verify", user_id, user_hash });
+        ajax_post(API_URL + "/id?" + prms)
+        .then (data => {
+            if (data.verified)
+                show_authenticated(user_id, user_hash);
+        })
+        .catch(_ => {});
+    }
+
     if (localStorage["user_id"]) {
         $('input[name="email"]').val(localStorage["user_id"]);
         $("#remember-me").prop('checked', true);
@@ -132,23 +143,26 @@ $(function () {
         process_oauth_token(args)
         .catch(console.error);
     }
-    
+
     $("#next").click(async function (ev) {
         // !! IMPORTANT FOR CROSS DOMAIN !!
         ev.preventDefault();
 
         var user_id = $('input[name="email"]').val();
-        var user_pwd = document.getElementById("emailcode").style.display == "block" ? $('input[name="password"]').val() : undefined;
+        var user_pwd = $('input[name="password"]').val();
+		if (document.getElementById("emailcode").style.display != "block")
+			user_pwd = undefined;
+
         if (!user_id) return;
-        
+
         if (!user_pwd) {
-            // ask for OTP 
+            // ask for OTP
             var prms = new URLSearchParams({ action: "register", user_id });
             await ajax_post(API_URL + "/id?" + prms);
-            
+
             // and show password input
             document.getElementById("emailcode").style.display = "block";
-            
+
         } else {
             // check OTP (return HTTP status code 400 if not authenticated)
             var prms = new URLSearchParams({ action: "register", user_id, user_pwd });
@@ -158,18 +172,18 @@ $(function () {
     });
 
     async function process_oauth_token(args) {
-        
+
         // check OAUTH token after redirection from OAUTH provider
 
         document.getElementById("signin").style.display = "none";
         document.getElementById("redirect").style.display = "block";
-        
+
         var oauth_provider = args.state;
         console.log("processing OAUTH token from "+oauth_provider+"\n" + JSON.stringify(args));
-        
+
         var prms = new URLSearchParams({ action: "oauth", ...args });
         var data = await ajax_post(API_URL + "/id?" + prms);
-        
+
         save_user_info_and_redirect(data);
     }
 
@@ -179,19 +193,19 @@ $(function () {
             console.warn("Authentication failed.\n\n", data);
             return;
         }
-        
+
         // authenticated
         localStorage["user_id"] = data.uid;
         localStorage["user_name"] = data.name;
         localStorage["user_email"] = data.email;
         localStorage["user_hash"] = data.hash;
-        
+
         document.cookie = `uid=${data.uid}; path=/; Secure; SameSite=Strict;`;
         document.cookie = `hash=${data.hash}; path=/; Secure; SameSite=Strict;`;
 
-        var prms = new URLSearchParams(data);
-    
-        // redirect 
+        var prms = new URLSearchParams({ uid: data.uid, hash: data.hash });
+
+        // redirect
         if (localStorage["redirect_after_signin"]) {
             var url = localStorage["redirect_after_signin"];
             delete localStorage["redirect_after_signin"];
@@ -199,25 +213,32 @@ $(function () {
                 url += "?" + prms;
             window.location.href = url;
         }
-        
+
+        show_authenticated(data.uid, data.hash);
+    }
+
+    function show_authenticated(uid, hash) {
         document.getElementById("signin").style.display = "none";
         document.getElementById("redirect").style.display = "none";
         document.getElementById("authenticated").style.display = "block";
 
-        document.getElementById("beta_upload_link").href += "?" + prms;
+        var auth_prms = new URLSearchParams({ uid, hash }).toString();
+        var auth_elnts = document.getElementsByClassName("external_link");
+        for (var elnt of auth_elnts)
+            elnt.href += "?" + auth_prms;
     }
-    
+
     function clear_user_info() {
         delete localStorage["user_id"];
         delete localStorage["user_name"];
         delete localStorage["user_email"];
         delete localStorage["user_hash"];
     }
-    
+
     $("#remember-me").change(function (ev) {
         if (!ev.target.checked) {
             clear_user_info();
-            
+
             // reload with no info
             window.location.href = REDIRECT_URI;
         }
@@ -257,10 +278,11 @@ $(function () {
             + "&state=" + get_state("google")
             // + "&scope=email" // https://www.googleapis.com/auth/userinfo.email
             + "&scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
-            // + "&scope=openid";   // try-it as per https://developers.google.com/identity/protocols/oauth2/scopes
+			// + "&scope=openid";   // try-it as per https://developers.google.com/identity/protocols/oauth2/scopes
+
         document.location.href = url;
     });
-    
+
 });
 
 async function ajax_post(url, data) {
@@ -395,11 +417,11 @@ body {
 <div class="login-form" id="authenticated" style="display: none;"><form>
     <h2>Authenticated.</h2>
     <ul>
-        <li><a href="../upload">Upload</a> (<a id="beta_upload_link" href="https://kljh.github.io/misc/aws/upload/">beta</a>)</li>
-        <li><a href="../fs">Explore</a></li>
-        <li><a href="../delta">Text editor</a></li>
-        <li><a href="../photos">Photos</a></li>
-        <li><a href="../audio">Music & videos</a></li>
+        <li><a href="/upload">Upload</a> (<a class="external_link" href="https://kljh.github.io/misc/aws/upload/">beta</a>)</li>
+        <li><a href="/fs">Explore</a></li>
+        <li><a href="/delta">Text editor</a></li>
+        <li><a href="/photos">Photos</a></li>
+        <li><a href="/audio">Music & videos</a></li>
     </ul>
 </form></div>
 

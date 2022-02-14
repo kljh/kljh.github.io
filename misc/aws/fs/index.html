@@ -40,10 +40,10 @@ var home = "";
 var keys = [];  // selected keys
 function build_fancy_tree(index) {
 	home = index.Home; // path to home folder (kljh/)
-	
+
 	function s3_to_fancy_source(index) {
 		var prefix = index.Prefix;
-		
+
 		var folders = new Set();
 		var src = [];
 		for (var item of index.Contents) {
@@ -56,14 +56,14 @@ function build_fancy_tree(index) {
 			} else {
 				// file
 				src.push({ title: name, key: prefix+name, ...item });
-			} 
+			}
 		}
 
 		// folders (put on top)
 		folders = Array.from(folders.keys()).sort();
-		folders = folders.map( key => { 
+		folders = folders.map( key => {
 			var name = key.split("/").pop();
-			return { title: name, key, folder: true, lazy: true }; 
+			return { title: name, key, folder: true, lazy: true };
 		});
 		src = folders.concat(src);
 		return src;
@@ -71,40 +71,40 @@ function build_fancy_tree(index) {
 
 	var src =  s3_to_fancy_source(index);
 
-	// too early to register events on item yet to be created 
+	// too early to register events on item yet to be created
 	// $(".abi").click(e => { console.log("icon click", e); });
-	
+
 	$("#treegrid").fancytree({
 		// extensions: [ "edit", "filter" ],
 		extensions: [ "edit", "table" ],
 		checkbox: true,
 		table: {
-			indentation: 20,       // 20 px per level 
+			indentation: 20,       // 20 px per level
 			checkboxColumnIdx: 0,  // render the checkboxes into the 1st column
-			nodeColumnIdx: 2,      // render the node title into the 3rd column	
+			nodeColumnIdx: 2,      // render the node title into the 3rd column
 		},
 		source: src,
 		lazyLoad: function(event, target) {
 			var path = target.node.key.substr(home.length)+"/"
 			var qs = new URLSearchParams({ path, ...prms });
-			
+
 			// target.result can be a jQurey deferred
 			target.result = $.post("https://aws.kljh.org/fs?"+qs)
 				.then(data => {
 					var src =  s3_to_fancy_source(data);
 					return src;
 				});
-			
+
 		},
 		renderColumns: function(event, data) {
 			var meta = data.node.data;
 			var $TDs = $(data.node.tr).find(">td");
 			$(data.node.tr).attr("data-key", data.node.key);
-			
+
 			var ext = data.node.key.split(".").pop();
 			var text_extensions = new Set(["txt", "html", "js", "css", "json", "yaml", "xml" ]);
 			var isFolder = !meta.Size;
-			
+
 			var action_image = '<a href="#" onclick="action(this)"><i class="image bi-image"></i></a>';
 			var action_music = '<a href="#" onclick="action(this)"><i class="music bi-music-note-list"></i></a>';
 			var action_open  = '<a href="#" onclick="action(this)"><i class="open  bi-file-earmark-arrow-down"></i></a>';
@@ -112,15 +112,15 @@ function build_fancy_tree(index) {
 			var action_pdf   = '<a href="#" onclick="action(this)"><i class="pdf   bi-file-earmark-pdf"></i></a>';
 			var actions = isFolder ? action_image + action_music + action_pdf : (
 				( action_open + ( text_extensions.has(ext) ? action_edit : "" )));
-			
+
 			var size = meta.Size ? (Math.ceil(meta.Size/1024)+"kB") : "";
-			
-			// $TDs.eq(0) rendered with checkbox  
+
+			// $TDs.eq(0) rendered with checkbox
 			// $TDs.eq(1).text(data.node.getIndexHier());
-			// $TDs.eq(2) rendered with node title  
+			// $TDs.eq(2) rendered with node title
 			$TDs.eq(3).text(size);
 			$TDs.eq(4).html(actions);
-			
+
 		},
 		tooltip: function(event, data) {
 			var meta = data.node.data;
@@ -137,11 +137,11 @@ function build_fancy_tree(index) {
 
 function action(e) {
 	console.log("action", this);
-	var action = e.firstElementChild.className.split(" ")[0]; 
+	var action = e.firstElementChild.className.split(" ")[0];
 	var download = action == "open";
 	var key = e.parentElement.parentElement.getAttribute("data-key");
 	var path = key.substr(home.length);
-	
+
 	var url;
 	var qs = new URLSearchParams({ path, keys, ...prms });
 	if (action=="image")
@@ -154,9 +154,9 @@ function action(e) {
 		url = "https://kljh.github.io/misc/photoscan?"+qs;
 	else if (action=="open")
 		url = "https://kusers.s3.eu-west-3.amazonaws.com/"+home+path;
-	else 
+	else
 		throw new Error("Unknown action "+action);
-	
+
 	if (download)
 		window.open(url, "_blank"); // new window
 	else
@@ -165,7 +165,10 @@ function action(e) {
 
 
 function uri_args() {
-	var tmp = window.location.search.substr(1).split('&');
+	var search = window.location.search.substr(1);
+	if (!search) return {};
+	var tmp = search.split('&');
+
 	var kv = {};
 	for (var i=0; i<tmp.length; i++) {
 		var key = tmp[i].split('=', 1)[0];

@@ -4,7 +4,7 @@ const oauth = require('./oauth');
 const nodemailer = require('nodemailer');
 
 // const mail_prms = JSON.parse(require('fs').readFileSync(".mail.creds"));
-const mail_prms = { 
+const mail_prms = {
 	"host": process.env["SMTP_HOST"] || 'smtp.gmail.com',  // Allow less secure apps: ON
 	"port": process.env["SMTP_PORT"] || 465,
 	"user": process.env["SMTP_USER"],
@@ -14,15 +14,16 @@ const mail_prms = {
 
 exports.handler = async (event) => {
     var qs = event.queryStringParameters || {};
-    
-    if (event.httpMethod == "GET")
+
+    if (event.httpMethod == "GET" && !qs.no_html_get)
         return await get_lambda_static_file('index.html');
-    
+
     var data, err, statusCode;
     try {
         var user_id = qs.id || qs.email || qs.user_id || qs.user_email;
         var user_otp = qs.pwd || qs.otp || qs.user_pwd || qs.user_otp;
-        
+        var user_hash = qs.hash || qs.user_hash;
+
         if (qs.action=="register" && user_id) {
             var otp = generate_code( user_id + new Date().toISOString().substr(0,8) + mail_prms.pass );
             if (!user_otp) {
@@ -30,33 +31,38 @@ exports.handler = async (event) => {
                 var txt = `Your sign-in code: ${otp}`;
                 if (user_id.startsWith("+"))
                     data = await send_text(user_id, txt);
-                else 
+                else
                     data = await send_email(user_id, txt, txt, `Your sign-in code: <b>${otp}</b>`);
             } else {
                 // check OTP
                 if (otp == user_otp)
                     data = { uid: user_id, name: user_id, email: user_id, hash: oauth.user_hash(user_id) };
-                else 
+                else
                     statusCode = 400;
             }
         } else if (qs.action=="oauth") {
             // data = { status: "authentication token to process" };
             data = await oauth.process_oauth_token(qs);
-        } else { 
+        } else if (qs.action=="verify") {
+            data = await oauth.check_hash(user_id, user_hash);
+        } else {
             throw new Error("Invalid request. "+JSON.stringify(qs));
         }
     } catch (e) {
         err = "Query: " + JSON.stringify(qs) + "\n\n" + e + "\n" + ( e.stack || "" );
     }
-    
+
+    // should handle case where data is a Promise
+    var body = data ? ( data.substr ? data : JSON.stringify(data, null, 4)) : err;
+
     return {
-        statusCode: statusCode || ( data ? 200 : 500 ),
-        headers: { 
+        statusCode: statusCode || ( data ? 200 : 207 ),
+        headers: {
             "Access-Control-Allow-Headers" : "Content-Type",
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
         },
-        body: data ? ( data.substr ? data : JSON.stringify(data)) : err,
+        body
     };
 
 };
@@ -65,9 +71,9 @@ async function get_lambda_static_file(filename) {
     return new Promise((resolve, reject) => {
         var fs = require('fs');
         fs.readFile(filename, 'utf8' , (err, data) => {
-            if (err) 
+            if (err)
                 reject(err);
-            else 
+            else
                 resolve({
                     statusCode: 200,
                     headers: { "Content-Type": "text/html" },
@@ -78,7 +84,7 @@ async function get_lambda_static_file(filename) {
 
 async function send_email(to, subject, text, html) {
     return new Promise((resolve, reject) => {
-    
+
         var transporter = nodemailer.createTransport({
             host: mail_prms.host,
             port: mail_prms.port,
@@ -102,7 +108,7 @@ async function send_email(to, subject, text, html) {
 
 async function send_text(to, text) {
     const axios = require('axios');
-    
+
     const sid = process.env.TWILIO_ACCOUNT_SID;
     const tok = process.env.TWILIO_AUTH_TOKEN;
     const num = process.env.TWILIO_NUMBER_FROM;
@@ -123,7 +129,7 @@ async function send_text(to, text) {
 			password: tok
 		}
     };
-    
+
     return axios.post(url, prms, config)
         .then(res => { return { status: res.status, data: res.data }; });
 }
@@ -140,7 +146,7 @@ function generate_code(txt) {
 }
 
 if (require.main === module) {
-	
+
     send_email('claude.cochet@gmail.com', 'Hello Code from AWS', 'Toc Toc?', '<b>Toc Toc Toc?</b>')
     .then(console.log)
     .catch(console.error);

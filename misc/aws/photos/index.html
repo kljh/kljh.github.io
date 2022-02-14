@@ -21,38 +21,98 @@ const photos_extensions = new Set([ "jpeg", "jpg", "png", "mov", "avi", "mp4" ])
 function init() {
     var args = uri_args();
 
-    var qs = new URLSearchParams({ ...args, delimiter: "/" });
-    $.post("/fs?"+qs)
-    .then(data => {
-        var res = {
-            thumbnailHeight:  "auto",
-            thumbnailWidth:   150,
-            itemsBaseURL:     'https://kusers.s3.eu-west-3.amazonaws.com/' + data.Prefix,
-            items: [],
-            thumbnailLabel: { display: true, position:'onBottomOverImage', hideIcons: true, titleFontSize: '0.75em', align: 'left', titleMultiLine:false, displayDescription: false },
-            thumbnailHoverEffect2: 'label_font-size_0.75em_1.5em|title_backgroundColor_rgba(255,255,255,0.34)_rgba(((35,203,153,0.8)|title_color_#000_#fff|image_scale_1.00_1.10_5000|image_rotateZ_0deg_4deg_5000',
-            galleryTheme : { 
-                thumbnail: { titleShadow : 'none', titleColor: '#fff', borderColor: '#333' },
-            },
-        };
-        for (var item of data.Contents) {
-            if (item.Size == 0)
-                continue;
-        	var ext = item.Key.split(".").pop().toLowerCase();
-        	if (!photos_extensions.has(ext)) 
-            	continue;
+    var photo_list = args.path ?
+        get_photo_list(args, args.path) :
+        get_latest_photo_list(args, "photos/");
 
-            var src = item.Key.substr(data.Prefix.length);
-            var srct = ".thumbs/" + src;
-            var title = url_to_title(item.Key);
-            res.items.push({ src, srct, title });
-        }
-        return res;
-    })
-    .then(data => {
-        console.log("nanogallery2 init");
-        $("#nanogallery2").nanogallery2(data);
+    photo_list
+	.then(async photo_list => { await check_thumbs(args, photo_list); return photo_list; })
+    .then(render_photos)
+    .catch(console.error);
+}
+
+async function get_latest_photo_list(args, path) {
+
+    var photo_list = await get_photo_list(args, path);
+
+    while (photo_list.CommonPrefixes.length) {
+        var sub_folder_path = photo_list.CommonPrefixes.pop().Prefix;
+        sub_folder_path = sub_folder_path.substr(photo_list.Home.length);
+
+        if (sub_folder_path.endsWith("/.thumbs/"))
+            continue;
+
+        var sub_photo_list = await get_latest_photo_list(args, sub_folder_path);
+        if (sub_photo_list.Contents.length>0)
+            return sub_photo_list;
+    }
+
+    return photo_list;
+}
+
+async function ajax_post(url, qs) {
+    return new Promise((resolve, reject) => {
+        $.post(url+"?"+new URLSearchParams(qs))
+        .done(resolve)
+        .fail(reject);
     });
+}
+
+async function get_photo_list(args, path) {
+    var qs = { ...args, path, delimiter: "/" };
+    return ajax_post("/fs", qs);
+}
+
+async function check_thumbs(args, photo_list) {
+    var thumb_list = await get_photo_list(args, photo_list.Prefix.substr(photo_list.Home.length) + ".thumbs/");
+    var thumb_set = new Set(thumb_list.Contents.map(x => x.Key.split('/').pop()));
+
+    var promises = [];
+    for (var photo of photo_list.Contents) {
+        var tmp = photo.Key.split('/');
+        var file = tmp.pop();
+
+        if (thumb_set.has(file))
+			continue;
+
+	    var thumb = tmp.join("/") + "/.thumbs/" + file;
+	    console.warn("thumb", thumb);
+        var qs = { ...args, action: "photomin", key: photo.Key, out: thumb };
+        promises.push( ajax_post("/photos", qs) );
+    }
+
+    var thumb_res = await Promise.all(promises);
+    return thumb_list;
+}
+
+function render_photos(photo_list) {
+
+    var gallery_prms = {
+        thumbnailHeight:  "auto",
+        thumbnailWidth:   150,
+        itemsBaseURL:     'https://kusers.s3.eu-west-3.amazonaws.com/' + photo_list.Prefix,
+        items: [],
+        thumbnailLabel: { display: true, position:'onBottomOverImage', hideIcons: true, titleFontSize: '0.75em', align: 'left', titleMultiLine:false, displayDescription: false },
+        thumbnailHoverEffect2: 'label_font-size_0.75em_1.5em|title_backgroundColor_rgba(255,255,255,0.34)_rgba(((35,203,153,0.8)|title_color_#000_#fff|image_scale_1.00_1.10_5000|image_rotateZ_0deg_4deg_5000',
+        galleryTheme : {
+            thumbnail: { titleShadow : 'none', titleColor: '#fff', borderColor: '#333' },
+        },
+    };
+    for (var item of photo_list.Contents) {
+        if (item.Size == 0)
+            continue;
+        var ext = item.Key.split(".").pop().toLowerCase();
+	    if (!photos_extensions.has(ext))
+            continue;
+
+        var src = item.Key.substr(photo_list.Prefix.length);
+        var srct = ".thumbs/" + src;
+        var title = url_to_title(item.Key);
+        gallery_prms.items.push({ src, srct, title });
+    }
+
+    console.log("nanogallery2 init");
+    $("#nanogallery2").nanogallery2(gallery_prms);
 }
 
 function url_to_title(url) {

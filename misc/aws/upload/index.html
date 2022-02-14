@@ -7,7 +7,7 @@
 <!-- <script src="https://cdn.jsdelivr.net/npm/exif-js"></script> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<!-- script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script> -->
 </head>
 <body>
 
@@ -41,6 +41,9 @@ const prms = get_params();
 
 window.onload = function () {
     document.getElementById("file_input").addEventListener("change", evt => upload(evt));
+
+    if (prms.path)
+        document.getElementById("root_input").value = prms.path;
 };
 
 async function upload(evt) {
@@ -55,21 +58,21 @@ async function upload(evt) {
          root += "/";
 
     status_elnt.innerHTML = ""
-    
+
     // smaller files first
     files.sort((a, b) => a.size - b.size);
-    
+
     files = await skip_too_big(files, status_elnt);
 
-    //if (check_duplicates) 
+    //if (check_duplicates)
     //    files = await remove_duplicates(files, status_elnt);
     status_elnt.innerHTML += `<p>Uploading ${files.length} file(s) ...</p>`;
 
-    var iFile = 0, nbFile = files.length; 
+    var iFile = 0, nbFile = files.length;
     for (const file of files) {
         try {
             iFile = iFile + 1;
-            
+
             var { name, size, type, lastModifiedDate } = file;
             status_elnt.innerHTML += `<p>Uploading ${iFile}/${nbFile} ${name} (${Math.round(size/1024)}kB)</p>`;
 
@@ -92,7 +95,7 @@ async function upload(evt) {
                     status_elnt.innerHTML += `<p>Exif error ${e}</p>`;
                 }
             }
-            
+
             // using metadata
             var used_root = root || ( is_photo ? "photos/" : ( is_audio ? "music/" : "uploads/")) ;
             if (used_root.endsWith('/'))
@@ -107,7 +110,7 @@ async function upload(evt) {
                 var iso_date = meta.DateTime.replace(/:/g, "-");
                 key = used_root + "/" +  iso_date.substr(0,4) + "/" + iso_date.substr(0,7) + "/" + iso_date;
                 // key = key + " " + name; // keep original name (random on iPhones)
-                key = key + "." + ext; // just keep extension 
+                key = key + "." + ext; // just keep extension
             } else if ((is_photo||is_audio) && infos && infos.lastModifiedDate) {
                 var modif_date = new Date(infos.lastModifiedDate).toISOString().substr(0, 19).replace(/:/g, "-").replace("T", " ")
                 key = used_root + "/" +  modif_date.substr(0,4) + "/" + modif_date.substr(0,7) + "/" + modif_date;
@@ -120,18 +123,18 @@ async function upload(evt) {
             if (upload_key) {
                 var qs = { ...prms, multipart: "presign_post", name: upload_key, ...meta };
                 var presigned_infos = await http_request("GET", lambda_url + "/upload", qs);
-                
+
                 var res = await send_file_multipart(presigned_infos, file)
 
                 status_elnt.innerHTML += `<p>&#9989; ${iFile}/${nbFile} <a href="${res.url}">${key}</a></p>`;
             } else {
-                status_elnt.innerHTML += `<p>&#x1F197; ${iFile}/${nbFile} Skipping ${key} already uploaded.</p>`; 
+                status_elnt.innerHTML += `<p>&#x1F197; ${iFile}/${nbFile} Skipping ${key} already uploaded.</p>`;
             }
         } catch (e) {
             status_elnt.innerHTML += `<p>&#10060; ${iFile}/${nbFile} <b style="color: brown;">${e.message||e}<pre><br/><br/>${e.stack||""}</pre></b></p>`;
         }
-        
-        // autoscroll 
+
+        // autoscroll
         status_elnt.lastElementChild.scrollIntoView({ behavior: "smooth" });
     }
 }
@@ -146,21 +149,21 @@ async function send_file_multipart(presigned_infos, file) {
     var n = Math.ceil(file.size/chunk_size);
     for (var i=0; i<n; i++) {
         status_elnt.lastElementChild.innerHTML = `Uploading part ${i+1}/${n}...`;
-        
+
         var beg = i * chunk_size;
         var end = Math.min((i+1) * chunk_size, file.size);
-        var blob = file.slice(beg, end);
-        
+        var blob = n==1 ? blob : file.slice(beg, end);
+
         var part_key = key + ( n==1 ? "" : `.${i}` );
         await send_file_presigned_post(presigned_infos, blob, part_key);
     }
 
     // concatenate parts
     var res = { url: `https://${bucket}.s3.eu-west-3.amazonaws.com/${key}` };
-    // if (n>1) 
+    // if (n>1)
     {
         status_elnt.lastElementChild.innerHTML = `Concatenating parts...`;
-        // (and make public) 
+        // (and make public)
 
         var qs = { ...prms, multipart: "concatenate_parts", bucket, key, nb_parts: n };
         var agg = await http_request("GET", lambda_url + "/upload", qs);
@@ -173,7 +176,7 @@ async function send_file_multipart(presigned_infos, file) {
 async function send_file_presigned_post(presigned, file, optional_part_key) {
     // Note: CORS access required on S3 bucket
     var post_url = presigned.url;
-    
+
     var formData = new FormData();
     for (var k in presigned.fields)
         if (k != "key" || !optional_part_key)
@@ -182,21 +185,21 @@ async function send_file_presigned_post(presigned, file, optional_part_key) {
         formData.append("key", optional_part_key);
     formData.append("file", file);
     // console.log("formData", Array.from(formData.entries()));
-    
+
     var res = await http_request("POST", post_url, null, null, formData);
     return res;
 }
 
 
 async function send_file(name, file, meta, http_headers) {
-    
-    if (file.size > multipart_threshold || presigned_infos) 
+
+    if (file.size > multipart_threshold || presigned_infos)
         return await send_file_multipart(name, file, meta, presigned_infos);
-    
+
     meta.name = name;
 
     // get rid of undefined values
-    var tmp = {}; for (var k in meta) if (meta[k] !== undefined) tmp[k] = meta[k]; meta = tmp; 
+    var tmp = {}; for (var k in meta) if (meta[k] !== undefined) tmp[k] = meta[k]; meta = tmp;
 
     // var urlenc = await file_to_urlencoded(file);
     var bintxt = await file_to_binary_string(file);
@@ -210,7 +213,7 @@ async function http_request(verb, url, qs_prms, http_headers, body) {
         var xhr = new XMLHttpRequest;
         var query = qs_prms ? new URLSearchParams(qs_prms).toString() : null;
         xhr.open(verb, url + ( query ? "?" + query : "" ));
-        // xhr.setRequestHeader('Content-Type', 'application/octet-stream'); 
+        // xhr.setRequestHeader('Content-Type', 'application/octet-stream');
 
         if (http_headers)
             for (var k in http_headers)
@@ -218,20 +221,20 @@ async function http_request(verb, url, qs_prms, http_headers, body) {
 
         xhr.onload = function (e) {
             var response = xhr.response || xhr.responseText;
-            try { 
+            try {
                 // if (xhr.getResponseHeader("Content-Type") == "application/json")
                     response = JSON.parse(response);
             } catch(e) {};
             resolve(response);
         };
-        
+
         xhr.onreadystatechange = function handler() {
             if(this.readyState == this.DONE) {
                 if (this.status < 200 || this.status >= 207)
                     reject(`Http error ${this.status}.  ${this.responseText}`);
             }
         };
-        
+
         xhr.error = function(e) {
             reject(`Upload error ${e}.`);
         };
@@ -265,30 +268,30 @@ async function get_exif_infos(img) {
         EXIF.getData(img, function() {
             var all_tags = EXIF.getAllTags(this);
 
-            // extract subset 
+            // extract subset
             var { Make, Model, DateTime, Orientation, FocalLengthIn35mmFilm, FNumber, ExposureTime, ...other } = all_tags;
             var meta = { Make, Model, DateTime, Orientation, FocalLengthIn35mmFilm, FNumber, ExposureTime };
-            
+
             // try to get timestamp
             var timestamp = null;
             if (DateTime) {
                 try {
                     timestamp = new Date(meta.DateTime);
                 } catch (e) {}
-                
-                if (!isValidDate(timestamp)) 
+
+                if (!isValidDate(timestamp))
                 try {
                     var tok = DateTime.split(/[-: ]+/).map(x => x*1);
                     timestamp = new Date(tok[0], tok[1]-1, tok[2], tok[3], tok[4], tok[5]);  // the month is 0-indexed
-                    if (isValidDate(timestamp)) 
+                    if (isValidDate(timestamp))
                         // meta.DateTime = DateTime.substr(0,10).replaceAll(":", "-")+DateTime.substr(10);
                         meta.DateTime = DateTime.replaceAll(":", "-"); // do not preserve ':' in time part as it is an illegal character in a file path
                 } catch (e) {}
-                
+
             }
-            if (!isValidDate(timestamp)) 
+            if (!isValidDate(timestamp))
                 reject(`Couldn't extract timestamp from EXIF data. ${DateTime}`);
-            else 
+            else
                 resolve(meta);
         });
     });
@@ -302,9 +305,9 @@ function skip_too_big(files, status_elnt) {
     var threshold = too_big_size;
     status_elnt.innerHTML += `<p>Filtering files above ${(threshold/1024/1024).toFixed(0)}MB ...</p>`;
 
-    for (var f of files) 
-        if (f.size>threshold) 
-            status_elnt.innerHTML += `<p>&#x26A0;&#xFE0F; Skipping ${f.name} (${(f.size/1024/1024).toFixed(2)}MB) file too big.</p>`; 
+    for (var f of files)
+        if (f.size>threshold)
+            status_elnt.innerHTML += `<p>&#x26A0;&#xFE0F; Skipping ${f.name} (${(f.size/1024/1024).toFixed(2)}MB) file too big.</p>`;
 
     return files.filter(f => f.size<threshold);
 }
@@ -313,7 +316,7 @@ async function check_key(key, infos, folder_contents) {
     var tmp = key.split("/");
     var file = tmp.pop();
     var folder = tmp.join("/");
-    
+
     folder_contents[folder] = await get_existing_folder(folder, folder_contents);
 
     if (!folder_contents[folder][key]) {
@@ -325,7 +328,7 @@ async function check_key(key, infos, folder_contents) {
         return;
     } else {
         // collision (new file => new key)
-        var tmp = file.split();
+        var tmp = file.split(".");
         var ext = tmp.pop();
         var name = tmp.join(".");
         var extra = infos.size;
@@ -337,13 +340,14 @@ async function check_key(key, infos, folder_contents) {
 async function get_existing_folder(folder, folder_contents) {
     if (!folder_contents[folder]) {
         var tmp = await get_existing_files({ path: folder+"/", delimiter: "/" })
-        for (var k in tmp.by_key) 
+        for (var k in tmp.by_key)
             tmp.by_key[k] = tmp.by_key[k][0];
         folder_contents[folder] = tmp.by_key;
     }
     return folder_contents[folder];
 }
 
+/*
 async function remove_duplicates(files, status_elnt) {
     status_elnt.innerHTML += `<p>Getting existing files...</p>`;
     var t0 = new Date();
@@ -361,7 +365,8 @@ async function remove_duplicates(files, status_elnt) {
     if (skip_files.size>0)
         status_elnt.innerHTML += `<p>&#x26A0;&#xFE0F; Skipping ${skip_files.size} files already uploaded.</p>`;
     return keep_files;
-} 
+}
+*/
 
 async function async_filter(my_array, my_callback) {
   const fail = Symbol()
@@ -370,18 +375,19 @@ async function async_filter(my_array, my_callback) {
   return selected;
 }
 
+/*
 async function skip_file_check(file, existing_files) {
     var same_size = existing_files.by_size[file.size];
     if (!same_size)
         // no file with that size => do not skip
         return false;
-    
+
     var hash = await calculate_hash(file);
     var same_hash = existing_files.by_hash[hash];
     if (!same_hash)
          // no file with that hash  => do not skip
         return false;
-    
+
     // found file with that size and hash => already upladed => skip file
     return true;
 }
@@ -391,8 +397,8 @@ async function calculate_hash(file) {
     var data1 = CryptoJS.lib.WordArray.create(data0);
     var hash1 = CryptoJS.MD5(data1).toString();
     return hash1;
-   
 }
+*/
 
 async function get_existing_files(args) {
     var files = await list_files(args);
@@ -412,7 +418,7 @@ async function get_existing_files(args) {
 
 async function list_files(args) {
     var fs = new Promise((resolve, reject) => {
-    
+
         var qs = new URLSearchParams({ ...prms, ...args });
         $.ajax({
             url: "https://aws.kljh.org/fs?"+qs,
@@ -444,14 +450,13 @@ function fs_by_key(fs, key) {
 function get_params() {
     var cookies = Object.fromEntries(document.cookie.split(';')
         .map(kv => kv.split('=').map(x => x.trim())));
-    
-    var query = Object.fromEntries(window.location.search.substring(1).split('&')
-        .map(x => x.split('='))
-        .map(kv => [ decodeURIComponent(kv[0]), decodeURIComponent(kv[1]) ]));
+
+    var search = window.location.search.substring(1);
+    var query = Object.fromEntries([ ...new URLSearchParams(search).entries() ]);
 
     return { ...cookies, ...query };
 }
-     
+
 </script>
 </body>
 </html>

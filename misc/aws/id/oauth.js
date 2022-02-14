@@ -195,6 +195,7 @@ async function check_hash(uid, pwd) {
     var exp = user_hash(uid);
     if (pwd != exp)
         throw new Error("Hash check did not pass");
+    return { verified: true };
 }
 
 function user_hash(uid) {
@@ -217,3 +218,4 @@ module.exports = {
     user_hash: user_hash,
     check_hash: check_hash
 };
+
