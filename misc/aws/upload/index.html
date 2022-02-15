@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<title>Upload</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:;base64,=">
@@ -42,8 +43,11 @@ const prms = get_params();
 window.onload = function () {
     document.getElementById("file_input").addEventListener("change", evt => upload(evt));
 
-    if (prms.path)
+    if (prms.path) {
+        if (!prms.path.endsWith("/"))
+            prms.path += "/";
         document.getElementById("root_input").value = prms.path;
+    }
 };
 
 async function upload(evt) {
@@ -152,7 +156,7 @@ async function send_file_multipart(presigned_infos, file) {
 
         var beg = i * chunk_size;
         var end = Math.min((i+1) * chunk_size, file.size);
-        var blob = n==1 ? blob : file.slice(beg, end);
+        var blob = n==1 ? file : file.slice(beg, end);
 
         var part_key = key + ( n==1 ? "" : `.${i}` );
         await send_file_presigned_post(presigned_infos, blob, part_key);
