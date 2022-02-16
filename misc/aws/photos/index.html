@@ -10,6 +10,9 @@
 <script  src="https://cdnjs.cloudflare.com/ajax/libs/nanogallery2/3.0.5/jquery.nanogallery2.min.js" type="text/javascript" ></script>
 </head>
 <body style="background-color: rgb(17, 17, 17); ">
+<div id="path" style="color: #fda;"></div>
+<div id="nb_photos" style="color: #afa;"></div>
+<div id="nb_thumbs" style="color: #faa;"></div>
 <div id="nanogallery2">Made with nanogallery2</div>
 <script>
 /* global $ */
@@ -21,14 +24,17 @@ const photos_extensions = new Set([ "jpeg", "jpg", "png", "mov", "avi", "mp4" ])
 function init() {
     var args = uri_args();
 
+    if (args.path)
+        document.getElementById("path").innerHTML = "<b>"+args.path+"</b>";
+
     var photo_list = args.path ?
         get_photo_list(args, args.path) :
         get_latest_photo_list(args, "photos/");
 
     photo_list
 	.then(async photo_list => { await check_thumbs(args, photo_list); return photo_list; })
-    .then(render_photos)
-    .catch(console.error);
+    .catch(console.error)
+    .then(render_photos);
 }
 
 async function get_latest_photo_list(args, path) {
@@ -67,19 +73,37 @@ async function check_thumbs(args, photo_list) {
     var thumb_list = await get_photo_list(args, photo_list.Prefix.substr(photo_list.Home.length) + ".thumbs/");
     var thumb_set = new Set(thumb_list.Contents.map(x => x.Key.split('/').pop()));
 
+    var nb_photos = 0;
+    var nb_thumbs = 0;
+
     var promises = [];
     for (var photo of photo_list.Contents) {
         var tmp = photo.Key.split('/');
         var file = tmp.pop();
+        var ext = file.split(".").pop().toLowerCase();
+	    //if (!photos_extensions.has(ext))
+        //    continue;
 
-        if (thumb_set.has(file))
-			continue;
+        nb_photos++;
+        if (thumb_set.has(file)) {
+            nb_thumbs++;
+            continue; }
 
 	    var thumb = tmp.join("/") + "/.thumbs/" + file;
 	    console.warn("thumb", thumb);
-        var qs = { ...args, action: "photomin", key: photo.Key, out: thumb };
-        promises.push( ajax_post("/photos", qs) );
+        var qs = { ...args, action: "photomin", key: photo.Key, out: thumb, no_html_get: "ajax" };
+        var promise = ajax_post("/photos", qs)
+            .then(_ => { nb_thumbs++; update_thumbs(); });
+        promises.push(  );
     }
+
+    document.getElementById("nb_photos").innerHTML = "<b>#photos " + nb_photos + "</b>";
+
+    function update_thumbs() {
+        // if (nb_thumbs<nb_photos)
+        document.getElementById("nb_thumbs").innerHTML = "<b>#thumbs " + nb_thumbs + "</b>";
+    }
+    update_thumbs();
 
     var thumb_res = await Promise.all(promises);
     return thumb_list;
