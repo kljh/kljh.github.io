@@ -132,7 +132,6 @@ $(function () {
 
     if (localStorage["user_id"]) {
         $('input[name="email"]').val(localStorage["user_id"]);
-        $("#remember-me").prop('checked', true);
     }
 
     if (args.redirect_after_signin)
@@ -235,13 +234,9 @@ $(function () {
         delete localStorage["user_hash"];
     }
 
-    $("#remember-me").change(function (ev) {
-        if (!ev.target.checked) {
-            clear_user_info();
-
-            // reload with no info
-            window.location.href = REDIRECT_URI;
-        }
+    $("#logout").click(function (ev) {
+        clear_user_info();
+        window.location.href = REDIRECT_URI;
     });
 
     $(".btn-linkedin").click(function (ev) {
@@ -398,7 +393,6 @@ body {
             <button id="next" type="submit" class="btn btn-success btn-block login-btn">Next</button>
         </div>
         <div class="clearfix">
-            <label class="pull-left checkbox-inline"><input id="remember-me" type="checkbox"> Remember me</label>
             <!-- <a href="#" class="pull-right text-success">Forgot Password?</a> -->
         </div>
 
@@ -422,6 +416,7 @@ body {
         <li><a href="/delta">Text editor</a> (<a class="external_link" href="https://kljh.github.io/misc/aws/delta/">beta</a>)</li>
         <li><a href="/photos">Photos</a> (<a class="external_link" href="https://kljh.github.io/misc/aws/photos/">beta</a>)</li>
         <li><a href="/audio">Music & videos</a></li>
+        <li><a href="#" id="logout">Log out</a></li>
     </ul>
 </form></div>
 
