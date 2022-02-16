@@ -15,7 +15,7 @@ exports.handler = async (event) => {
         if (!user_name) { statusCode = 400; throw new Error("unregistered user or expired authentication. " + JSON.stringify(prms)); }
 
         prms.httpMethod = event.httpMethod;
-        data = await handle_request(prms, user_name, qs.delimiter);
+        data = await handle_request(prms, user_name);
     } catch (e) {
         err = { error: e.message || (""+e), stack: e.stack  } ;
     }
@@ -47,13 +47,30 @@ async function get_lambda_static_file(filename) {
     });
 }
 
-async function handle_request(prms, user_name, delimiter) {
+async function handle_request(prms, user_name) {
     var bucket = process.env["BUCKET"];
     var key = user_name + "/" + ( prms.path || "" );
-    if (!key.endsWith("/")) key += "/";
 
-    var data = await list_s3(bucket, key, delimiter);
-    data.Home = user_name+"/";
+    var action = prms.action || "list";
+    var data;
+    switch (action) {
+        case "list":
+            if (!key.endsWith("/")) key += "/";
+            var delimiter = prms.delimiter;
+            data = await list_s3(bucket, key, delimiter);
+            data.Home = user_name+"/";
+            break;
+        case "copy":
+            if (!prms.dest) new Error("missing 'dest' key");
+            data = await copy_s3(bucket, key, prms.dest);
+            break;
+        case "move":
+            if (!prms.dest) new Error("missing 'dest' key");
+            data = await move_s3(bucket, key, prms.dest);
+            break;
+        default:
+            throw new Error("unsupported fs action");
+    }
     return data;
 }
 
@@ -62,8 +79,10 @@ async function list_s3(bucket, key, delimiter, nextToken) {
         var params = {
             Bucket: bucket,
             Prefix: key,
-            Delimiter: delimiter,
             };
+
+        if (delimiter)
+            params.Delimiter = delimiter;
 
         if (nextToken)
             params.ContinuationToken = nextToken;
