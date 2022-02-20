@@ -96,6 +96,7 @@ function build_fancy_tree(index) {
     $("#treegrid").fancytree({
         // extensions: [ "edit", "filter" ],
         extensions: [ "edit", "table" ],
+        selectMode: 3, // hierarchical multi-selection
         checkbox: true,
         table: {
             indentation: 20,       // 20 px per level
@@ -169,6 +170,8 @@ function build_fancy_tree(index) {
             keys = data.tree.getSelectedNodes().map(x => x.key);
         }
     });
+
+    // $(".fancytree-container").addClass("fancytree-connectors");
 }
 
 function action(e) {

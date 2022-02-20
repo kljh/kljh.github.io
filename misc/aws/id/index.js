@@ -45,6 +45,8 @@ exports.handler = async (event) => {
             data = await oauth.process_oauth_token(qs);
         } else if (qs.action=="verify") {
             data = await oauth.check_hash(user_id, user_hash);
+        } else if (qs.action=="switch") {
+            data = await oauth.switch_user(user_id, user_hash, qs.to_user_id);
         } else {
             throw new Error("Invalid request. "+JSON.stringify(qs));
         }

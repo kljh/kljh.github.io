@@ -221,10 +221,30 @@ $(function () {
         document.getElementById("redirect").style.display = "none";
         document.getElementById("authenticated").style.display = "block";
 
+        document.getElementById("user_name_disp").innerText = " as " + localStorage.user_name;
+        document.getElementById("user_id_disp").innerText = " (" + uid + ")";
+        document.getElementById("user_id_disp").addEventListener('input', function (e) {
+            var to_user_id = e.target.innerText;
+            if (to_user_id.indexOf('\n') != -1)
+                to_user_id = to_user_id.trim();
+            else
+                return;
+            console.log("switching to", to_user_id);
+
+            var prms = new URLSearchParams({ action: "switch", user_id, user_hash, to_user_id });
+            ajax_post(API_URL + "/id?" + prms)
+            .then (data => {
+                show_authenticated(data.uid, data.hash);
+            })
+            .catch(_ => {
+                console.warn("couldn't switch to "+to_user_id);
+            });
+        });
+
         var auth_prms = new URLSearchParams({ uid, hash }).toString();
         var auth_elnts = document.getElementsByClassName("external_link");
         for (var elnt of auth_elnts)
-            elnt.href += "?" + auth_prms;
+            elnt.href = elnt.href.split("?")[0] + "?" + auth_prms;
     }
 
     function clear_user_info() {
@@ -295,8 +315,7 @@ async function ajax_post(url, data) {
                 resolve(data);
             },
             error : function(err) {
-                console.error("registration error.", err.responseText);
-                console.error("registration error.", err);
+                console.error("ajax error.", err.responseText);
                 reject(err);
             }
         });
@@ -348,6 +367,8 @@ body {
 <body>
 <div class="topbar" >
     <span>Sign in</span>
+    <span id="user_name_disp"></span>
+    <span id="user_id_disp" contentEditable="true"></span>
 </div>
 <br/>
 

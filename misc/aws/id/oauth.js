@@ -9,6 +9,8 @@ AWS Lambda setting :
 
 */
 
+/* global AWS */
+
 const REDIRECT_URL = "https://aws.kljh.org/id";
 
 function get_redirect_uri(provider) {
@@ -29,7 +31,7 @@ async function process_oauth_token(auth) {
         console.log("user_info", user_info);
         return user_info;
     } catch(e) {
-        console.log("ERROR: " + e);
+        console.error("ERROR: " + e);
         throw e;
     }
 }
@@ -213,9 +215,64 @@ function urlenc_data_to_string(data) {
 	return "?" + tmp.join("&");
 }
 
-module.exports = {
-    process_oauth_token: process_oauth_token,
-    user_hash: user_hash,
-    check_hash: check_hash
-};
+function read_text_from_s3(bucket, key) {
+    const s3 = new AWS.S3({ signatureVersion: 'v4' });
+    return s3.getObject({ Bucket: bucket, Key: key }).promise()
+        .then(data => data.Body.toString())
+		.then(data => JSON.parse(data));
+}
 
+async function build_user_infos() {
+    var users = await read_text_from_s3("kusers", "users.json");
+
+    var auth_to_user_id = {};
+    for (var user_id in users ) {
+        for (var auth_id of users[user_id].auth_ids) {
+            if (!auth_id.startsWith('@'))
+                auth_to_user_id[auth_id] = user_id;
+        }
+    }
+
+    return { users, auth_to_user_id };
+}
+
+async function user_name(headers, prms) {
+    var cookie = headers["Cookie"] || headers["cookie"] || "";
+    var cookies = Object.fromEntries(cookie.split(";").map(x => x.split("=", 2).map(y => y.trim())));
+    var { uid, hash } = cookies;
+
+    if (!uid && !hash) {
+        try {
+            var { uid, hash } = prms || {};
+        } catch(e) {}
+    }
+
+    var user_infos = await build_user_infos();
+
+    var ok = hash == user_hash(uid);
+    if (ok) return user_infos.auth_to_user_id[uid];
+}
+
+async function switch_user(from_user, from_hash, to_user) {
+    // check crendentials
+    check_hash(from_user, from_hash);
+
+    // check permission
+    var user_infos = await build_user_infos();
+    var from_user = user_infos.auth_to_user_id[from_user] || from_user;
+    if (user_infos.users[to_user].auth_ids.indexOf("@"+from_user) == -1)
+        throw new Error("User switch from "+from_user+" to "+to_user+": no '@"+from_user+"' permission found");
+
+    return {
+        uid: to_user,
+        hash: user_hash(to_user),
+        };
+}
+
+module.exports = {
+    process_oauth_token,
+    user_hash,
+    check_hash,
+    user_name,
+    switch_user,
+};
