@@ -258,8 +258,6 @@ function rename_object(path) {
     btnElnt.onclick = function (evt) {
         var dest = txtElnt.value;
         move_object(path, dest);
-
-        reload_updated_folders_content();
     }
 }
 
@@ -271,7 +269,6 @@ function move_object_to_trash(path) {
         if (p!= path) // move only once
             move_object(p, "vrac/trash/"+p);
     }
-    reload_updated_folders_content();
 }
 
 function move_objects(dest_folder) {
@@ -292,17 +289,19 @@ function move_objects(dest_folder) {
             var dest = dest_folder + name;
             move_object(path, dest);
         }
-
-        reload_updated_folders_content();
     }
 }
 
+var nb_object_being_moved = 0;
 function move_object(path, dest) {
     append_object_to_updated_folders(path);
     append_object_to_updated_folders(dest);
 
     if (dest==path)
         return alert("Rename source and destination are the same");
+
+    nb_object_being_moved++;
+    update_move_status();
 
     // !! should detect overriding dest !!
 
@@ -313,7 +312,26 @@ function move_object(path, dest) {
     $.post("https://aws.kljh.org/fs?"+qs)
     .then(data => {
         console.log("rename done\n"+path+"\n"+dest);
+    })
+    .fail(err => {
+        console.error(err);
+    })
+    .always(_ => {
+        nb_object_being_moved--;
+        update_move_status();
     });
+
+    function update_move_status() {
+        var notifs = document.getElementById("notifs");
+        if (nb_object_being_moved>0) {
+            notifs.hidden = false;
+            notifs.innerHTML = `#${nb_object_being_moved} move/rename left`
+        } else {
+            notifs.hidden = true;
+            reload_updated_folders_content();
+        }
+    }
+
 }
 
 function preview_file(key) {
@@ -334,6 +352,9 @@ function preview_file(key) {
 </script>
 </head>
 <body>
+<div style="position: fixed; top: 0px; width: 100%; display: flex; align-items: center; justify-content: center;">
+    <div id="notifs" hidden="true" style="background-color: #FEE; padding: 5px 15px;"></div>
+</div>
 <div id="path"></div>
 <div id="content"></div>
 <div id="tree"></div>

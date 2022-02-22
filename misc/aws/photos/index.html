@@ -19,6 +19,7 @@
 
 $(document).ready(init);
 
+const api_url = window.location.protocol=="http" ? "" : "https://aws.kljh.org"
 const photos_extensions = new Set([ "jpeg", "jpg", "png", "mov", "avi", "mp4" ]);
 
 function init() {
@@ -66,7 +67,7 @@ async function ajax_post(url, qs) {
 
 async function get_photo_list(args, path) {
     var qs = { ...args, path, delimiter: "/" };
-    return ajax_post("/fs", qs);
+    return ajax_post(api_url+"/fs", qs);
 }
 
 async function check_thumbs(args, photo_list) {
@@ -92,7 +93,7 @@ async function check_thumbs(args, photo_list) {
 	    var thumb = tmp.join("/") + "/.thumbs/" + file;
 	    console.warn("thumb", thumb);
         var qs = { ...args, action: "photomin", key: photo.Key, out: thumb, no_html_get: "ajax" };
-        var promise = ajax_post("/photos", qs)
+        var promise = ajax_post(api_url+"/photos", qs)
             .then(_ => { nb_thumbs++; update_thumbs(); });
         promises.push(  );
     }
