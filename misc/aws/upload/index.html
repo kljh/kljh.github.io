@@ -109,17 +109,23 @@ async function upload(evt) {
             var nameIsAlreadyValidDate = bare.length == 19 && !isNaN(new Date(bare.substr(0,10)).getTime());
             var nameIsAppleUID = apple_uid_re.test(bare);
 
-            if (nameIsAlreadyValidDate) {
-                key = used_root + "/" +  name.substr(0,4) + "/" + name.substr(0,7) + "/" + name;
-            } else if (meta && meta.DateTime) {
-                var iso_date = meta.DateTime.replace(/:/g, "-");
-                key = used_root + "/" +  iso_date.substr(0,4) + "/" + iso_date.substr(0,7) + "/" + iso_date;
-                // key = key + " " + name; // keep original name (random on iPhones)
-                key = key + "." + ext; // just keep extension
-            } else if ((is_photo||is_audio) && infos && infos.lastModifiedDate) {
-                var modif_date = new Date(infos.lastModifiedDate).toISOString().substr(0, 19).replace(/:/g, "-").replace("T", " ")
-                key = used_root + "/" +  modif_date.substr(0,4) + "/" + modif_date.substr(0,7) + "/" + modif_date;
-                key = key + ( !nameIsAppleUID ? " " + name : ext ); // keep original name (random on iPhones)
+            if (auto && is_photo) {
+                if (nameIsAlreadyValidDate) {
+                    key = used_root + "/" +  name.substr(0,4) + "/" + name.substr(0,7) + "/" + name;
+                } else if (meta && meta.DateTime) {
+                    var iso_date = meta.DateTime.replace(/:/g, "-");
+                    key = used_root + "/" +  iso_date.substr(0,4) + "/" + iso_date.substr(0,7) + "/" + iso_date;
+                    // key = key + " " + name; // keep original name (random on iPhones)
+                    key = key + "." + ext; // just keep extension
+                } else if (infos && infos.lastModifiedDate) {
+                    var modif_date = new Date(infos.lastModifiedDate).toISOString().substr(0, 10).replace(/:/g, "-").replace("T", " ")
+                    status_elnt.innerHTML += `<p>File lastModifiedDate: ${infos.lastModifiedDate} =&gt; ${modif_date}</p>`;
+                    key = used_root + "/" +  modif_date.substr(0,4) + "/" + modif_date.substr(0,7) + "/" + modif_date;
+                    key = key + ( !nameIsAppleUID ? " " + name : ext ); // keep original name (random on iPhones)
+                } else {
+                    status_elnt.innerHTML += `<p>File lastModifiedDate missing. ${JSON.stringify(infos)}</p>`;
+                    key = used_root + "/" + name;
+                }
             } else {
                 key = used_root + "/" + name;
             }
