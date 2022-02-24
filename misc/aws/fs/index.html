@@ -27,9 +27,9 @@ $(document).ready(init);
 
 var prms = Object.fromEntries([ ...new URLSearchParams(document.location.search.substring(1)).entries() ]);
 function init() {
-    var args = uri_args();
+    var qs = new URLSearchParams({ ...prms, delimiter: '/' });
+    delete prms.path; // remove to avoid conflicts with subsequent requets on subfolders
 
-    var qs = new URLSearchParams({ ...args, ...prms, delimiter: '/' });
     $.post("https://aws.kljh.org/fs?"+qs)
     .done(data => {
         build_fancy_tree(data);
@@ -47,7 +47,7 @@ var home = "";
 var keys = [];  // selected keys
 var updated_folders = new Set();  // folders updated by a file operation that needs updating
 function build_fancy_tree(index) {
-    home = index.Home; // path to home folder (kljh/)
+    home = index.Prefix.split("/")[0] + "/";  // path to home folder (kljh/)
 
     function s3_to_fancy_source(index) {
         var prefix = index.Prefix;
@@ -105,7 +105,7 @@ function build_fancy_tree(index) {
         },
         source: src,
         lazyLoad: function(event, target) {
-            var path = target.node.key.substr(home.length)+"/"
+            var path = "~"+target.node.key+"/"
             var qs = new URLSearchParams({ path, ...prms, delimiter: '/' });
 
             // target.result can be a jQurey deferred
@@ -157,17 +157,18 @@ function build_fancy_tree(index) {
         },
         activate: function(event, data) {
             var key = data.node.key;
-            var path = key.substr(home.length);
             var isFolder = data.node.folder;
             if (isFolder) {
-                move_objects(path);
+                move_objects(key);
             } else {
                 preview_file(key);
-                rename_object(path);
+                rename_object(key);
             }
         },
         select: function(event, data) {
-            keys = data.tree.getSelectedNodes().map(x => x.key);
+            keys = data.tree.getSelectedNodes()
+                .filter(node => !node.folder)
+                .map(node => node.key);
         }
     });
 
@@ -179,7 +180,7 @@ function action(e) {
     var action = e.firstElementChild.className.split(" ")[0];
     var download = action == "open";
     var key = e.parentElement.parentElement.getAttribute("data-key");
-    var path = key.substr(home.length);
+    var path = key.substr(home.length); // we'd like "~"+key to be supported everywhere
 
     var url;
     var qs = new URLSearchParams({ path, keys, ...prms });
@@ -196,9 +197,9 @@ function action(e) {
     else if (action=="open")
         url = "https://kusers.s3.eu-west-3.amazonaws.com/"+key;
     else if (action=="trash")
-        return move_object_to_trash(path);
+        return move_objects_to_trash(key);
     else if (action=="recycle")
-        return reload_folder_content(path);
+        return reload_folder_content(key);
     else
         throw new Error("Unknown action "+action);
 
@@ -209,29 +210,14 @@ function action(e) {
 }
 
 
-function uri_args() {
-    var search = window.location.search.substr(1);
-    if (!search) return {};
-    var tmp = search.split('&');
-
-    var kv = {};
-    for (var i=0; i<tmp.length; i++) {
-        var key = tmp[i].split('=', 1)[0];
-        var val = tmp[i].substr(key.length+1);
-        kv[key] = val ? decodeURIComponent(val) : val;
-    }
-    return kv;
-}
-
-
-function reload_folder_content(path) {
+function reload_folder_content(key) {
     var tree = $("#treegrid").fancytree("getTree");
     var root = tree.getRootNode();
     // var node = tree.getActiveNode();
     var node = tree.getFocusNode();
-    var target = tree.getNodeByKey(home+path, root);
+    var target = tree.getNodeByKey(key, root);
 
-    console.log(home+path, node);
+    console.log(key, node);
 
     target.load(true);
 }
@@ -242,32 +228,40 @@ function reload_updated_folders_content() {
     updated_folders = new Set();
 }
 
-function append_object_to_updated_folders(path) {
-    var tmp = path.split("/");  tmp.pop();
+function append_object_to_updated_folders(key) {
+    var tmp = key.split("/");  tmp.pop();
     var folder = tmp.join("/");
     updated_folders.add(folder);
 }
 
-function rename_object(path) {
+function rename_object(key) {
     var txtElnt = document.getElementById("dest")
     var btnElnt = document.getElementById("move")
 
-    txtElnt.value = path;
+    txtElnt.value = key;
     btnElnt.value = "Rename";
 
     btnElnt.onclick = function (evt) {
         var dest = txtElnt.value;
-        move_object(path, dest);
+        move_object(key, dest);
     }
 }
 
-function move_object_to_trash(path) {
-    move_object(path, "vrac/trash/"+path);
+function move_objects_to_trash(active_key) {
+    function move_object_to_trash(key) {
+        var tmp = key.split("/");
+        tmp[0] += "/vrac/trash";
+        var dest = tmp.join("/");
 
-    for (var key of keys) {
-        var p = key.substr(home.length);
-        if (p!= path) // move only once
-            move_object(p, "vrac/trash/"+p);
+        move_object(key, dest);
+    }
+
+    // active key
+    move_object_to_trash(active_key)
+    // checkbox keys
+    for (var k of keys) {
+        if (k!=active_key)
+            move_object_to_trash(k);
     }
 }
 
@@ -284,20 +278,19 @@ function move_objects(dest_folder) {
             dest_folder += "/";
 
         for (var key of keys) {
-            var path = key.substr(home.length);
             var name = key.split("/").pop();
             var dest = dest_folder + name;
-            move_object(path, dest);
+            move_object(key, dest);
         }
     }
 }
 
 var nb_object_being_moved = 0;
-function move_object(path, dest) {
-    append_object_to_updated_folders(path);
+function move_object(key, dest) {
+    append_object_to_updated_folders(key);
     append_object_to_updated_folders(dest);
 
-    if (dest==path)
+    if (dest==key)
         return alert("Rename source and destination are the same");
 
     nb_object_being_moved++;
@@ -305,7 +298,7 @@ function move_object(path, dest) {
 
     // !! should detect overriding dest !!
 
-    var qs = new URLSearchParams({ action: "move", path, dest, ...prms });
+    var qs = new URLSearchParams({ action: "move", path: "~"+key, dest: "~"+dest, ...prms });
     $.post("https://aws.kljh.org/fs?"+qs)
     .then(data => {
         console.log("rename done\n"+path+"\n"+dest);

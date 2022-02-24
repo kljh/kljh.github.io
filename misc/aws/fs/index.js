@@ -58,15 +58,14 @@ async function handle_request(prms, user_name) {
             if (!key.endsWith("/")) key += "/";
             var delimiter = prms.delimiter;
             data = await list_s3(bucket, key, delimiter);
-            data.Home = user_name+"/";
             break;
         case "copy":
             if (!prms.dest) new Error("missing 'dest' key");
-            data = await copy_s3(bucket, key, await oauth.path_to_key(prms.dest));
+            data = await copy_s3(bucket, key, await oauth.path_to_key(user_name, prms.dest));
             break;
         case "move":
             if (!prms.dest) new Error("missing 'dest' key");
-            data = await move_s3(bucket, key, await oauth.path_to_key(prms.dest));
+            data = await move_s3(bucket, key, await oauth.path_to_key(user_name, prms.dest));
             break;
         default:
             throw new Error("unsupported fs action");
