@@ -120,11 +120,18 @@ async function upload(evt) {
                 } else if (infos && infos.lastModifiedDate) {
                     var modif_date = new Date(infos.lastModifiedDate).toISOString().substr(0, 10).replace(/:/g, "-").replace("T", " ")
                     status_elnt.innerHTML += `<p>File lastModifiedDate: ${infos.lastModifiedDate} =&gt; ${modif_date}</p>`;
-                    key = used_root + "/" +  modif_date.substr(0,4) + "/" + modif_date.substr(0,7) + "/" + modif_date;
-                    key = key + ( !nameIsAppleUID ? " " + name : ext ); // keep original name (random on iPhones)
+                    key = used_root + "/misc/" +  modif_date.substr(0,4) + "/" + modif_date.substr(0,7) + "/" + modif_date;
+                    if (nameIsAppleUID)
+                        key = key + "." + ext;
+                    else
+                        key = key + name; // keep original name (random on iPhones)
                 } else {
-                    status_elnt.innerHTML += `<p>File lastModifiedDate missing. ${JSON.stringify(infos)}</p>`;
-                    key = used_root + "/" + name;
+                    status_elnt.innerHTML += `<p>File lastModifiedDate missing. ${JSON.stringify(infos)}${nameIsAppleUID?"<br/>Generating hash-based name":""}</p>`;
+                    if (nameIsAppleUID) {
+                        key = used_root + "/misc/" + (await hash_from_blob(file)) + "." + ext;
+                    } else  {
+                        key = used_root + "/misc/" + name;
+                    }
                 }
             } else {
                 key = used_root + "/" + name;
@@ -148,6 +155,14 @@ async function upload(evt) {
         // autoscroll
         status_elnt.lastElementChild.scrollIntoView({ behavior: "smooth" });
     }
+}
+
+async function hash_from_blob(file) {
+    var ab = await file.arrayBuffer();
+    var hash_ab = await crypto.subtle.digest("SHA-256", ab);
+    var hash = btoa(String.fromCharCode(... new Uint8Array(hash_ab)));
+    hash = hash.replace(/[+=/]/g, "").substr(0, 10);
+    return hash;
 }
 
 async function send_file_multipart(presigned_infos, file) {

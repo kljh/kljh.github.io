@@ -19,6 +19,10 @@ do
 	else
 		echo "Calling ffmpeg."
 		ffmpeg -i "${video_path}" -ss "00:00:00.001" -vf 'scale=320:320:force_original_aspect_ratio=decrease' -y -vframes 1 "${thumb_path}"
+
+		# Metadata
+		# ffmpeg -i "${video_path}" -f ffmetadata "${thumb_path/%.jpeg/.txt}"
+		# ffmpeg -i "${video_path}" -c copy -map_metadata 0 -map_metadata:s:v 0:s:v -map_metadata:s:a 0:s:a -f ffmetadata "${thumb_path/%.jpeg/.txt}"
 	fi
 	echo ""
 done

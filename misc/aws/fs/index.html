@@ -305,10 +305,7 @@ function move_object(path, dest) {
 
     // !! should detect overriding dest !!
 
-    // !! home should be added to dest server side !!
-    var dest2 = home + dest;
-
-    var qs = new URLSearchParams({ action: "move", path, dest: dest2, ...prms });
+    var qs = new URLSearchParams({ action: "move", path, dest, ...prms });
     $.post("https://aws.kljh.org/fs?"+qs)
     .then(data => {
         console.log("rename done\n"+path+"\n"+dest);

@@ -11,7 +11,7 @@ exports.handler = async (event) => {
 
     var data, err, statusCode;
     try {
-        var user_name = oauth.user_name(event.headers, prms);
+        var user_name = await oauth.user_name(event.headers, prms);
         if (!user_name) { statusCode = 400; throw new Error("unregistered user or expired authentication. " + JSON.stringify(prms)); }
 
         prms.httpMethod = event.httpMethod;
@@ -49,7 +49,7 @@ async function get_lambda_static_file(filename) {
 
 async function handle_request(prms, user_name) {
     var bucket = process.env["BUCKET"];
-    var key = user_name + "/" + ( prms.path || "" );
+    var key = await oauth.path_to_key(user_name, prms.path || "" );
 
     var action = prms.action || "list";
     var data;
@@ -62,11 +62,11 @@ async function handle_request(prms, user_name) {
             break;
         case "copy":
             if (!prms.dest) new Error("missing 'dest' key");
-            data = await copy_s3(bucket, key, prms.dest);
+            data = await copy_s3(bucket, key, await oauth.path_to_key(prms.dest));
             break;
         case "move":
             if (!prms.dest) new Error("missing 'dest' key");
-            data = await move_s3(bucket, key, prms.dest);
+            data = await move_s3(bucket, key, await oauth.path_to_key(prms.dest));
             break;
         default:
             throw new Error("unsupported fs action");

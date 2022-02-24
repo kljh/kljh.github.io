@@ -222,18 +222,20 @@ function read_text_from_s3(bucket, key) {
 		.then(data => JSON.parse(data));
 }
 
+var users, auth_to_user_id;
 async function build_user_infos() {
-    var users = await read_text_from_s3("kusers", "users.json");
+    if (users)
+        return;
 
-    var auth_to_user_id = {};
+    users = await read_text_from_s3("kusers", "users.json");
+
+    auth_to_user_id = {};
     for (var user_id in users ) {
         for (var auth_id of users[user_id].auth_ids) {
             if (!auth_id.startsWith('@'))
                 auth_to_user_id[auth_id] = user_id;
         }
     }
-
-    return { users, auth_to_user_id };
 }
 
 async function user_name(headers, prms) {
@@ -243,14 +245,15 @@ async function user_name(headers, prms) {
 
     if (!uid && !hash) {
         try {
-            var { uid, hash } = prms || {};
+            uid = prms.uid;
+            hash = prms.hash;
         } catch(e) {}
     }
 
-    var user_infos = await build_user_infos();
+    await build_user_infos();
 
     var ok = hash == user_hash(uid);
-    if (ok) return user_infos.auth_to_user_id[uid];
+    if (ok) return auth_to_user_id[uid];
 }
 
 async function switch_user(from_user, from_hash, to_user) {
@@ -258,9 +261,9 @@ async function switch_user(from_user, from_hash, to_user) {
     check_hash(from_user, from_hash);
 
     // check permission
-    var user_infos = await build_user_infos();
-    var from_user = user_infos.auth_to_user_id[from_user] || from_user;
-    if (user_infos.users[to_user].auth_ids.indexOf("@"+from_user) == -1)
+    await build_user_infos();
+    var from_user = auth_to_user_id[from_user] || from_user;
+    if (!users[to_user] ||  users[to_user].auth_ids.indexOf("@"+from_user) == -1)
         throw new Error("User switch from "+from_user+" to "+to_user+": no '@"+from_user+"' permission found");
 
     return {
