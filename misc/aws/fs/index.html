@@ -58,7 +58,9 @@ function build_fancy_tree(index) {
             var name_split = item.Key.substr(prefix.length).split("/");
             var name = name_split[0];
 
-            if (name_split.length>1) {
+            if (!name) {
+                continue;
+            } else if (name_split.length>1) {
                 // folder (put aside)
                 // if (name.startsWith("."))
                 //    continue;
@@ -209,6 +211,18 @@ function action(e) {
         window.location = url;
 }
 
+function sort_by_size() {
+    var deep = true;
+    function cmp(a, b) {
+        var x = a.data.Size;
+        var y = b.data.Size;
+        return x === y ? 0 : y > x ? 1 : -1;
+    }
+
+    var tree = $("#treegrid").fancytree("getTree");
+    var root = tree.getRootNode();
+    root.sortChildren(cmp, deep);
+}
 
 function reload_folder_content(key) {
     var tree = $("#treegrid").fancytree("getTree");
