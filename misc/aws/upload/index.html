@@ -158,7 +158,17 @@ async function upload(evt) {
 }
 
 async function hash_from_blob(file) {
-    var ab = await file.arrayBuffer();
+    // Blob.arrayBuffer() not available on iPhone
+    // var ab = await file.arrayBuffer();
+    // Let's use verbose backward compatibility syntax
+    var ab = await new Promise((resolve, reject) => {
+        var fr = new FileReader();
+        fr.onload = function() {
+            resolve(fr.result);
+        };
+        fr.readAsArrayBuffer(file);
+    });
+
     var hash_ab = await crypto.subtle.digest("SHA-256", ab);
     var hash = btoa(String.fromCharCode(... new Uint8Array(hash_ab)));
     hash = hash.replace(/[+=/]/g, "").substr(0, 10);
@@ -429,9 +439,10 @@ async function calculate_hash(file) {
 async function get_existing_files(args) {
     var files = await list_files(args);
 
+    var home = files.Prefix.split("/")[0] + "/";
     files.Contents = files.Contents.map(f => {
-        if (f.Key && f.Key.startsWith(files.Home))
-            f.Key = f.Key.substr(files.Home.length);
+        if (f.Key && f.Key.startsWith(home))
+            f.Key = f.Key.substr(home.length);
         if (f.ETag &&  f.ETag.replace) // get rid of quotes in AWS Etags
             f.ETag = f.ETag.replace(/"/g, '');
         return f;
