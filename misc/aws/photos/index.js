@@ -16,7 +16,7 @@ async function handler(event) {
 
 	const bucket = prms.bucket || process.env.BUCKET;
 	const keyIn = prms.key;
-	const keyOut = prms.out || make_output_path(keyIn);
+	const keyOut = prms.out || make_output_path(keyIn, prms.subfolder);
 
 	var action = prms.action || "photoscan";
 	switch (action) {
@@ -24,6 +24,13 @@ async function handler(event) {
 			action = photoscan; break;
 		case "photomin":
 			action = img => img.resize(200, 300); break;
+		case "photosize":
+			var p = {} ;
+			if (!prms.width && !prms.height) p.width= 800;
+			if (prms.width) p.width= prms.width*1;
+			if (prms.height) p.height= prms.height*1;
+			if (prms.fit) p.fit= prms.fit; // outside
+			action = img => img.resize(p).withMetadata(); break;
 		default:
 			action = null;
 	}
@@ -64,10 +71,16 @@ async function get_lambda_static_file(filename) {
     });
 }
 
-function make_output_path(input_path) {
-	var tmp = input_path.split(".");
-	tmp.push("alt." + tmp.pop());
-	return tmp.join(".");
+function make_output_path(input_path, subfolder) {
+	if (subfolder) {
+		var tmp = input_path.split("/");
+		tmp.splice(tmp.length-1, 0, subfolder);
+		return tmp.join("/");
+	} else {
+		var tmp = input_path.split(".");
+		tmp.push("alt." + tmp.pop());
+		return tmp.join(".");
+	}
 }
 
 function read_and_write_to_s3(bucket, keyIn, keyOut, action)  {

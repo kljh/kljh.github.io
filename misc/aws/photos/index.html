@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<title>Photos</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:;base64,=">
@@ -30,7 +31,7 @@ function init() {
 
     var photo_list = args.path ?
         get_photo_list(args, args.path) :
-        get_latest_photo_list(args, "photos/");
+        get_latest_photo_list(args, "~/photos/");
 
     photo_list
 	.then(async photo_list => { await check_thumbs(args, photo_list); return photo_list; })
@@ -43,8 +44,9 @@ async function get_latest_photo_list(args, path) {
     var photo_list = await get_photo_list(args, path);
 
     while (photo_list.CommonPrefixes.length) {
+        var home = photo_list.Prefix.split("/")[0] + "/";
         var sub_folder_path = photo_list.CommonPrefixes.pop().Prefix;
-        sub_folder_path = sub_folder_path.substr(photo_list.Home.length);
+        sub_folder_path = sub_folder_path.substr(home.length);
 
         if (sub_folder_path.endsWith("/.thumbs/"))
             continue;
@@ -71,7 +73,7 @@ async function get_photo_list(args, path) {
 }
 
 async function check_thumbs(args, photo_list) {
-    var thumb_list = await get_photo_list(args, photo_list.Prefix.substr(photo_list.Home.length) + ".thumbs/");
+    var thumb_list = await get_photo_list(args, "~" + photo_list.Prefix + ".thumbs/");
     var thumb_set = new Set(thumb_list.Contents.map(x => x.Key.split('/').pop()));
 
     var nb_photos = 0;
