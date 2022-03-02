@@ -25,7 +25,7 @@ async function init() {
 	for (var key of keys) {
 		var url = `https://kusers.s3.eu-west-3.amazonaws.com/${key}`;
 		if (binarise)
-		    add_bin_image(url);
+		    add_bin_image(url, nb_bin_img++);
 		else
 		    document.write(`<div class="clip"><img class="persp" src="${url}" width="100%"></div>`);
 	}
@@ -98,16 +98,16 @@ async function init() {
 }
 
 var nb_bin_img = 0;
-async function add_bin_image(url) {
-	url = "test.png"
-	nb_bin_img++;
+async function add_bin_image(url, iImg) {
+	// url = "test.png"
 	console.log("url", url);
-
+	document.write(`<div id="div_cnvs${iImg}" width="100%"></div>`)
 	var img = new Image();
 	img.onload = function() {
+		var div = document.getElementById(`div_cnvs${iImg}`);
 		var w = img.width, h = img.height;
-		document.write(`<canvas id="cnvs${nb_bin_img}" width="${w}" height="${h}"></canvas>`);
-		var canvas = document.getElementById(`cnvs${nb_bin_img}`);
+		div.innerHTML = `<canvas id="cnvs${iImg}" width="${w}" height="${h}"></canvas>`;
+		var canvas = document.getElementById(`cnvs${iImg}`);
 		var ctx = canvas.getContext('2d');
 		ctx.drawImage(img, 0, 0, w, h);
 		var imgData = ctx.getImageData(0, 0, w, h);
