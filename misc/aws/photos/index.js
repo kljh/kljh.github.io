@@ -23,7 +23,8 @@ async function handler(event) {
 		case "photoscan":
 			action = photoscan; break;
 		case "photomin":
-			action = img => img.resize(200, 300); break;
+			// either apply metadata rotation with .rotate() or keep metadata with .withMetadata()
+			action = img => img.rotate().resize({ width: 300 }); break;
 		case "photosize":
 			var p = {} ;
 			if (!prms.width && !prms.height) p.width= 800;
