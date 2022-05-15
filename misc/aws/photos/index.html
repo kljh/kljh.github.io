@@ -26,17 +26,27 @@ const photos_extensions = new Set([ "jpeg", "jpg", "png", "mov", "avi", "mp4" ])
 function init() {
     var args = uri_args();
 
-    if (args.path)
-        document.getElementById("path").innerHTML = "<b>"+args.path+"</b>";
+    if (args.list) {
+        var list_url = "https://kusers.s3.eu-west-3.amazonaws.com/" + args.list;
+        fetch(list_url)
+        .then(async response => {
+            var photo_list = await response.json()
+            console.log("photo_list", photo_list);
+            render_photos(photo_list);
+        });
+    } else {
+        if (args.path)
+            document.getElementById("path").innerHTML = "<b>"+args.path+"</b>";
 
-    var photo_list = args.path ?
-        get_photo_list(args, args.path) :
-        get_latest_photo_list(args, "~/photos/");
+        var photo_list = args.path ?
+            get_photo_list(args, args.path) :
+            get_latest_photo_list(args, "~/photos/");
 
-    photo_list
-	.then(async photo_list => { await check_thumbs(args, photo_list); return photo_list; })
-    .catch(console.error)
-    .then(render_photos);
+        photo_list
+        .then(async photo_list => { await check_thumbs(args, photo_list); return photo_list; })
+        .catch(console.error)
+        .then(render_photos);
+    }
 }
 
 async function get_latest_photo_list(args, path) {
