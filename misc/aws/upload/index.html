@@ -305,7 +305,8 @@ async function get_exif_infos(img) {
             var all_tags = EXIF.getAllTags(this);
 
             // extract subset
-            var { Make, Model, DateTime, Orientation, FocalLengthIn35mmFilm, FNumber, ExposureTime, ...other } = all_tags;
+            var { Make, Model, DateTime, DateTimeDigitized, DateTimeOriginal, Orientation, FocalLengthIn35mmFilm, FNumber, ExposureTime, ...other } = all_tags;
+            DateTime = DateTime || DateTimeDigitized || DateTimeOriginal;
             var meta = { Make, Model, DateTime, Orientation, FocalLengthIn35mmFilm, FNumber, ExposureTime };
 
             // try to get timestamp
@@ -320,8 +321,8 @@ async function get_exif_infos(img) {
                     var tok = DateTime.split(/[-: ]+/).map(x => x*1);
                     timestamp = new Date(tok[0], tok[1]-1, tok[2], tok[3], tok[4], tok[5]);  // the month is 0-indexed
                     if (isValidDate(timestamp))
-                        // meta.DateTime = DateTime.substr(0,10).replaceAll(":", "-")+DateTime.substr(10);
-                        meta.DateTime = DateTime.replaceAll(":", "-"); // do not preserve ':' in time part as it is an illegal character in a file path
+                        meta.DateTime = DateTime.substring(0,10).replaceAll(":", "-") + DateTime.substring(10).replaceAll(":", ".");
+                        // do not preserve ':' in time part as it is an illegal character in a file path
                 } catch (e) {}
 
             }
