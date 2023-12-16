@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- script src="js/main.min.js"></script -->
+<script src="js/webgl.min.js"></script>
+<script src="js/three.min.js"></script>
+<script src="js/stlloader.min.js"></script>
+<script src="js/orbitcontrols.min.js"></script>
+<script src="stlviewer.js"></script>
+<script src="isomesh.js"></script>
+<title>STL Viewer with Three.js</title>
+</head>
+
+<body>
+
+<label for="points">Threshold angle between normals for crease detection:</label><br/>
+<input type="range" id="crease_angle_threshold" value="28" min="0" max="120">
+<span id="crease_angle_threshold_label"></span>
+<br/>
+
+<!-- STL files generated from OpenSCAD files -->
+<div class="stlviewer" style="width: 742px; height: 500px;"
+    data-src="stl/logo.stl" data-rotate="x" data-zdistance="2"></div>
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+  id="svg_elnt" width="300" height="200"
+  viewbox="0 0 300 200" >
+<style type="text/css">
+svg {
+  stroke: black;
+  stroke-width: 0.5;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.construct {
+  stroke: grey;
+  stroke-width: 0.2;
+}
+
+.cut {
+  stroke: black;
+  /* stroke-width: 1; */
+}
+
+
+</style>
+<defs id="defs"></defs>
+<g> <!--  transform="scale(1,-1)" -->
+
+  <g id="grid" class="construct"
+    inkscape:label="Grid"
+    inkscape:groupmode="layer" >
+  </g>
+  <g id="cut" class="cut"
+    inkscape:label="Cut"
+    inkscape:groupmode="layer" >
+  </g>
+  <g id="engrave" class="engrave"
+    inkscape:label="Engrave"
+    inkscape:groupmode="layer" >
+  </g>
+
+</g>
+</svg>
+
+</body>
+</html>
