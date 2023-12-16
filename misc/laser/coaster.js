@@ -23,7 +23,9 @@ function draw() {
     cut.textContent = "";
 
     var arc_models = new Set([ "gray_code", "binary_code", "random_balance" ]);
-    if (prms.model == "iso_grid") {
+    if (prms.model == "rosace1") {
+        draw_rosace1();
+    } else if (prms.model == "iso_grid") {
         draw_iso_grid();
     } else if (prms.model == "iso_tri") {
         draw_iso_tri();
@@ -107,11 +109,12 @@ function draw_iso_tri(flip) {
     var dx = 5;
     var dh = dx * Math.sqrt(3)/2;
     var dX = 3 * dx, dH = 3 * dh;
+    var strokeWidth = 2.0;
 
     var defs = document.getElementById("svg-defs");
     var cut = document.getElementById("cut");
 
-    var g = defs.appendChild(svg_node("g", { id: "hline"}));
+    var g = defs.appendChild(svg_node("g", { id: "hline", "stroke-width": strokeWidth }));
     g.appendChild(svg_node("line", { x1: -3*dX, x2: 3*dX, y1: 0, y2: 0 }));
     g.appendChild(svg_node("line", { x1: -2.5*dX, x2: 2.5*dX, y1: dH, y2: dH }));
     g.appendChild(svg_node("line", { x1: -2.5*dX, x2: 2.5*dX, y1: -dH, y2: -dH }));
@@ -124,7 +127,7 @@ function draw_iso_tri(flip) {
     cut.appendChild(svg_node("use", { href: "#hline", transform: "rotate(60)" }));
     cut.appendChild(svg_node("use", { href: "#hline", transform: "rotate(120)" }));
 
-    var g = defs.appendChild(svg_node("g", { id: "tri"}));
+    var g = defs.appendChild(svg_node("g", { id: "tri", "stroke-width": strokeWidth }));
     g.appendChild(svg_node("line", { x1: 1.5*dx, x2: 0.5*dx, y1: dh, y2: dh }));
     g.appendChild(svg_node("line", { x1: 1.5*dx, x2: 2*dx, y1: dh, y2: 0 }));
     g.appendChild(svg_node("line", { x1: 1.5*dx, x2: 2*dx, y1: dh, y2: 2*dh }));
@@ -320,4 +323,63 @@ function svg_node(tag, attrs) {
         el.setAttributeNS(ns, name, attrs[k]);
     }
     return el;
+}
+
+function draw_rosace1() {
+    var R = 25; // OI
+    var N = 7;
+    var rij = [ 0.2, 0.4, 0.6, 0.8 ];
+    var rij = [ 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 ];
+    
+    var alpha = 2*Math.PI/N;
+    var alpha_deg = 360/N;
+    var Rij = 2 * R * Math.sin(alpha/2);  // IJ    
+    var cos_alpha = Math.cos(alpha);
+    var sin_alpha = Math.sin(alpha);
+    
+    var defs = document.getElementById("svg-defs");
+    var cut = document.getElementById("cut");
+
+    var transform = "scale(1 -1)";
+
+    // clip path data
+    var Rik = Rij * 0.8;
+    var Rkj = Rij - Rik;
+    var clipPathData = `M 0 ${-R} 
+        L ${R*sin_alpha} ${-R*cos_alpha}
+        L ${R} 0
+        L ${-R*sin_alpha} ${-R*cos_alpha+Rik}
+        A ${Rik} ${Rik} 0 0 0 ${-Rkj*Math.cos(alpha/2)} ${-R+Rkj*Math.sin(alpha/2)}
+        L ${-R*sin_alpha} ${-R*cos_alpha}
+        L ${-R} ${-R}
+        L ${-R} ${-2*R}
+        L ${+R} ${-2*R}
+        L ${+R*sin_alpha} ${-R*cos_alpha-Rik}
+        A ${Rik} ${Rik} 0 0 0 ${+Rkj*Math.cos(alpha/2)} ${-R+Rkj*Math.sin(alpha/2)}
+        L 0 ${-R}
+        `;
+    var g = defs.appendChild(svg_node("g", { id: "chunk" }));
+    
+    var clipPath = defs.appendChild(svg_node("clipPath", { id: "rosace_clip" }));
+    clipPath.appendChild(svg_node("path", { d: clipPathData}));
+
+    var gCircles = defs.appendChild(svg_node("g", { id: "circles" }));
+    for (var r of rij)
+        gCircles.appendChild(svg_node("circle", { cx: 0, cy: -R, r: Rij*r, stroke: "red", "stroke-width": "1.5"  }));
+    // g.appendChild(svg_node("circle", { cx: 0, cy: 0, r: 2*R/N, stroke: "red", "stroke-width": "2" }));
+    // g.appendChild(svg_node("circle", { cx: 0, cy: 0, r: 1.7*R, stroke: "red", "stroke-width": "2" }));
+    // g.appendChild(svg_node("circle", { cx: 0, cy: 0, r: 1.8*R, stroke: "red", "stroke-width": "3" }));
+
+    // g.appendChild(svg_node("circle", { c1x: 0, cy: 0, r: R, stroke: "grey" }));
+    // g.appendChild(svg_node("use", { id: "to_be_clipped", href: "#circles" }));
+    // g.appendChild(svg_node("path", { d: clipPathData, stroke: "green", fill: "green", "fill-opacity": "0.2" }));
+    g.appendChild(svg_node("use", { 
+        "clip-path": "url(#rosace_clip)", 
+        "href": "#circles" 
+    })); 
+
+    for (var i=0; i<N; i++)
+        cut.appendChild(svg_node("use", { href: "#chunk", transform: "rotate("+i*alpha_deg+")" }));
+
+
 }
