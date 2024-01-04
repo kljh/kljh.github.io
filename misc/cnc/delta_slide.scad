@@ -20,10 +20,10 @@ LBH = 24;       // height
 LBNH = 4;       // height (from ends) for notch
 
 // Hex pivots
-HL = 50;
-HW = 11.5;
-HOD = 6;
-HID = 3;
+HL = 30;        // parallelogram width
+HW = 8.0;
+HOD = 6;        // axis inner diameter (M3)
+HID = 3;        // axis inner diameter (M3)
 
 module slide() {
 
@@ -85,6 +85,7 @@ module central_beam() {
             rounded_filet();
             
         }
+        
         union() {
             
             // linear bearing space
@@ -97,15 +98,17 @@ module central_beam() {
                     
             // GT2 belt holes (wide)
             
-            translate([ GT2D/2, 0, 0 ])
+            D = GT2D - 1.5*GT2H;
+            
+            translate([ D/2, 0, 0 ])
             rounded_cube([ 2*GT2H, GT2W, 7*BH ], center=true, radius=1);
 
             // GT2 belt holes (narrow x2)
             
-            translate([ -GT2D/2-0.8*GT2H, 0, 0 ])
+            translate([ -D/2-0.8*GT2H, 0, 0 ])
             rounded_cube([ GT2H, GT2W, 7*BH ], center=true, radius=1);
             
-            translate([ -GT2D/2+0.8*GT2H, 0, 0 ])
+            translate([ -D/2+0.8*GT2H, 0, 0 ])
             rounded_cube([ GT2H, GT2W, 7*BH ], center=true, radius=1);
         }
     }
@@ -167,21 +170,22 @@ module hex_arms_pivots()
     translate([ 0, -HD/2, 0 ])
     {
 
-        Rclear = ( DW - HL ) / 2;
-
-        translate([ 0, -Rclear, 0 ])
+        R = HW - HID/2;
+        L = HL + 2* R;
+        
+        translate([ 0, -R, 0 ])
 
         difference() {
             
-            translate([ -DW/2, 0, 0 ])
-            cube([ DW , Rclear, BH ]);
+            translate([ -L/2, 0, 0 ])
+            cube([ L, R, BH ]);
             
             union() {
-                translate([ -DW/2, 0, 0 ])
-                cylinder(r=Rclear, h=3*HL, center=true);    
+                translate([ -L/2, 0, 0 ])
+                cylinder(r=R, h=3*HL, center=true);    
 
-                translate([ +DW/2, 0, 0 ])
-                cylinder(r=Rclear, h=3*HL, center=true);
+                translate([ +L/2, 0, 0 ])
+                cylinder(r=R, h=3*HL, center=true);
             }
         }
 
