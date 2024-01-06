@@ -20,10 +20,12 @@ LBH = 24;       // height
 LBNH = 4;       // height (from ends) for notch
 
 // Hex pivots
-HL = 30;        // parallelogram width
+HL = 40;        // parallelogram width
 HW = 8.0;
 HOD = 6;        // axis inner diameter (M3)
 HID = 3;        // axis inner diameter (M3)
+
+use <rounded_cube.scad>
 
 module slide() {
 
@@ -101,15 +103,15 @@ module central_beam() {
             D = GT2D - 1.5*GT2H;
             
             translate([ D/2, 0, 0 ])
-            rounded_cube([ 2*GT2H, GT2W, 7*BH ], center=true, radius=1);
+            rounded_column([ 2*GT2H, GT2W, 2*BH ], center=true, r=1);
 
             // GT2 belt holes (narrow x2)
             
             translate([ -D/2-0.8*GT2H, 0, 0 ])
-            rounded_cube([ GT2H, GT2W, 7*BH ], center=true, radius=1);
+            rounded_column([ GT2H, GT2W, 2*BH ], center=true, r=1);
             
             translate([ -D/2+0.8*GT2H, 0, 0 ])
-            rounded_cube([ GT2H, GT2W, 7*BH ], center=true, radius=1);
+            rounded_column([ GT2H, GT2W, 2*BH ], center=true, r=1);
         }
     }
 }
@@ -124,45 +126,31 @@ module rounded_filet() {
     }
 }
 
-module rounded_cube(size = [1, 1, 1], center = false, radius = 0.5) {
-	// If single value, convert to [x, y, z] vector
-	size = (size[0] == undef) ? [size, size, size] : size;
-
-	translate = (center == false) ?
-		[radius, radius, radius] :
-		[
-			radius - (size[0] / 2),
-			radius - (size[1] / 2),
-			radius - (size[2] / 2)
-	];
-
-	translate(v = translate)
-	minkowski() {
-		cube(size = [
-			size[0] - (radius * 2),
-			size[1] - (radius * 2),
-			size[2] - (radius * 2)
-		]);
-		sphere(r = radius);
-	}
-}
-
 // Hex pivots
 module hex_arms_pivots()
-{    
+{   
+    epsilon = 0;
+    
     translate([ 0, -HD/2-HW, HOD/2 ])
     {
-        translate([ -HL/2, 0, -HOD/2 ])
-        cube([ HL, HW, BH ]);
-
         difference() {
             
-            rotate([ 0, 90, 0 ])
-            cylinder(r=HOD/2, h=HL, center=true);    
-        
-            rotate([ 0, 90, 0 ])
-            cylinder(r=HID/2, h=HL-0.4, center=true);
-
+            union() {
+                    
+                translate([ -HL/2, 0, -HOD/2 ])
+                cube([ HL, HW, BH ]);
+                
+                rotate([ 0, 90, 0 ])
+                cylinder(r=HOD/2, h=HL, center=true);    
+                
+            }
+            
+            union() {
+                
+                rotate([ 0, 90, 0 ])
+                cylinder(r=HID/2, h=HL-epsilon, center=true);
+                
+            }
         }
     }
 
