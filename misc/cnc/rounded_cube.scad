@@ -1,6 +1,6 @@
 
 
-module rounded_cube(size = [1, 1, 1], center = false, r = 0.5) {
+module rounded_cube(size = [ 1, 1, 1 ], center = false, r = 0.5) {
 	// if single value, convert to [x, y, z] vector
 	size = (size[0] == undef) ? [size, size, size] : size;
 
@@ -12,7 +12,7 @@ module rounded_cube(size = [1, 1, 1], center = false, r = 0.5) {
 			r - (size[2] / 2)
         ];
 
-	translate(v = translate)
+	translate(translate)
 	minkowski() {
 		cube(size = [
 			size[0] - (r * 2),
@@ -40,7 +40,7 @@ module rounded_column(size = [1, 1, 1], center = false, r = 0.5) {
 			  - h / 2
         ];
 
-	translate(v = translate)
+	translate(translate)
     hull() {
 		translate([ 0, 0, 0 ]) cylinder(r=r, h);
 		translate([ x, 0, 0 ]) cylinder(r=r, h);
@@ -49,4 +49,4 @@ module rounded_column(size = [1, 1, 1], center = false, r = 0.5) {
 	}
 }
 
-rounded_column(20, r=4, center=true);
+rounded_cube(20, r=4, center=true);

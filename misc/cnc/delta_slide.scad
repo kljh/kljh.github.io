@@ -1,8 +1,11 @@
+
+use <rounded_cube.scad>
+
 $fn = 36;
 
 // Delta printer slide (x3)
 
-DW = 60;        // distance between rails
+DW = 61.0;      // distance between rails
 HD = 20;        // holder diameter
 BW = HD - 5;    // base width 
 BH = 4.0;       // base height
@@ -21,11 +24,10 @@ LBNH = 4;       // height (from ends) for notch
 
 // Hex pivots
 HL = 40;        // parallelogram width
-HW = 8.0;
+HW = 9.0;
 HOD = 6;        // axis inner diameter (M3)
 HID = 3;        // axis inner diameter (M3)
 
-use <rounded_cube.scad>
 
 module slide() {
 
@@ -158,7 +160,7 @@ module hex_arms_pivots()
     translate([ 0, -HD/2, 0 ])
     {
 
-        R = HW - HID/2;
+        R = HW - 3*HID/2;
         L = HL + 2* R;
         
         translate([ 0, -R, 0 ])
