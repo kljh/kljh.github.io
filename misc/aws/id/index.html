@@ -8,7 +8,7 @@
 <meta property="og:title" content="Sign in" />
 <meta property="og:description" content="Kljh Sign in" />
 <meta property="og:image" content="https://kljh.github.io/img/grammar-for-dummies.jpg" />
-<meta property="og:url" content="https://aws.kljh.org/id" />
+<meta property="og:url" content="https://app.kljh.org/id" />
 <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
 <link rel="icon" href="data:;base64,=">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
@@ -103,14 +103,13 @@
 /* global $ */
 /* global localStorage */
 
-// const IS_LOCALHOST = window.location.hostname == "localhost";
+const IS_LOCALHOST = window.location.hostname == "localhost";
 // const REDIRECT_URI = "https://localhost:8086/kljh/misc/quiz/quiz.html";
 // const REDIRECT_URI = "https://kljh.github.io/misc/quiz/quiz.html";
 const REDIRECT_URI = window.location.origin + window.location.pathname;
 console.log("REDIRECT_URI", REDIRECT_URI);
 
-const API_URL = "https://aws.kljh.org";
-// if (IS_LOCALHOST) API_URL = "";
+const API_URL = IS_LOCALHOST ? "" : "https://app.kljh.org";
 
 const LINKEDIN_CLIENT_ID = "77k1tltx3oew8e";  // updated 2021-22-07
 const GITHUB_CLIENT_ID = "ef1a126cb7c698d6cdea";
@@ -155,9 +154,13 @@ $(function () {
         if (!user_id) return;
 
         if (!user_pwd) {
-            // ask for OTP
+            // ask for OTP by EMAIL or SMS
             var prms = new URLSearchParams({ action: "register", user_id });
-            await ajax_post(API_URL + "/id?" + prms);
+            try {
+                await ajax_post(API_URL + "/id?" + prms);
+            } catch (e) {
+                error_msg(e);
+            }
 
             // and show password input
             document.getElementById("emailcode").style.display = "block";
@@ -165,8 +168,12 @@ $(function () {
         } else {
             // check OTP (return HTTP status code 400 if not authenticated)
             var prms = new URLSearchParams({ action: "register", user_id, user_pwd });
-            var data = await ajax_post(API_URL + "/id?" + prms);
-            save_user_info_and_redirect(data);
+            try {
+                var data = await ajax_post(API_URL + "/id?" + prms);
+                save_user_info_and_redirect(data);
+            } catch (e) {
+                error_msg(e);
+            }
         }
     });
 
@@ -336,6 +343,15 @@ function uri_args() {
 	}
 	return kv;
 }
+
+function error_msg(err) {
+    if (err instanceof Error)
+        msg = err.message;
+    else
+        msg = JSON.stringify(err);
+    document.getElementById("msg").innerText = msg;
+}
+
 </script>
 
 <style>

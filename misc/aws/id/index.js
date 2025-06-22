@@ -30,7 +30,7 @@ exports.handler = async (event) => {
                 // send OTP
                 var txt = `Your sign-in code: ${otp}`;
                 if (user_id.startsWith("+"))
-                    data = await send_text(user_id, txt);
+                    data = await send_text("KljhApp", user_id.replace('+', '') * 1, txt);
                 else
                     data = await send_email(user_id, txt, txt, `Your sign-in code: <b>${otp}</b>`);
             } else {
@@ -38,7 +38,7 @@ exports.handler = async (event) => {
                 if (otp == user_otp)
                     data = { uid: user_id, name: user_id, email: user_id, hash: oauth.user_hash(user_id) };
                 else
-                    statusCode = 400;
+                    statusCode = 401;
             }
         } else if (qs.action=="oauth") {
             // data = { status: "authentication token to process" };
@@ -108,32 +108,24 @@ async function send_email(to, subject, text, html) {
     });
 }
 
-async function send_text(to, text) {
-    const axios = require('axios');
-
-    const sid = process.env.TWILIO_ACCOUNT_SID;
-    const tok = process.env.TWILIO_AUTH_TOKEN;
-    const num = process.env.TWILIO_NUMBER_FROM;
-
-    const url = `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`;
-
-    const prms = new URLSearchParams({
-        'To': to,
-        'Body': text,
-        'From': num });
-
-    const config = {
-    	headers: {
-    		'Content-Type': 'application/x-www-form-urlencoded'
-    	},
-    	auth: {
-			username: sid,
-			password: tok
-		}
-    };
-
-    return axios.post(url, prms, config)
-        .then(res => { return { status: res.status, data: res.data }; });
+async function send_text(sender, recipient, message) {
+    const url = "https://gatewayapi.eu/rest/mtsms";
+    const token = process.env.GATEWAYAPI_TOKEN;
+    const response = await fetch(url, {
+        method: 'POST',
+        body: JSON.stringify({
+            sender,
+            message,
+            "recipients": [{ "msisdn": recipient }]
+        }),
+        headers: {
+            'Content-Type': 'application/json',
+            "Authorization": `Token ${token}`,
+        }
+    });
+    if (!response.ok) { }
+    if (response.body !== null) { }
+    return response.ok;
 }
 
 function generate_code(txt) {
